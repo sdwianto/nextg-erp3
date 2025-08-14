@@ -11,7 +11,9 @@ import {
   PieChart,
   Shield,
   Database,
-  Cloud
+  Cloud,
+  Wrench,
+  ShoppingCart
 } from "lucide-react";
 import React, { type ReactNode } from "react";
 
@@ -129,6 +131,45 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                   <Link href="/inventory">
                     <Package className="mr-2 h-4 w-4" />
                     Inventory
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Procurement Management"
+                  isActive={isActive("/procurement")}
+                >
+                  <Link href="/procurement">
+                    <ShoppingCart className="mr-2 h-4 w-4" />
+                    Procurement
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Asset Management"
+                  isActive={isActive("/asset")}
+                >
+                  <Link href="/asset">
+                    <Building2 className="mr-2 h-4 w-4" />
+                    Asset Management
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip="Operations Management"
+                  isActive={isActive("/operations")}
+                >
+                  <Link href="/operations">
+                    <Wrench className="mr-2 h-4 w-4" />
+                    Operations
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -293,7 +334,7 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter className="p-4">
-            <p className="text-muted-foreground text-xs">NextGen ERP v1.0</p>
+            <p className="text-muted-foreground text-xs">NextGen ERP v1.1</p>
             <p className="text-muted-foreground text-xs">Papua New Guinea</p>
             <div className="flex items-center gap-2 mt-2">
               <ThemeToggle />

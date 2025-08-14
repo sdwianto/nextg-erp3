@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Plus, 
   Search, 
@@ -19,8 +20,10 @@ import {
   Package,
   X,
   Eye,
-  Edit
+  Edit,
+  Shield
 } from 'lucide-react';
+import EnhancedInventoryDashboard from '@/components/EnhancedInventoryDashboard';
 
 interface InventoryItem {
   id: number;
@@ -369,165 +372,167 @@ const InventoryPage: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Inventory Management</h1>
             <p className="text-gray-600 dark:text-gray-400">Manage your inventory, track stock levels, and monitor supplies</p>
           </div>
-          <Dialog open={isAddItemDialogOpen} onOpenChange={setIsAddItemDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Add New Item
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px]">
-              <DialogHeader>
-                <DialogTitle>Add New Inventory Item</DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="code">Item Code *</Label>
-                    <Input
-                      id="code"
-                      placeholder="e.g., EXC-001"
-                      value={newItem.code}
-                      onChange={(e) => setNewItem(prev => ({ ...prev, code: e.target.value }))}
-                    />
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Dialog open={isAddItemDialogOpen} onOpenChange={setIsAddItemDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="w-full sm:w-auto flex items-center gap-2">
+                  <Plus className="h-4 w-4" />
+                  Add New Item
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle>Add New Inventory Item</DialogTitle>
+                </DialogHeader>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="code">Item Code *</Label>
+                      <Input
+                        id="code"
+                        placeholder="e.g., EXC-001"
+                        value={newItem.code}
+                        onChange={(e) => setNewItem(prev => ({ ...prev, code: e.target.value }))}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="name">Item Name *</Label>
+                      <Input
+                        id="name"
+                        placeholder="e.g., Excavator Spare Parts Kit"
+                        value={newItem.name}
+                        onChange={(e) => setNewItem(prev => ({ ...prev, name: e.target.value }))}
+                      />
+                    </div>
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="name">Item Name *</Label>
-                    <Input
-                      id="name"
-                      placeholder="e.g., Excavator Spare Parts Kit"
-                      value={newItem.name}
-                      onChange={(e) => setNewItem(prev => ({ ...prev, name: e.target.value }))}
-                    />
-                  </div>
-                </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="category">Category *</Label>
+                      <Select 
+                        value={newItem.category} 
+                        onValueChange={(value) => setNewItem(prev => ({ ...prev, category: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="location">Location *</Label>
+                      <Select 
+                        value={newItem.location} 
+                        onValueChange={(value) => setNewItem(prev => ({ ...prev, location: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select location" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {locations.map((location) => (
+                            <SelectItem key={location} value={location}>
+                              {location}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="grid gap-2">
+                      <Label htmlFor="quantity">Current Quantity *</Label>
+                      <Input
+                        id="quantity"
+                        type="number"
+                        placeholder="0"
+                        value={newItem.quantity}
+                        onChange={(e) => setNewItem(prev => ({ ...prev, quantity: e.target.value }))}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="minQuantity">Minimum Quantity *</Label>
+                      <Input
+                        id="minQuantity"
+                        type="number"
+                        placeholder="0"
+                        value={newItem.minQuantity}
+                        onChange={(e) => setNewItem(prev => ({ ...prev, minQuantity: e.target.value }))}
+                      />
+                    </div>
+                    <div className="grid gap-2">
+                      <Label htmlFor="unit">Unit *</Label>
+                      <Select 
+                        value={newItem.unit} 
+                        onValueChange={(value) => setNewItem(prev => ({ ...prev, unit: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select unit" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="pcs">Pieces (pcs)</SelectItem>
+                          <SelectItem value="units">Units</SelectItem>
+                          <SelectItem value="sets">Sets</SelectItem>
+                          <SelectItem value="kg">Kilograms (kg)</SelectItem>
+                          <SelectItem value="liters">Liters</SelectItem>
+                          <SelectItem value="meters">Meters</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
                   <div className="grid gap-2">
-                    <Label htmlFor="category">Category *</Label>
+                    <Label htmlFor="status">Initial Status</Label>
                     <Select 
-                      value={newItem.category} 
-                      onValueChange={(value) => setNewItem(prev => ({ ...prev, category: value }))}
+                      value={newItem.status} 
+                      onValueChange={(value) => setNewItem(prev => ({ ...prev, status: value }))}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select category" />
+                        <SelectValue placeholder="Select status" />
                       </SelectTrigger>
                       <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
+                        <SelectItem value="normal">Normal</SelectItem>
+                        <SelectItem value="low">Low Stock</SelectItem>
+                        <SelectItem value="out">Out of Stock</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="location">Location *</Label>
-                    <Select 
-                      value={newItem.location} 
-                      onValueChange={(value) => setNewItem(prev => ({ ...prev, location: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select location" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {locations.map((location) => (
-                          <SelectItem key={location} value={location}>
-                            {location}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
                 </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="quantity">Current Quantity *</Label>
-                    <Input
-                      id="quantity"
-                      type="number"
-                      placeholder="0"
-                      value={newItem.quantity}
-                      onChange={(e) => setNewItem(prev => ({ ...prev, quantity: e.target.value }))}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="minQuantity">Minimum Quantity *</Label>
-                    <Input
-                      id="minQuantity"
-                      type="number"
-                      placeholder="0"
-                      value={newItem.minQuantity}
-                      onChange={(e) => setNewItem(prev => ({ ...prev, minQuantity: e.target.value }))}
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="unit">Unit *</Label>
-                    <Select 
-                      value={newItem.unit} 
-                      onValueChange={(value) => setNewItem(prev => ({ ...prev, unit: value }))}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select unit" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pcs">Pieces (pcs)</SelectItem>
-                        <SelectItem value="units">Units</SelectItem>
-                        <SelectItem value="sets">Sets</SelectItem>
-                        <SelectItem value="kg">Kilograms (kg)</SelectItem>
-                        <SelectItem value="liters">Liters</SelectItem>
-                        <SelectItem value="meters">Meters</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="grid gap-2">
-                  <Label htmlFor="status">Initial Status</Label>
-                  <Select 
-                    value={newItem.status} 
-                    onValueChange={(value) => setNewItem(prev => ({ ...prev, status: value }))}
+                <div className="flex justify-end gap-2">
+                  <Button 
+                    variant="outline" 
+                    onClick={() => {
+                      setNewItem({
+                        code: '',
+                        name: '',
+                        category: '',
+                        quantity: '',
+                        minQuantity: '',
+                        unit: '',
+                        location: '',
+                        status: 'normal'
+                      });
+                      setIsAddItemDialogOpen(false);
+                    }}
                   >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="normal">Normal</SelectItem>
-                      <SelectItem value="low">Low Stock</SelectItem>
-                      <SelectItem value="out">Out of Stock</SelectItem>
-                    </SelectContent>
-                  </Select>
+                    Cancel
+                  </Button>
+                  <Button 
+                    onClick={addNewItem}
+                    disabled={!isFormValid}
+                  >
+                    Add Item
+                  </Button>
                 </div>
-              </div>
-              <div className="flex justify-end gap-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => {
-                    setNewItem({
-                      code: '',
-                      name: '',
-                      category: '',
-                      quantity: '',
-                      minQuantity: '',
-                      unit: '',
-                      location: '',
-                      status: 'normal'
-                    });
-                    setIsAddItemDialogOpen(false);
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button 
-                  onClick={addNewItem}
-                  disabled={!isFormValid}
-                >
-                  Add Item
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {/* Stats Cards */}
@@ -585,271 +590,306 @@ const InventoryPage: React.FC = () => {
           </Card>
         </div>
 
-        {/* Search and Filters */}
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Inventory Items</CardTitle>
-              {hasActiveFilters && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={clearFilters}
-                  className="flex items-center gap-2"
-                >
-                  <X className="h-4 w-4" />
-                  Clear Filters
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col md:flex-row gap-2 md:gap-4 mb-6">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input 
-                    placeholder="Search items by name, code, location, status, or category..." 
-                    className="pl-10"
-                    value={filters.search}
-                    onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                  />
+        {/* Main Content with Tabs */}
+        <Tabs defaultValue="standard" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="standard" className="flex items-center gap-2">
+              <Package className="h-4 w-4" />
+              Standard Inventory
+            </TabsTrigger>
+            <TabsTrigger value="enhanced" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Enhanced Inventory
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Standard Inventory Tab */}
+          <TabsContent value="standard" className="space-y-6">
+            {/* Search and Filters */}
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <CardTitle>Inventory Items</CardTitle>
+                  {hasActiveFilters && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={clearFilters}
+                      className="flex items-center gap-2"
+                    >
+                      <X className="h-4 w-4" />
+                      Clear Filters
+                    </Button>
+                  )}
                 </div>
-              </div>
-              
-              <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Filter className="h-4 w-4" />
-                    Filters
-                    {hasActiveFilters && (
-                      <Badge variant="secondary" className="ml-1">
-                        {[
-                          filters.category !== 'all' ? filters.category : null,
-                          filters.status !== 'all' ? filters.status : null,
-                          filters.location !== 'all' ? filters.location : null,
-                          filters.quantity,
-                          filters.lastUpdated
-                        ].filter(Boolean).length}
-                      </Badge>
-                    )}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Filter Inventory Items</DialogTitle>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="category">Category</Label>
-                      <Select 
-                        value={filters.category} 
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Categories</SelectItem>
-                          {categories.map((category) => (
-                            <SelectItem key={category} value={category}>
-                              {category}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="status">Status</Label>
-                      <Select 
-                        value={filters.status} 
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Statuses</SelectItem>
-                          {statuses.map((status) => (
-                            <SelectItem key={status} value={status}>
-                              {status === 'normal' ? 'Normal' : 
-                               status === 'low' ? 'Low Stock' : 
-                               status === 'out' ? 'Out of Stock' : status}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="location">Location</Label>
-                      <Select 
-                        value={filters.location} 
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, location: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select location" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Locations</SelectItem>
-                          {locations.map((location) => (
-                            <SelectItem key={location} value={location}>
-                              {location}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="quantity">Quantity</Label>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col md:flex-row gap-2 md:gap-4 mb-6">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input 
-                        type="number"
-                        placeholder="Enter quantity"
-                        value={filters.quantity}
-                        onChange={(e) => setFilters(prev => ({ ...prev, quantity: e.target.value }))}
-                      />
-                    </div>
-
-                    <div className="grid gap-2">
-                      <Label htmlFor="lastUpdated">Last Updated</Label>
-                      <Input 
-                        type="date"
-                        value={filters.lastUpdated}
-                        onChange={(e) => setFilters(prev => ({ ...prev, lastUpdated: e.target.value }))}
+                        placeholder="Search items by name, code, location, status, or category..." 
+                        className="pl-10"
+                        value={filters.search}
+                        onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                       />
                     </div>
                   </div>
-                                     <div className="flex justify-end gap-2">
-                     <Button variant="outline" onClick={clearFilters}>
-                       Clear All
-                     </Button>
-                     <Button onClick={closeFilterDialog}>
-                       Apply Filters
-                     </Button>
-                   </div>
-                </DialogContent>
-              </Dialog>
-            </div>
+                  
+                  <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="flex items-center gap-2">
+                        <Filter className="h-4 w-4" />
+                        Filters
+                        {hasActiveFilters && (
+                          <Badge variant="secondary" className="ml-1">
+                            {[
+                              filters.category !== 'all' ? filters.category : null,
+                              filters.status !== 'all' ? filters.status : null,
+                              filters.location !== 'all' ? filters.location : null,
+                              filters.quantity,
+                              filters.lastUpdated
+                            ].filter(Boolean).length}
+                          </Badge>
+                        )}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>Filter Inventory Items</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="category">Category</Label>
+                          <Select 
+                            value={filters.category} 
+                            onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Categories</SelectItem>
+                              {categories.map((category) => (
+                                <SelectItem key={category} value={category}>
+                                  {category}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="grid gap-2">
+                          <Label htmlFor="status">Status</Label>
+                          <Select 
+                            value={filters.status} 
+                            onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Statuses</SelectItem>
+                              {statuses.map((status) => (
+                                <SelectItem key={status} value={status}>
+                                  {status === 'normal' ? 'Normal' : 
+                                   status === 'low' ? 'Low Stock' : 
+                                   status === 'out' ? 'Out of Stock' : status}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="grid gap-2">
+                          <Label htmlFor="location">Location</Label>
+                          <Select 
+                            value={filters.location} 
+                            onValueChange={(value) => setFilters(prev => ({ ...prev, location: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select location" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Locations</SelectItem>
+                              {locations.map((location) => (
+                                <SelectItem key={location} value={location}>
+                                  {location}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
 
-            {/* Active Filters Display */}
-            {hasActiveFilters && (
-              <div className="flex flex-wrap gap-2 mb-4">
-                {filters.category && filters.category !== 'all' && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Category: {filters.category}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => setFilters(prev => ({ ...prev, category: 'all' }))}
-                    />
-                  </Badge>
-                )}
-                {filters.status && filters.status !== 'all' && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Status: {filters.status === 'normal' ? 'Normal' : 
-                            filters.status === 'low' ? 'Low Stock' : 
-                            filters.status === 'out' ? 'Out of Stock' : filters.status}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => setFilters(prev => ({ ...prev, status: 'all' }))}
-                    />
-                  </Badge>
-                )}
-                {filters.location && filters.location !== 'all' && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Location: {filters.location}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => setFilters(prev => ({ ...prev, location: 'all' }))}
-                    />
-                  </Badge>
-                )}
-                {filters.quantity && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Quantity: {filters.quantity}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => setFilters(prev => ({ ...prev, quantity: '' }))}
-                    />
-                  </Badge>
-                )}
-                {filters.lastUpdated && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Last Updated: {filters.lastUpdated}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => setFilters(prev => ({ ...prev, lastUpdated: '' }))}
-                    />
-                  </Badge>
-                )}
-              </div>
-            )}
+                        <div className="grid gap-2">
+                          <Label htmlFor="quantity">Quantity</Label>
+                          <Input 
+                            type="number"
+                            placeholder="Enter quantity"
+                            value={filters.quantity}
+                            onChange={(e) => setFilters(prev => ({ ...prev, quantity: e.target.value }))}
+                          />
+                        </div>
 
-            {/* Results Count */}
-            <div className="mb-4 text-sm text-gray-500">
-              Showing {filteredItems.length} of {inventoryItems.length} items
-            </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="lastUpdated">Last Updated</Label>
+                          <Input 
+                            type="date"
+                            value={filters.lastUpdated}
+                            onChange={(e) => setFilters(prev => ({ ...prev, lastUpdated: e.target.value }))}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={clearFilters}>
+                          Clear All
+                        </Button>
+                        <Button onClick={closeFilterDialog}>
+                          Apply Filters
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
 
-            {/* Inventory Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-3 font-medium">Item</th>
-                    <th className="text-left p-3 font-medium">Category</th>
-                    <th className="text-left p-3 font-medium">Quantity</th>
-                    <th className="text-left p-3 font-medium">Location</th>
-                    <th className="text-left p-3 font-medium">Status</th>
-                    <th className="text-left p-3 font-medium">Last Updated</th>
-                    <th className="text-left p-3 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredItems.length > 0 ? (
-                    filteredItems.map((item) => (
-                      <tr key={item.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <td className="p-3">
-                          <div>
-                            <div className="font-medium">{item.name}</div>
-                            <div className="text-sm text-gray-500">{item.code}</div>
-                          </div>
-                        </td>
-                        <td className="p-3">{item.category}</td>
-                        <td className="p-3">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{item.quantity}</span>
-                            <span className="text-sm text-gray-500">{item.unit}</span>
-                          </div>
-                        </td>
-                        <td className="p-3">{item.location}</td>
-                        <td className="p-3">
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(item.status)}
-                            {getStatusBadge(item.status)}
-                          </div>
-                        </td>
-                        <td className="p-3 text-sm text-gray-500">{item.lastUpdated}</td>
-                        <td className="p-3">
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => handleEditClick(item)}>Edit</Button>
-                            <Button size="sm" variant="outline" onClick={() => handleViewClick(item)}>View</Button>
-                          </div>
-                        </td>
+                {/* Active Filters Display */}
+                {hasActiveFilters && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {filters.category && filters.category !== 'all' && (
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        Category: {filters.category}
+                        <X 
+                          className="h-3 w-3 cursor-pointer" 
+                          onClick={() => setFilters(prev => ({ ...prev, category: 'all' }))}
+                        />
+                      </Badge>
+                    )}
+                    {filters.status && filters.status !== 'all' && (
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        Status: {filters.status === 'normal' ? 'Normal' : 
+                                filters.status === 'low' ? 'Low Stock' : 
+                                filters.status === 'out' ? 'Out of Stock' : filters.status}
+                        <X 
+                          className="h-3 w-3 cursor-pointer" 
+                          onClick={() => setFilters(prev => ({ ...prev, status: 'all' }))}
+                        />
+                      </Badge>
+                    )}
+                    {filters.location && filters.location !== 'all' && (
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        Location: {filters.location}
+                        <X 
+                          className="h-3 w-3 cursor-pointer" 
+                          onClick={() => setFilters(prev => ({ ...prev, location: 'all' }))}
+                        />
+                      </Badge>
+                    )}
+                    {filters.quantity && (
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        Quantity: {filters.quantity}
+                        <X 
+                          className="h-3 w-3 cursor-pointer" 
+                          onClick={() => setFilters(prev => ({ ...prev, quantity: '' }))}
+                        />
+                      </Badge>
+                    )}
+                    {filters.lastUpdated && (
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        Last Updated: {filters.lastUpdated}
+                        <X 
+                          className="h-3 w-3 cursor-pointer" 
+                          onClick={() => setFilters(prev => ({ ...prev, lastUpdated: '' }))}
+                        />
+                      </Badge>
+                    )}
+                  </div>
+                )}
+
+                {/* Results Count */}
+                <div className="mb-4 text-sm text-gray-500">
+                  Showing {filteredItems.length} of {inventoryItems.length} items
+                </div>
+
+                {/* Inventory Table */}
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-3 font-medium">Item</th>
+                        <th className="text-left p-3 font-medium">Category</th>
+                        <th className="text-left p-3 font-medium">Quantity</th>
+                        <th className="text-left p-3 font-medium">Location</th>
+                        <th className="text-left p-3 font-medium">Status</th>
+                        <th className="text-left p-3 font-medium">Last Updated</th>
+                        <th className="text-left p-3 font-medium">Actions</th>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={7} className="p-8 text-center text-gray-500">
-                        No items found matching your filters.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
+                    </thead>
+                    <tbody>
+                      {filteredItems.length > 0 ? (
+                        filteredItems.map((item) => (
+                          <tr key={item.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
+                            <td className="p-3">
+                              <div>
+                                <div className="font-medium">{item.name}</div>
+                                <div className="text-sm text-gray-500">{item.code}</div>
+                              </div>
+                            </td>
+                            <td className="p-3">{item.category}</td>
+                            <td className="p-3">
+                              <div className="flex items-center gap-2">
+                                <span className="font-medium">{item.quantity}</span>
+                                <span className="text-sm text-gray-500">{item.unit}</span>
+                              </div>
+                            </td>
+                            <td className="p-3">{item.location}</td>
+                            <td className="p-3">
+                              <div className="flex items-center gap-2">
+                                {getStatusIcon(item.status)}
+                                {getStatusBadge(item.status)}
+                              </div>
+                            </td>
+                            <td className="p-3 text-sm text-gray-500">{item.lastUpdated}</td>
+                            <td className="p-3">
+                              <div className="flex gap-2">
+                                <Button size="sm" variant="outline" onClick={() => handleEditClick(item)}>Edit</Button>
+                                <Button size="sm" variant="outline" onClick={() => handleViewClick(item)}>View</Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={7} className="p-8 text-center text-gray-500">
+                            No items found matching your filters.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Enhanced Inventory Tab */}
+          <TabsContent value="enhanced" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-blue-600" />
+                  Enhanced Inventory - Real-time Monitoring
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  Advanced features for real-time stock monitoring, GPS location tracking, smart reorder alerts, and procurement integration
+                </p>
+              </CardHeader>
+              <CardContent>
+                <EnhancedInventoryDashboard />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
 
         {/* Edit Item Dialog */}
         <Dialog open={isEditItemDialogOpen} onOpenChange={setIsEditItemDialogOpen}>

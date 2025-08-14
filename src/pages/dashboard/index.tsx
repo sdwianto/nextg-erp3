@@ -3,6 +3,8 @@ import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { DashboardRealTime } from '@/components/DashboardRealTime';
 import { MaintenanceCard } from '@/components/MaintenanceCard';
 import { MaintenanceAlerts } from '@/components/MaintenanceAlerts';
+import { RentalMaintenanceDashboard } from '@/components/RentalMaintenanceDashboard';
+import { AssetLifecycleDashboard } from '@/components/AssetLifecycleDashboard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,7 +20,8 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  Plus
+  Plus,
+  BarChart3
 } from 'lucide-react';
 
 const DashboardPage: React.FC = () => {
@@ -134,7 +137,7 @@ const DashboardPage: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">NextGen ERP Dashboard</h1>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">NextGen ERP Dashboard v1.1</h1>
             <p className="text-gray-600 dark:text-gray-400">Real-time overview of your business operations</p>
           </div>
           <Badge variant="outline" className="flex items-center gap-2">
@@ -145,6 +148,22 @@ const DashboardPage: React.FC = () => {
 
         {/* Real-time Dashboard Component */}
         <DashboardRealTime />
+
+        {/* V1.1 Enhanced Rental & Maintenance Dashboard */}
+        <RentalMaintenanceDashboard />
+
+        {/* Asset Lifecycle Dashboard */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Building2 className="h-5 w-5" />
+              Asset Lifecycle Management
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <AssetLifecycleDashboard />
+          </CardContent>
+        </Card>
 
         {/* Key Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -235,6 +254,14 @@ const DashboardPage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="h-20 flex flex-col items-center justify-center gap-2"
+                onClick={() => router.push('/operations')}
+              >
+                <Wrench className="h-6 w-6" />
+                <span className="text-sm">Operations</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center justify-center gap-2"
                 onClick={() => router.push('/rental')}
               >
                 <Truck className="h-6 w-6" />
@@ -276,6 +303,14 @@ const DashboardPage: React.FC = () => {
               >
                 <Building2 className="h-6 w-6" />
                 <span className="text-sm">CRM</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center justify-center gap-2"
+                onClick={() => router.push('/asset')}
+              >
+                <BarChart3 className="h-6 w-6" />
+                <span className="text-sm">Asset Management</span>
               </Button>
               <Button 
                 variant="outline" 

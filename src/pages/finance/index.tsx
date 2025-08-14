@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   TrendingUp, 
   TrendingDown,
@@ -27,8 +28,10 @@ import {
   DollarSign,
   X,
   Eye,
-  Edit
+  Edit,
+  Shield
 } from 'lucide-react';
+import EnhancedFinanceDashboard from '@/components/EnhancedFinanceDashboard';
 
 interface Transaction {
   id: number;
@@ -906,981 +909,417 @@ const FinancePage: React.FC = () => {
           </Card>
         </div>
 
-        {/* Recent Transactions */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <CardTitle>Recent Transactions</CardTitle>
-              {hasActiveFilters && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={clearFilters}
-                  className="flex items-center gap-2"
-                >
-                  <X className="h-4 w-4" />
-                  Clear Filters
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col md:flex-row gap-2 md:gap-4 mb-6">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input 
-                    placeholder="Search transactions by description, category, or reference..." 
-                    className="pl-10"
-                    value={filters.search}
-                    onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                  />
-                </div>
-              </div>
-              
-              <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Filter className="h-4 w-4" />
-                    Filters
-                    {hasActiveFilters && (
-                      <Badge variant="secondary" className="ml-1">
-                        {[
-                          filters.type !== 'all' ? filters.type : null,
-                          filters.status !== 'all' ? filters.status : null,
-                          filters.category !== 'all' ? filters.category : null,
-                          filters.amount
-                        ].filter(Boolean).length}
-                      </Badge>
-                    )}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Filter Transactions</DialogTitle>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="type">Transaction Type</Label>
-                      <Select 
-                        value={filters.type} 
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, type: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Types</SelectItem>
-                          {types.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type === 'income' ? 'Income' : 'Expense'}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="status">Status</Label>
-                      <Select 
-                        value={filters.status} 
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Statuses</SelectItem>
-                          {statuses.map((status) => (
-                            <SelectItem key={status} value={status}>
-                              {status === 'completed' ? 'Completed' : 
-                               status === 'pending' ? 'Pending' : 
-                               status === 'overdue' ? 'Overdue' : status}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="category">Category</Label>
-                      <Select 
-                        value={filters.category} 
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select category" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Categories</SelectItem>
-                          {categories.map((category) => (
-                            <SelectItem key={category} value={category}>
-                              {category}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+        {/* Main Content with Tabs */}
+        <Tabs defaultValue="standard" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="standard" className="flex items-center gap-2">
+              <DollarSign className="h-4 w-4" />
+              Standard Finance
+            </TabsTrigger>
+            <TabsTrigger value="enhanced" className="flex items-center gap-2">
+              <Shield className="h-4 w-4" />
+              Enhanced Finance
+            </TabsTrigger>
+          </TabsList>
 
-                    <div className="grid gap-2">
-                      <Label htmlFor="amount">Amount</Label>
+          {/* Standard Finance Tab */}
+          <TabsContent value="standard" className="space-y-6">
+            {/* Recent Transactions */}
+            <Card>
+              <CardHeader>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <CardTitle>Recent Transactions</CardTitle>
+                  {hasActiveFilters && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={clearFilters}
+                      className="flex items-center gap-2"
+                    >
+                      <X className="h-4 w-4" />
+                      Clear Filters
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-col md:flex-row gap-2 md:gap-4 mb-6">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                       <Input 
-                        type="number"
-                        placeholder="Enter amount"
-                        value={filters.amount}
-                        onChange={(e) => setFilters(prev => ({ ...prev, amount: e.target.value }))}
+                        placeholder="Search transactions by description, category, or reference..." 
+                        className="pl-10"
+                        value={filters.search}
+                        onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
                       />
                     </div>
                   </div>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={clearFilters}>
-                      Clear All
-                    </Button>
-                    <Button onClick={closeFilterDialog}>
-                      Apply Filters
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
+                  
+                  <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="flex items-center gap-2">
+                        <Filter className="h-4 w-4" />
+                        Filters
+                        {hasActiveFilters && (
+                          <Badge variant="secondary" className="ml-1">
+                            {[
+                              filters.type !== 'all' ? filters.type : null,
+                              filters.status !== 'all' ? filters.status : null,
+                              filters.category !== 'all' ? filters.category : null,
+                              filters.amount
+                            ].filter(Boolean).length}
+                          </Badge>
+                        )}
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px]">
+                      <DialogHeader>
+                        <DialogTitle>Filter Transactions</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid gap-4 py-4">
+                        <div className="grid gap-2">
+                          <Label htmlFor="type">Transaction Type</Label>
+                          <Select 
+                            value={filters.type} 
+                            onValueChange={(value) => setFilters(prev => ({ ...prev, type: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Types</SelectItem>
+                              {types.map((type) => (
+                                <SelectItem key={type} value={type}>
+                                  {type === 'income' ? 'Income' : 'Expense'}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="grid gap-2">
+                          <Label htmlFor="status">Status</Label>
+                          <Select 
+                            value={filters.status} 
+                            onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Statuses</SelectItem>
+                              {statuses.map((status) => (
+                                <SelectItem key={status} value={status}>
+                                  {status === 'completed' ? 'Completed' : 
+                                   status === 'pending' ? 'Pending' : 
+                                   status === 'overdue' ? 'Overdue' : status}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="grid gap-2">
+                          <Label htmlFor="category">Category</Label>
+                          <Select 
+                            value={filters.category} 
+                            onValueChange={(value) => setFilters(prev => ({ ...prev, category: value }))}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">All Categories</SelectItem>
+                              {categories.map((category) => (
+                                <SelectItem key={category} value={category}>
+                                  {category}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
 
-            {/* Active Filters Display */}
-            {hasActiveFilters && (
-              <div className="flex flex-wrap gap-2 mb-4">
-                {filters.type && filters.type !== 'all' && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Type: {filters.type === 'income' ? 'Income' : 'Expense'}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => setFilters(prev => ({ ...prev, type: 'all' }))}
-                    />
-                  </Badge>
-                )}
-                {filters.status && filters.status !== 'all' && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Status: {filters.status === 'completed' ? 'Completed' : 
-                            filters.status === 'pending' ? 'Pending' : 
-                            filters.status === 'overdue' ? 'Overdue' : filters.status}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => setFilters(prev => ({ ...prev, status: 'all' }))}
-                    />
-                  </Badge>
-                )}
-                {filters.category && filters.category !== 'all' && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Category: {filters.category}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => setFilters(prev => ({ ...prev, category: 'all' }))}
-                    />
-                  </Badge>
-                )}
-                {filters.amount && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Amount: {filters.amount}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => setFilters(prev => ({ ...prev, amount: '' }))}
-                    />
-                  </Badge>
-                )}
-              </div>
-            )}
-
-            {/* Results Count */}
-            <div className="mb-4 text-sm text-gray-500">
-              Showing {filteredTransactions.length} of {transactions.length} transactions
-            </div>
-
-            <div className="space-y-4">
-              {filteredTransactions.length > 0 ? (
-                filteredTransactions.map((transaction) => (
-                  <div key={transaction.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
-                    <div className="flex items-start gap-4">
-                      {getTypeIcon(transaction.type)}
-                      <div>
-                        <div className="font-medium">{transaction.description}</div>
-                        <div className="text-sm text-gray-500">
-                          {transaction.category} • {transaction.reference} • {transaction.date}
+                        <div className="grid gap-2">
+                          <Label htmlFor="amount">Amount</Label>
+                          <Input 
+                            type="number"
+                            placeholder="Enter amount"
+                            value={filters.amount}
+                            onChange={(e) => setFilters(prev => ({ ...prev, amount: e.target.value }))}
+                          />
                         </div>
                       </div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
-                      <div className="text-left sm:text-right">
-                        <div className={`font-medium ${transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {formatCurrency(transaction.amount)}
-                        </div>
+                      <div className="flex justify-end gap-2">
+                        <Button variant="outline" onClick={clearFilters}>
+                          Clear All
+                        </Button>
+                        <Button onClick={closeFilterDialog}>
+                          Apply Filters
+                        </Button>
                       </div>
-                      {getStatusBadge(transaction.status)}
-                      <div className="flex gap-2 w-full sm:w-auto">
-                        <Button size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={() => handleViewTransactionClick(transaction)}>View</Button>
-                        <Button size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={() => handleEditTransactionClick(transaction)}>Edit</Button>
-                      </div>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="p-8 text-center text-gray-500">
-                  No transactions found matching your filters.
+                    </DialogContent>
+                  </Dialog>
                 </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
-        {/* Chart of Accounts */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Chart of Accounts</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-3 font-medium">Account Code</th>
-                    <th className="text-left p-3 font-medium">Account Name</th>
-                    <th className="text-left p-3 font-medium">Type</th>
-                    <th className="text-left p-3 font-medium">Balance</th>
-                    <th className="text-left p-3 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {accounts.map((account) => (
-                    <tr key={account.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
-                      <td className="p-3 font-mono">{account.code}</td>
-                      <td className="p-3 font-medium">{account.name}</td>
-                      <td className="p-3">
-                        <Badge variant="outline" className="capitalize">
-                          {account.type}
-                        </Badge>
-                      </td>
-                      <td className="p-3">
-                        <span className={`font-medium ${account.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                          {formatCurrency(account.balance)}
-                        </span>
-                      </td>
-                      <td className="p-3">
-                        <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => handleViewAccountClick(account)}>View</Button>
-                          <Button size="sm" variant="outline" onClick={() => handleEditAccountClick(account)}>Edit</Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Receipt className="h-5 w-5" />
-                Invoicing
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => setIsNewInvoiceDialogOpen(true)}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Create Invoice
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => setIsViewInvoicesDialogOpen(true)}
-              >
-                <Search className="mr-2 h-4 w-4" />
-                View Invoices
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => setIsOverdueInvoicesDialogOpen(true)}
-              >
-                <AlertTriangle className="mr-2 h-4 w-4" />
-                Overdue Invoices
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5" />
-                Payments
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => setIsNewPaymentDialogOpen(true)}
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Record Payment
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => setIsPaymentHistoryDialogOpen(true)}
-              >
-                <Banknote className="mr-2 h-4 w-4" />
-                Payment History
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => setIsPendingPaymentsDialogOpen(true)}
-              >
-                <Clock className="mr-2 h-4 w-4" />
-                Pending Payments
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <PieChart className="h-5 w-5" />
-                Reports
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => setIsProfitLossDialogOpen(true)}
-              >
-                <TrendingUp className="mr-2 h-4 w-4" />
-                Profit & Loss
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => setIsBalanceSheetDialogOpen(true)}
-              >
-                <Building2 className="mr-2 h-4 w-4" />
-                Balance Sheet
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={() => setIsCashFlowDialogOpen(true)}
-              >
-                <DollarSign className="mr-2 h-4 w-4" />
-                Cash Flow
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Edit Transaction Dialog */}
-        <Dialog open={isEditTransactionDialogOpen} onOpenChange={setIsEditTransactionDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Edit Transaction</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="editTransactionType">Transaction Type *</Label>
-                  <Select 
-                    value={editTransaction.type} 
-                    onValueChange={(value) => setEditTransaction(prev => ({ ...prev, type: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="income">Income</SelectItem>
-                      <SelectItem value="expense">Expense</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="editTransactionStatus">Status</Label>
-                  <Select 
-                    value={editTransaction.status} 
-                    onValueChange={(value) => setEditTransaction(prev => ({ ...prev, status: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="completed">Completed</SelectItem>
-                      <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="overdue">Overdue</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="editTransactionDescription">Description *</Label>
-                <Input
-                  id="editTransactionDescription"
-                  placeholder="e.g., Equipment Rental - Highlands Construction"
-                  value={editTransaction.description}
-                  onChange={(e) => setEditTransaction(prev => ({ ...prev, description: e.target.value }))}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="editTransactionAmount">Amount *</Label>
-                  <Input
-                    id="editTransactionAmount"
-                    type="number"
-                    placeholder="e.g., 45000"
-                    value={editTransaction.amount}
-                    onChange={(e) => setEditTransaction(prev => ({ ...prev, amount: e.target.value }))}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="editTransactionCategory">Category *</Label>
-                  <Input
-                    id="editTransactionCategory"
-                    placeholder="e.g., Rental Revenue"
-                    value={editTransaction.category}
-                    onChange={(e) => setEditTransaction(prev => ({ ...prev, category: e.target.value }))}
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="editTransactionReference">Reference *</Label>
-                <Input
-                  id="editTransactionReference"
-                  placeholder="e.g., INV-2024-001"
-                  value={editTransaction.reference}
-                  onChange={(e) => setEditTransaction(prev => ({ ...prev, reference: e.target.value }))}
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setEditTransaction({
-                    type: 'income',
-                    description: '',
-                    amount: '',
-                    category: '',
-                    reference: '',
-                    status: 'completed'
-                  });
-                  setSelectedTransaction(null);
-                  setIsEditTransactionDialogOpen(false);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={editTransactionItem}
-                disabled={!isEditTransactionFormValid}
-              >
-                Save Changes
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* View Transaction Dialog */}
-        <Dialog open={isViewTransactionDialogOpen} onOpenChange={setIsViewTransactionDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Transaction Details</DialogTitle>
-            </DialogHeader>
-            {selectedTransaction ? (
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Transaction Type</Label>
-                    <div className="font-medium">{selectedTransaction.type === 'income' ? 'Income' : 'Expense'}</div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Status</Label>
-                    <div className="font-medium">{getStatusBadge(selectedTransaction.status)}</div>
-                  </div>
-                </div>
-                <div className="grid gap-2">
-                  <Label>Description</Label>
-                  <div className="font-medium">{selectedTransaction.description}</div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Amount</Label>
-                    <div className={`font-medium ${selectedTransaction.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatCurrency(selectedTransaction.amount)}
-                    </div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Category</Label>
-                    <div className="font-medium">{selectedTransaction.category}</div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Reference</Label>
-                    <div className="font-medium">{selectedTransaction.reference}</div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Date</Label>
-                    <div className="font-medium">{selectedTransaction.date}</div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="p-8 text-center text-gray-500">No transaction selected for viewing.</div>
-            )}
-            <div className="flex justify-end">
-              <Button onClick={() => setIsViewTransactionDialogOpen(false)}>Close</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Edit Account Dialog */}
-        <Dialog open={isEditAccountDialogOpen} onOpenChange={setIsEditAccountDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Edit Account</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="editAccountCode">Account Code *</Label>
-                  <Input
-                    id="editAccountCode"
-                    placeholder="e.g., 1000"
-                    value={editAccount.code}
-                    onChange={(e) => setEditAccount(prev => ({ ...prev, code: e.target.value }))}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="editAccountType">Account Type *</Label>
-                  <Select 
-                    value={editAccount.type} 
-                    onValueChange={(value) => setEditAccount(prev => ({ ...prev, type: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="asset">Asset</SelectItem>
-                      <SelectItem value="liability">Liability</SelectItem>
-                      <SelectItem value="income">Income</SelectItem>
-                      <SelectItem value="expense">Expense</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="editAccountName">Account Name *</Label>
-                <Input
-                  id="editAccountName"
-                  placeholder="e.g., Cash & Bank"
-                  value={editAccount.name}
-                  onChange={(e) => setEditAccount(prev => ({ ...prev, name: e.target.value }))}
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="editAccountBalance">Balance *</Label>
-                <Input
-                  id="editAccountBalance"
-                  type="number"
-                  placeholder="e.g., 245000"
-                  value={editAccount.balance}
-                  onChange={(e) => setEditAccount(prev => ({ ...prev, balance: e.target.value }))}
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setEditAccount({
-                    name: '',
-                    type: '',
-                    code: '',
-                    balance: ''
-                  });
-                  setSelectedAccount(null);
-                  setIsEditAccountDialogOpen(false);
-                }}
-              >
-                Cancel
-              </Button>
-              <Button 
-                onClick={editAccountItem}
-                disabled={!isEditAccountFormValid}
-              >
-                Save Changes
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* View Account Dialog */}
-        <Dialog open={isViewAccountDialogOpen} onOpenChange={setIsViewAccountDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Account Details</DialogTitle>
-            </DialogHeader>
-            {selectedAccount ? (
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Account Code</Label>
-                    <div className="font-medium">{selectedAccount.code}</div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Account Name</Label>
-                    <div className="font-medium">{selectedAccount.name}</div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Account Type</Label>
-                    <div className="font-medium">
-                      <Badge variant="outline" className="capitalize">
-                        {selectedAccount.type}
+                {/* Active Filters Display */}
+                {hasActiveFilters && (
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {filters.type && filters.type !== 'all' && (
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        Type: {filters.type === 'income' ? 'Income' : 'Expense'}
+                        <X 
+                          className="h-3 w-3 cursor-pointer" 
+                          onClick={() => setFilters(prev => ({ ...prev, type: 'all' }))}
+                        />
                       </Badge>
-                    </div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Balance</Label>
-                    <div className={`font-medium ${selectedAccount.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                      {formatCurrency(selectedAccount.balance)}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="p-8 text-center text-gray-500">No account selected for viewing.</div>
-            )}
-            <div className="flex justify-end">
-              <Button onClick={() => setIsViewAccountDialogOpen(false)}>Close</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* New Payment Dialog */}
-        <Dialog open={isNewPaymentDialogOpen} onOpenChange={setIsNewPaymentDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Record New Payment</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="paymentInvoiceNumber">Invoice Number *</Label>
-                  <Input
-                    id="paymentInvoiceNumber"
-                    placeholder="e.g., INV-2024-001"
-                    value={newPayment.invoiceNumber}
-                    onChange={(e) => setNewPayment(prev => ({ ...prev, invoiceNumber: e.target.value }))}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="paymentDate">Payment Date *</Label>
-                  <Input
-                    id="paymentDate"
-                    type="date"
-                    value={newPayment.date}
-                    onChange={(e) => setNewPayment(prev => ({ ...prev, date: e.target.value }))}
-                  />
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="paymentClientName">Client Name *</Label>
-                <Input
-                  id="paymentClientName"
-                  placeholder="e.g., Highlands Construction"
-                  value={newPayment.clientName}
-                  onChange={(e) => setNewPayment(prev => ({ ...prev, clientName: e.target.value }))}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="paymentAmount">Amount *</Label>
-                  <Input
-                    id="paymentAmount"
-                    type="number"
-                    placeholder="e.g., 45000"
-                    value={newPayment.amount}
-                    onChange={(e) => setNewPayment(prev => ({ ...prev, amount: e.target.value }))}
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="paymentMethod">Payment Method</Label>
-                  <Select 
-                    value={newPayment.method} 
-                    onValueChange={(value) => setNewPayment(prev => ({ ...prev, method: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select method" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
-                      <SelectItem value="Cash">Cash</SelectItem>
-                      <SelectItem value="Check">Check</SelectItem>
-                      <SelectItem value="Credit Card">Credit Card</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="paymentReference">Reference *</Label>
-                <Input
-                  id="paymentReference"
-                  placeholder="e.g., BT-2024-001"
-                  value={newPayment.reference}
-                  onChange={(e) => setNewPayment(prev => ({ ...prev, reference: e.target.value }))}
-                />
-              </div>
-            </div>
-            <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsNewPaymentDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={addNewPayment} disabled={!isNewPaymentFormValid}>
-                Record Payment
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* View Invoices Dialog */}
-        <Dialog open={isViewInvoicesDialogOpen} onOpenChange={setIsViewInvoicesDialogOpen}>
-          <DialogContent className="sm:max-w-[800px]">
-            <DialogHeader>
-              <DialogTitle>All Invoices</DialogTitle>
-            </DialogHeader>
-            <div className="max-h-96 overflow-y-auto">
-              <div className="space-y-4">
-                {invoices.map((invoice) => (
-                  <div key={invoice.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <div className="font-medium">{invoice.invoiceNumber}</div>
-                      <div className="text-sm text-gray-500">{invoice.clientName}</div>
-                      <div className="text-sm text-gray-500">{invoice.description}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-medium">{formatCurrency(invoice.amount)}</div>
-                      <div className="text-sm text-gray-500">Due: {invoice.dueDate}</div>
-                      <Badge variant={invoice.status === 'paid' ? 'default' : invoice.status === 'overdue' ? 'destructive' : 'outline'}>
-                        {invoice.status}
+                    )}
+                    {filters.status && filters.status !== 'all' && (
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        Status: {filters.status === 'completed' ? 'Completed' : 
+                                filters.status === 'pending' ? 'Pending' : 
+                                filters.status === 'overdue' ? 'Overdue' : filters.status}
+                        <X 
+                          className="h-3 w-3 cursor-pointer" 
+                          onClick={() => setFilters(prev => ({ ...prev, status: 'all' }))}
+                        />
                       </Badge>
-                    </div>
+                    )}
+                    {filters.category && filters.category !== 'all' && (
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        Category: {filters.category}
+                        <X 
+                          className="h-3 w-3 cursor-pointer" 
+                          onClick={() => setFilters(prev => ({ ...prev, category: 'all' }))}
+                        />
+                      </Badge>
+                    )}
+                    {filters.amount && (
+                      <Badge variant="secondary" className="flex items-center gap-1">
+                        Amount: {filters.amount}
+                        <X 
+                          className="h-3 w-3 cursor-pointer" 
+                          onClick={() => setFilters(prev => ({ ...prev, amount: '' }))}
+                        />
+                      </Badge>
+                    )}
                   </div>
-                ))}
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <Button onClick={() => setIsViewInvoicesDialogOpen(false)}>Close</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+                )}
 
-        {/* Overdue Invoices Dialog */}
-        <Dialog open={isOverdueInvoicesDialogOpen} onOpenChange={setIsOverdueInvoicesDialogOpen}>
-          <DialogContent className="sm:max-w-[800px]">
-            <DialogHeader>
-              <DialogTitle>Overdue Invoices</DialogTitle>
-            </DialogHeader>
-            <div className="max-h-96 overflow-y-auto">
-              <div className="space-y-4">
-                {invoices.filter(invoice => invoice.status === 'overdue').map((invoice) => (
-                  <div key={invoice.id} className="flex items-center justify-between p-4 border border-red-200 rounded-lg bg-red-50">
-                    <div>
-                      <div className="font-medium">{invoice.invoiceNumber}</div>
-                      <div className="text-sm text-gray-500">{invoice.clientName}</div>
-                      <div className="text-sm text-gray-500">{invoice.description}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-medium">{formatCurrency(invoice.amount)}</div>
-                      <div className="text-sm text-red-600">Overdue since: {invoice.dueDate}</div>
-                      <Badge variant="destructive">Overdue</Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <Button onClick={() => setIsOverdueInvoicesDialogOpen(false)}>Close</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Payment History Dialog */}
-        <Dialog open={isPaymentHistoryDialogOpen} onOpenChange={setIsPaymentHistoryDialogOpen}>
-          <DialogContent className="sm:max-w-[800px]">
-            <DialogHeader>
-              <DialogTitle>Payment History</DialogTitle>
-            </DialogHeader>
-            <div className="max-h-96 overflow-y-auto">
-              <div className="space-y-4">
-                {payments.map((payment) => (
-                  <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg">
-                    <div>
-                      <div className="font-medium">{payment.paymentNumber}</div>
-                      <div className="text-sm text-gray-500">{payment.clientName}</div>
-                      <div className="text-sm text-gray-500">Invoice: {payment.invoiceNumber}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-medium">{formatCurrency(payment.amount)}</div>
-                      <div className="text-sm text-gray-500">{payment.date}</div>
-                      <div className="text-sm text-gray-500">{payment.method}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <Button onClick={() => setIsPaymentHistoryDialogOpen(false)}>Close</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Pending Payments Dialog */}
-        <Dialog open={isPendingPaymentsDialogOpen} onOpenChange={setIsPendingPaymentsDialogOpen}>
-          <DialogContent className="sm:max-w-[800px]">
-            <DialogHeader>
-              <DialogTitle>Pending Payments</DialogTitle>
-            </DialogHeader>
-            <div className="max-h-96 overflow-y-auto">
-              <div className="space-y-4">
-                {invoices.filter(invoice => invoice.status === 'pending').map((invoice) => (
-                  <div key={invoice.id} className="flex items-center justify-between p-4 border border-yellow-200 rounded-lg bg-yellow-50">
-                    <div>
-                      <div className="font-medium">{invoice.invoiceNumber}</div>
-                      <div className="text-sm text-gray-500">{invoice.clientName}</div>
-                      <div className="text-sm text-gray-500">{invoice.description}</div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-medium">{formatCurrency(invoice.amount)}</div>
-                      <div className="text-sm text-yellow-600">Due: {invoice.dueDate}</div>
-                      <Badge variant="outline">Pending</Badge>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <Button onClick={() => setIsPendingPaymentsDialogOpen(false)}>Close</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Profit & Loss Dialog */}
-        <Dialog open={isProfitLossDialogOpen} onOpenChange={setIsProfitLossDialogOpen}>
-          <DialogContent className="sm:max-w-[800px]">
-            <DialogHeader>
-              <DialogTitle>Profit & Loss Statement</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="p-4 border rounded-lg">
-                  <h3 className="font-medium text-green-600">Revenue</h3>
-                  <div className="text-2xl font-bold">{formatCurrency(financialStats.revenue.monthly)}</div>
-                  <div className="text-sm text-gray-500">Monthly Revenue</div>
+                {/* Results Count */}
+                <div className="mb-4 text-sm text-gray-500">
+                  Showing {filteredTransactions.length} of {transactions.length} transactions
                 </div>
-                <div className="p-4 border rounded-lg">
-                  <h3 className="font-medium text-red-600">Expenses</h3>
-                  <div className="text-2xl font-bold">{formatCurrency(financialStats.expenses.monthly)}</div>
-                  <div className="text-sm text-gray-500">Monthly Expenses</div>
-                </div>
-              </div>
-              <div className="p-4 border rounded-lg bg-green-50">
-                <h3 className="font-medium text-green-600">Net Profit</h3>
-                <div className="text-3xl font-bold text-green-600">{formatCurrency(financialStats.profit.monthly)}</div>
-                <div className="text-sm text-gray-500">Monthly Net Profit</div>
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <Button onClick={() => setIsProfitLossDialogOpen(false)}>Close</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
 
-        {/* Balance Sheet Dialog */}
-        <Dialog open={isBalanceSheetDialogOpen} onOpenChange={setIsBalanceSheetDialogOpen}>
-          <DialogContent className="sm:max-w-[800px]">
-            <DialogHeader>
-              <DialogTitle>Balance Sheet</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-6">
-              <div>
-                <h3 className="font-medium mb-3">Assets</h3>
-                <div className="space-y-2">
-                  {accounts.filter(account => account.type === 'asset').map((account) => (
-                    <div key={account.id} className="flex justify-between p-2 border rounded">
-                      <span>{account.name}</span>
-                      <span className="font-medium">{formatCurrency(account.balance)}</span>
+                <div className="space-y-4">
+                  {filteredTransactions.length > 0 ? (
+                    filteredTransactions.map((transaction) => (
+                      <div key={transaction.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
+                        <div className="flex items-start gap-4">
+                          {getTypeIcon(transaction.type)}
+                          <div>
+                            <div className="font-medium">{transaction.description}</div>
+                            <div className="text-sm text-gray-500">
+                              {transaction.category} • {transaction.reference} • {transaction.date}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                          <div className="text-left sm:text-right">
+                            <div className={`font-medium ${transaction.amount > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {formatCurrency(transaction.amount)}
+                            </div>
+                          </div>
+                          {getStatusBadge(transaction.status)}
+                          <div className="flex gap-2 w-full sm:w-auto">
+                            <Button size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={() => handleViewTransactionClick(transaction)}>View</Button>
+                            <Button size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={() => handleEditTransactionClick(transaction)}>Edit</Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="p-8 text-center text-gray-500">
+                      No transactions found matching your filters.
                     </div>
-                  ))}
+                  )}
                 </div>
-              </div>
-              <div>
-                <h3 className="font-medium mb-3">Liabilities</h3>
-                <div className="space-y-2">
-                  {accounts.filter(account => account.type === 'liability').map((account) => (
-                    <div key={account.id} className="flex justify-between p-2 border rounded">
-                      <span>{account.name}</span>
-                      <span className="font-medium">{formatCurrency(account.balance)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <div className="flex justify-end">
-              <Button onClick={() => setIsBalanceSheetDialogOpen(false)}>Close</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+              </CardContent>
+            </Card>
 
-        {/* Cash Flow Dialog */}
-        <Dialog open={isCashFlowDialogOpen} onOpenChange={setIsCashFlowDialogOpen}>
-          <DialogContent className="sm:max-w-[800px]">
-            <DialogHeader>
-              <DialogTitle>Cash Flow Statement</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-6">
-              <div className="p-4 border rounded-lg bg-green-50">
-                <h3 className="font-medium text-green-600">Cash Inflows</h3>
-                <div className="text-2xl font-bold text-green-600">{formatCurrency(financialStats.revenue.monthly)}</div>
-                <div className="text-sm text-gray-500">From Operations</div>
-              </div>
-              <div className="p-4 border rounded-lg bg-red-50">
-                <h3 className="font-medium text-red-600">Cash Outflows</h3>
-                <div className="text-2xl font-bold text-red-600">{formatCurrency(financialStats.expenses.monthly)}</div>
-                <div className="text-sm text-gray-500">Operating Expenses</div>
-              </div>
-              <div className="p-4 border rounded-lg bg-blue-50">
-                <h3 className="font-medium text-blue-600">Net Cash Flow</h3>
-                <div className="text-2xl font-bold text-blue-600">{formatCurrency(financialStats.profit.monthly)}</div>
-                <div className="text-sm text-gray-500">Monthly Net Cash Flow</div>
-              </div>
+            {/* Chart of Accounts */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Chart of Accounts</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left p-3 font-medium">Account Code</th>
+                        <th className="text-left p-3 font-medium">Account Name</th>
+                        <th className="text-left p-3 font-medium">Type</th>
+                        <th className="text-left p-3 font-medium">Balance</th>
+                        <th className="text-left p-3 font-medium">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {accounts.map((account) => (
+                        <tr key={account.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
+                          <td className="p-3 font-mono">{account.code}</td>
+                          <td className="p-3 font-medium">{account.name}</td>
+                          <td className="p-3">
+                            <Badge variant="outline" className="capitalize">
+                              {account.type}
+                            </Badge>
+                          </td>
+                          <td className="p-3">
+                            <span className={`font-medium ${account.balance >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                              {formatCurrency(account.balance)}
+                            </span>
+                          </td>
+                          <td className="p-3">
+                            <div className="flex gap-2">
+                              <Button size="sm" variant="outline" onClick={() => handleViewAccountClick(account)}>View</Button>
+                              <Button size="sm" variant="outline" onClick={() => handleEditAccountClick(account)}>Edit</Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Receipt className="h-5 w-5" />
+                    Invoicing
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => setIsNewInvoiceDialogOpen(true)}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Create Invoice
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => setIsViewInvoicesDialogOpen(true)}
+                  >
+                    <Search className="mr-2 h-4 w-4" />
+                    View Invoices
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => setIsOverdueInvoicesDialogOpen(true)}
+                  >
+                    <AlertTriangle className="mr-2 h-4 w-4" />
+                    Overdue Invoices
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    Payments
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => setIsNewPaymentDialogOpen(true)}
+                  >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Record Payment
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => setIsPaymentHistoryDialogOpen(true)}
+                  >
+                    <Banknote className="mr-2 h-4 w-4" />
+                    Payment History
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => setIsPendingPaymentsDialogOpen(true)}
+                  >
+                    <Clock className="mr-2 h-4 w-4" />
+                    Pending Payments
+                  </Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <PieChart className="h-5 w-5" />
+                    Reports
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => setIsProfitLossDialogOpen(true)}
+                  >
+                    <TrendingUp className="mr-2 h-4 w-4" />
+                    Profit & Loss
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => setIsBalanceSheetDialogOpen(true)}
+                  >
+                    <Building2 className="mr-2 h-4 w-4" />
+                    Balance Sheet
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full justify-start"
+                    onClick={() => setIsCashFlowDialogOpen(true)}
+                  >
+                    <DollarSign className="mr-2 h-4 w-4" />
+                    Cash Flow
+                  </Button>
+                </CardContent>
+              </Card>
             </div>
-            <div className="flex justify-end">
-              <Button onClick={() => setIsCashFlowDialogOpen(false)}>Close</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+          </TabsContent>
+
+          {/* Enhanced Finance Tab */}
+          <TabsContent value="enhanced" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-blue-600" />
+                  Enhanced Finance - Predictive Analytics
+                </CardTitle>
+                <p className="text-sm text-gray-600">
+                  Advanced features for multi-currency support, predictive analytics, automated journaling, and risk assessment
+                </p>
+              </CardHeader>
+              <CardContent>
+                <EnhancedFinanceDashboard />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
     </DashboardLayout>
   );

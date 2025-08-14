@@ -50,6 +50,7 @@ model User {
     financialTransactions FinancialTransaction[]
     employeeRecords   Employee[]
     customerContacts  CustomerContact[]
+    assetTransactions AssetTransaction[]
 }
 
 model Role {
@@ -113,6 +114,7 @@ model Category {
     // Relations
     products          Product[]
     equipment         Equipment[]
+    assets            Asset[]
 }
 
 model Product {
@@ -201,6 +203,14 @@ model InventoryTransaction {
     referenceId       String?
     notes             String?
     
+    // Asset Integration
+    assetId           String?
+    asset             Asset?   @relation(fields: [assetId], references: [id])
+    
+    // Maintenance Integration
+    maintenanceRecordId String?
+    maintenanceRecord MaintenanceRecord? @relation(fields: [maintenanceRecordId], references: [id])
+    
     createdAt         DateTime @default(now())
 }
 
@@ -261,6 +271,16 @@ model PurchaseOrderItem {
     totalPrice        Int
     receivedQuantity  Int      @default(0)
     
+    // Asset Management Integration
+    isAsset           Boolean  @default(false)
+    assetId           String?
+    asset             Asset?   @relation(fields: [assetId], references: [id])
+    
+    // Maintenance Integration
+    isMaintenancePart Boolean  @default(false)
+    equipmentId       String?
+    equipment         Equipment? @relation(fields: [equipmentId], references: [id])
+    
     createdAt         DateTime @default(now())
 }
 
@@ -279,6 +299,7 @@ model Supplier {
     
     // Relations
     purchaseOrders    PurchaseOrder[]
+    performance       SupplierPerformance?
 }
 
 // ========================================
@@ -321,6 +342,9 @@ model Equipment {
     // Relations
     maintenanceRecords MaintenanceRecord[]
     rentalOrderItems  RentalOrderItem[]
+    asset             Asset?
+    maintenanceSchedule MaintenanceSchedule?
+    purchaseOrderItems PurchaseOrderItem[]
 }
 
 enum EquipmentStatus {
@@ -346,8 +370,15 @@ model MaintenanceRecord {
     endDate           DateTime?
     status            MaintenanceStatus @default(SCHEDULED)
     
-    // Parts used
+    // Parts used - Enhanced
     partsUsed         Json?    // Array of parts with quantities
+    
+    // Asset Integration
+    assetId           String?
+    asset             Asset?   @relation(fields: [assetId], references: [id])
+    
+    // Inventory Integration
+    inventoryTransactions InventoryTransaction[]
     
     createdAt         DateTime @default(now())
     updatedAt         DateTime @updatedAt
@@ -867,4 +898,238 @@ model Post {
     
     createdBy         String
     creator           User     @relation(fields: [createdBy], references: [id])
+}
+
+// ========================================
+// ENHANCED INTEGRATION MODELS
+// ========================================
+
+// Asset Management Integration
+model Asset {
+    id                String   @id @default(uuid())
+    assetNumber       String   @unique
+    name              String
+    description       String?
+    
+    // Asset Classification
+    assetType         AssetType
+    categoryId        String
+    category          Category @relation(fields: [categoryId], references: [id])
+    
+    // Financial Information
+    purchaseCost      Int      // Cost in cents
+    currentValue      Int      // Current book value
+    depreciationRate  Float    @default(0.0)
+    accumulatedDepreciation Int @default(0)
+    salvageValue      Int      @default(0) // Salvage value in cents
+    usefulLife        Int      // Useful life in years
+    
+    // Depreciation Methods
+    depreciationMethod DepreciationMethod @default(STRAIGHT_LINE)
+    depreciationStartDate DateTime?
+    lastDepreciationDate DateTime?
+    nextDepreciationDate DateTime?
+    
+    // Location and Assignment
+    location          String?
+    assignedTo        String?
+    department        String?
+    costCenter        String?
+    
+    // Status and Lifecycle
+    status            AssetStatus @default(ACTIVE)
+    lifecycleStage    AssetLifecycleStage @default(ACQUISITION)
+    acquisitionDate   DateTime
+    disposalDate      DateTime?
+    replacementDate   DateTime?
+    
+    // Performance Metrics
+    uptime            Float    @default(0.0) // Percentage
+    efficiency        Float    @default(0.0) // Percentage
+    utilization       Float    @default(0.0) // Percentage
+    totalOperatingHours Int    @default(0)
+    
+    // Integration with Equipment
+    equipmentId       String?  @unique
+    equipment         Equipment? @relation(fields: [equipmentId], references: [id])
+    
+    // Audit fields
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?
+    updatedBy         String?
+    
+    // Relations
+    assetTransactions AssetTransaction[]
+    maintenanceRecords MaintenanceRecord[]
+    purchaseOrderItems PurchaseOrderItem[]
+    inventoryTransactions InventoryTransaction[]
+    depreciationSchedules DepreciationSchedule[]
+}
+
+enum AssetType {
+    EQUIPMENT
+    VEHICLE
+    BUILDING
+    LAND
+    INTANGIBLE
+    SOFTWARE
+    FURNITURE
+    MACHINERY
+    TOOLS
+    OTHER
+}
+
+enum AssetStatus {
+    ACTIVE
+    INACTIVE
+    DISPOSED
+    UNDER_MAINTENANCE
+    RETIRED
+    TRANSFERRED
+    LOST
+    DAMAGED
+}
+
+enum DepreciationMethod {
+    STRAIGHT_LINE
+    DECLINING_BALANCE
+    UNITS_OF_PRODUCTION
+    SUM_OF_YEARS_DIGITS
+    DOUBLE_DECLINING_BALANCE
+}
+
+enum AssetLifecycleStage {
+    ACQUISITION
+    COMMISSIONING
+    OPERATION
+    MAINTENANCE
+    UPGRADE
+    DECOMMISSIONING
+    DISPOSAL
+    REPLACEMENT
+}
+
+model AssetTransaction {
+    id                String   @id @default(uuid())
+    assetId           String
+    asset             Asset    @relation(fields: [assetId], references: [id])
+    userId            String
+    user              User     @relation(fields: [userId], references: [id])
+    
+    transactionType   AssetTransactionType
+    amount            Int      // Amount in cents
+    description       String
+    
+    // Reference to related entity
+    referenceType     String?  // PurchaseOrder, MaintenanceRecord, etc.
+    referenceId       String?
+    
+    transactionDate   DateTime
+    createdAt         DateTime @default(now())
+}
+
+enum AssetTransactionType {
+    ACQUISITION
+    DEPRECIATION
+    MAINTENANCE
+    DISPOSAL
+    TRANSFER
+    REVALUATION
+    IMPAIRMENT
+    UPGRADE
+    REPAIR
+}
+
+// Asset Depreciation Schedule
+model DepreciationSchedule {
+    id                String   @id @default(uuid())
+    assetId           String
+    asset             Asset    @relation(fields: [assetId], references: [id])
+    
+    // Depreciation Period
+    periodStart       DateTime
+    periodEnd         DateTime
+    depreciationAmount Int     // Amount in cents
+    
+    // Calculation Details
+    bookValueStart    Int      // Book value at start of period
+    bookValueEnd      Int      // Book value at end of period
+    accumulatedDepreciation Int // Total accumulated depreciation
+    
+    // Status
+    isPosted          Boolean  @default(false)
+    postedDate        DateTime?
+    postedBy          String?
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+
+
+// Supplier Performance Tracking
+model SupplierPerformance {
+    id                String   @id @default(uuid())
+    supplierId        String   @unique
+    supplier          Supplier @relation(fields: [supplierId], references: [id])
+    
+    // Performance Metrics
+    onTimeDelivery    Float    @default(0.0) // Percentage
+    qualityRating     Float    @default(0.0) // 1-5 scale
+    costCompetitiveness Float  @default(0.0) // Percentage
+    responseTime      Int      @default(0) // Hours
+    
+    // Financial Metrics
+    totalSpend        Int      @default(0) // Total spend in cents
+    paymentTerms      String?
+    creditRating      String?
+    
+    // Contract Information
+    contractStartDate DateTime?
+    contractEndDate   DateTime?
+    contractValue     Int?     // Contract value in cents
+    
+    // Audit
+    lastEvaluated     DateTime @default(now())
+    evaluatedBy       String?
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+// Equipment Maintenance Schedule
+model MaintenanceSchedule {
+    id                String   @id @default(uuid())
+    equipmentId       String   @unique
+    equipment         Equipment @relation(fields: [equipmentId], references: [id])
+    
+    maintenanceType   MaintenanceType
+    frequency         MaintenanceFrequency
+    interval          Int      // Days, hours, or cycles
+    lastMaintenance   DateTime?
+    nextMaintenance   DateTime
+    
+    // Parts Requirements
+    requiredParts     Json?    // Array of required parts
+    
+    // Cost Estimation
+    estimatedCost     Int?     // Estimated cost in cents
+    
+    // Status
+    isActive          Boolean  @default(true)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+enum MaintenanceFrequency {
+    DAILY
+    WEEKLY
+    MONTHLY
+    QUARTERLY
+    SEMI_ANNUALLY
+    ANNUALLY
+    HOURS_BASED
+    CYCLE_BASED
 }

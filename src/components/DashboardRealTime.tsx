@@ -126,13 +126,13 @@ export const DashboardRealTime: React.FC = () => {
             <CardTitle className="text-sm font-medium">System Status</CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant="secondary">
-                Development
+                v1.1
               </Badge>
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-sm text-muted-foreground">
-              Running in development mode with mock data
+              NextGen ERP v1.1 - Enhanced Rental & Maintenance
             </div>
           </CardContent>
         </Card>
