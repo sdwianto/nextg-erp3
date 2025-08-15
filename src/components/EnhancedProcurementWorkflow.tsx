@@ -90,6 +90,10 @@ interface GoodsReceiptItem {
 }
 
 export default function EnhancedProcurementWorkflow() {
+  const [selectedRequest, setSelectedRequest] = useState<PurchaseRequest | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
+  const [selectedReceipt, setSelectedReceipt] = useState<GoodsReceipt | null>(null);
+  const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
 
   // Mock data
   const purchaseRequests: PurchaseRequest[] = [
@@ -246,7 +250,7 @@ export default function EnhancedProcurementWorkflow() {
           <h1 className="text-3xl font-bold">🛒 Enhanced Procurement Workflow</h1>
           <p className="text-muted-foreground">Automated purchase requests, supplier performance tracking, and GPS-enabled goods receipt</p>
         </div>
-        <Button>
+        <Button onClick={() => alert('Creating new purchase request...')}>
           <Plus className="h-4 w-4 mr-2" />
           New Purchase Request
         </Button>
@@ -302,15 +306,27 @@ export default function EnhancedProcurementWorkflow() {
                     </div>
 
                     <div className="flex space-x-2">
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                      <Button 
+                        size="sm" 
+                        className="bg-green-600 hover:bg-green-700"
+                        onClick={() => alert(`Generating PO for ${request.prNumber}...`)}
+                      >
                         <ShoppingCart className="h-3 w-3 mr-1" />
                         Generate PO
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => setSelectedRequest(request)}
+                      >
                         <Eye className="h-3 w-3 mr-1" />
                         View Details
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => alert(`Modifying ${request.prNumber}...`)}
+                      >
                         <Settings className="h-3 w-3 mr-1" />
                         Modify
                       </Button>
@@ -379,11 +395,19 @@ export default function EnhancedProcurementWorkflow() {
                     </div>
 
                     <div className="flex space-x-2">
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => alert(`Tracking delivery for ${order.poNumber}...`)}
+                      >
                         <Truck className="h-3 w-3 mr-1" />
                         Track Delivery
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => setSelectedOrder(order)}
+                      >
                         <Eye className="h-3 w-3 mr-1" />
                         View Details
                       </Button>
@@ -465,15 +489,27 @@ export default function EnhancedProcurementWorkflow() {
                     </div>
 
                     <div className="flex space-x-2">
-                      <Button size="sm" className="bg-green-600 hover:bg-green-700">
+                      <Button 
+                        size="sm" 
+                        className="bg-green-600 hover:bg-green-700"
+                        onClick={() => alert(`Accepting all items in ${receipt.grNumber}...`)}
+                      >
                         <CheckCircle className="h-3 w-3 mr-1" />
                         Accept All
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => alert(`Opening map for GPS coordinates: ${receipt.gpsCoordinates?.latitude}, ${receipt.gpsCoordinates?.longitude}`)}
+                      >
                         <MapPin className="h-3 w-3 mr-1" />
                         View Map
                       </Button>
-                      <Button size="sm" variant="outline">
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => setSelectedReceipt(receipt)}
+                      >
                         <Eye className="h-3 w-3 mr-1" />
                         Details
                       </Button>
@@ -523,11 +559,21 @@ export default function EnhancedProcurementWorkflow() {
                     </div>
 
                     <div className="flex space-x-2">
-                      <Button size="sm" variant="outline" className="flex-1">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => setSelectedSupplier(supplier)}
+                      >
                         <Eye className="h-3 w-3 mr-1" />
                         Details
                       </Button>
-                      <Button size="sm" variant="outline" className="flex-1">
+                      <Button 
+                        size="sm" 
+                        variant="outline" 
+                        className="flex-1"
+                        onClick={() => alert(`Viewing history for ${supplier.name}...`)}
+                      >
                         <TrendingUp className="h-3 w-3 mr-1" />
                         History
                       </Button>

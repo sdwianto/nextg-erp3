@@ -185,15 +185,26 @@ const DataManagementPage: React.FC = () => {
             <p className="text-gray-600 dark:text-gray-400">Manage, backup, and maintain system data</p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-            <Button variant="outline" className="w-full sm:w-auto">
+            <Button 
+              variant="outline" 
+              className="w-full sm:w-auto"
+              onClick={() => alert('Opening data import...')}
+            >
               <Upload className="h-4 w-4 mr-2" />
               Import
             </Button>
-            <Button variant="outline" className="w-full sm:w-auto">
+            <Button 
+              variant="outline" 
+              className="w-full sm:w-auto"
+              onClick={() => alert('Exporting data...')}
+            >
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
-            <Button className="w-full sm:w-auto">
+            <Button 
+              className="w-full sm:w-auto"
+              onClick={() => alert('Syncing data now...')}
+            >
               <RefreshCw className="h-4 w-4 mr-2" />
               Sync Now
             </Button>
@@ -300,13 +311,25 @@ const DataManagementPage: React.FC = () => {
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => alert(`Viewing ${category.name} data...`)}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => alert(`Editing ${category.name} data...`)}
+                          >
                             <Edit className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => alert(`Archiving ${category.name} data...`)}
+                          >
                             <Archive className="h-4 w-4" />
                           </Button>
                         </div>
@@ -436,19 +459,35 @@ const DataManagementPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Button variant="outline" className="h-20 flex-col gap-2">
+              <Button 
+                variant="outline" 
+                className="h-20 flex-col gap-2"
+                onClick={() => alert('Exporting all data...')}
+              >
                 <Download className="h-6 w-6" />
                 <span>Export Data</span>
               </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2">
+              <Button 
+                variant="outline" 
+                className="h-20 flex-col gap-2"
+                onClick={() => alert('Importing data...')}
+              >
                 <Upload className="h-6 w-6" />
                 <span>Import Data</span>
               </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2">
+              <Button 
+                variant="outline" 
+                className="h-20 flex-col gap-2"
+                onClick={() => alert('Creating backup...')}
+              >
                 <Archive className="h-6 w-6" />
                 <span>Create Backup</span>
               </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2">
+              <Button 
+                variant="outline" 
+                className="h-20 flex-col gap-2"
+                onClick={() => alert('Syncing all data...')}
+              >
                 <RefreshCw className="h-6 w-6" />
                 <span>Sync Data</span>
               </Button>

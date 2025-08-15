@@ -232,11 +232,18 @@ const OfflineSyncPage: React.FC = () => {
             <p className="text-gray-600 dark:text-gray-400">Manage offline synchronization across all devices</p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-            <Button variant="outline" className="w-full sm:w-auto">
+            <Button 
+              variant="outline" 
+              className="w-full sm:w-auto"
+              onClick={() => alert('Opening sync settings...')}
+            >
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </Button>
-            <Button className="w-full sm:w-auto">
+            <Button 
+              className="w-full sm:w-auto"
+              onClick={() => alert('Forcing sync for all devices...')}
+            >
               <RefreshCw className="h-4 w-4 mr-2" />
               Force Sync
             </Button>
@@ -359,13 +366,25 @@ const OfflineSyncPage: React.FC = () => {
                       </td>
                       <td className="py-3 px-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => alert(`Viewing ${device.name} details...`)}
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => alert(`Syncing ${device.name}...`)}
+                          >
                             <RefreshCw className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm">
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => alert(`Configuring ${device.name}...`)}
+                          >
                             <Settings className="h-4 w-4" />
                           </Button>
                         </div>
@@ -468,7 +487,11 @@ const OfflineSyncPage: React.FC = () => {
                   Automatically sync data every 30 minutes when devices are online.
                 </p>
                 <div className="mt-3">
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => alert('Enabling auto sync...')}
+                  >
                     <Play className="h-4 w-4 mr-2" />
                     Enable
                   </Button>
@@ -483,7 +506,11 @@ const OfflineSyncPage: React.FC = () => {
                   Automatic conflict resolution with manual review for complex cases.
                 </p>
                 <div className="mt-3">
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => alert('Configuring conflict resolution...')}
+                  >
                     <Settings className="h-4 w-4 mr-2" />
                     Configure
                   </Button>
@@ -498,7 +525,11 @@ const OfflineSyncPage: React.FC = () => {
                   Keep offline data for 30 days before automatic cleanup.
                 </p>
                 <div className="mt-3">
-                  <Button variant="outline" size="sm">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={() => alert('Configuring data retention...')}
+                  >
                     <Settings className="h-4 w-4 mr-2" />
                     Configure
                   </Button>
@@ -515,19 +546,35 @@ const OfflineSyncPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <Button variant="outline" className="h-20 flex-col gap-2">
+              <Button 
+                variant="outline" 
+                className="h-20 flex-col gap-2"
+                onClick={() => alert('Syncing all devices...')}
+              >
                 <RefreshCw className="h-6 w-6" />
                 <span>Sync All Devices</span>
               </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2">
+              <Button 
+                variant="outline" 
+                className="h-20 flex-col gap-2"
+                onClick={() => alert('Downloading data...')}
+              >
                 <Download className="h-6 w-6" />
                 <span>Download Data</span>
               </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2">
+              <Button 
+                variant="outline" 
+                className="h-20 flex-col gap-2"
+                onClick={() => alert('Uploading data...')}
+              >
                 <Upload className="h-6 w-6" />
                 <span>Upload Data</span>
               </Button>
-              <Button variant="outline" className="h-20 flex-col gap-2">
+              <Button 
+                variant="outline" 
+                className="h-20 flex-col gap-2"
+                onClick={() => alert('Viewing sync logs...')}
+              >
                 <FileText className="h-6 w-6" />
                 <span>View Logs</span>
               </Button>

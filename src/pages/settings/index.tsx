@@ -174,11 +174,18 @@ const SettingsPage: React.FC = () => {
             <p className="text-gray-600 dark:text-gray-400">Manage system configuration, users, and security settings</p>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <Button variant="outline" className="w-full sm:w-auto flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              className="w-full sm:w-auto flex items-center gap-2"
+              onClick={() => alert('Exporting system configuration...')}
+            >
               <Download className="h-4 w-4" />
               Export Config
             </Button>
-            <Button className="w-full sm:w-auto flex items-center gap-2">
+            <Button 
+              className="w-full sm:w-auto flex items-center gap-2"
+              onClick={() => alert('Saving system changes...')}
+            >
               <Save className="h-4 w-4" />
               Save Changes
             </Button>
@@ -256,11 +263,18 @@ const SettingsPage: React.FC = () => {
                   />
                 </div>
               </div>
-              <Button variant="outline" className="flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                className="flex items-center gap-2"
+                onClick={() => alert('Opening role management...')}
+              >
                 <Shield className="h-4 w-4" />
                 Roles
               </Button>
-              <Button className="flex items-center gap-2">
+              <Button 
+                className="flex items-center gap-2"
+                onClick={() => alert('Adding new user...')}
+              >
                 <Users className="h-4 w-4" />
                 Add User
               </Button>
@@ -307,8 +321,20 @@ const SettingsPage: React.FC = () => {
                       </td>
                       <td className="p-3">
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline">Edit</Button>
-                          <Button size="sm" variant="outline">Reset Password</Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => alert(`Editing user: ${user.name}`)}
+                          >
+                            Edit
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline"
+                            onClick={() => alert(`Resetting password for: ${user.name}`)}
+                          >
+                            Reset Password
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -341,7 +367,14 @@ const SettingsPage: React.FC = () => {
                             <div className="font-medium">{setting.name}</div>
                             <div className="text-sm text-gray-500">Current: {setting.value}</div>
                           </div>
-                          <Button size="sm" variant="outline" className="w-full sm:w-auto">Edit</Button>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="w-full sm:w-auto"
+                            onClick={() => alert(`Editing setting: ${setting.name}`)}
+                          >
+                            Edit
+                          </Button>
                         </div>
                       ))}
                     </div>
@@ -373,8 +406,20 @@ const SettingsPage: React.FC = () => {
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <Button size="sm" variant="outline">Edit</Button>
-                      <Button size="sm" variant="outline">Permissions</Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => alert(`Editing role: ${role.name}`)}
+                      >
+                        Edit
+                      </Button>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => alert(`Managing permissions for: ${role.name}`)}
+                      >
+                        Permissions
+                      </Button>
                     </div>
                   </div>
                 ))}

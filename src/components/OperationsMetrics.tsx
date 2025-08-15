@@ -58,6 +58,44 @@ interface OperationsMetrics {
   };
 }
 
+// Mock data moved outside component to prevent recreation on every render
+const mockMetrics: OperationsMetrics = {
+  mttr: {
+    current: 4.2,
+    target: 3.0,
+    trend: 'improving',
+    lastMonth: 5.1
+  },
+  mtbs: {
+    current: 168.5,
+    target: 200.0,
+    trend: 'improving',
+    lastMonth: 145.2
+  },
+  equipmentUtilization: {
+    current: 87.3,
+    target: 90.0,
+    byShift: {
+      morning: 92.1,
+      afternoon: 85.7,
+      night: 84.1
+    }
+  },
+  workOrders: {
+    total: 45,
+    completed: 32,
+    inProgress: 8,
+    pending: 3,
+    overdue: 2
+  },
+  breakdowns: {
+    total: 12,
+    resolved: 10,
+    critical: 2,
+    averageResolutionTime: 3.8
+  }
+};
+
 export const OperationsMetrics: React.FC = () => {
   const [metrics, setMetrics] = useState<OperationsMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -76,44 +114,6 @@ export const OperationsMetrics: React.FC = () => {
   const [isEquipmentUtilizationOpen, setIsEquipmentUtilizationOpen] = useState(false);
   const [isOperationsSettingsOpen, setIsOperationsSettingsOpen] = useState(false);
 
-  // Mock data following JDE best practices
-  const mockMetrics: OperationsMetrics = {
-    mttr: {
-      current: 4.2,
-      target: 3.0,
-      trend: 'improving',
-      lastMonth: 5.1
-    },
-    mtbs: {
-      current: 168.5,
-      target: 200.0,
-      trend: 'improving',
-      lastMonth: 145.2
-    },
-    equipmentUtilization: {
-      current: 87.3,
-      target: 90.0,
-      byShift: {
-        morning: 92.1,
-        afternoon: 85.7,
-        night: 84.1
-      }
-    },
-    workOrders: {
-      total: 45,
-      completed: 32,
-      inProgress: 8,
-      pending: 3,
-      overdue: 2
-    },
-    breakdowns: {
-      total: 12,
-      resolved: 10,
-      critical: 2,
-      averageResolutionTime: 3.8
-    }
-  };
-
   useEffect(() => {
     const loadMetrics = async () => {
       try {
@@ -126,7 +126,7 @@ export const OperationsMetrics: React.FC = () => {
     };
     
     void loadMetrics();
-  }, [mockMetrics]);
+  }, []); // Empty dependency array to run only once
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {

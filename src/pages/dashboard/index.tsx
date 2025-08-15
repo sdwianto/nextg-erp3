@@ -8,7 +8,7 @@ import { AssetLifecycleDashboard } from '@/components/AssetLifecycleDashboard';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/navigation';
+import { useRouter } from 'next/router';
 import { 
   Package, 
   Truck, 
@@ -21,7 +21,8 @@ import {
   CheckCircle,
   Clock,
   Plus,
-  BarChart3
+  BarChart3,
+  ShoppingCart
 } from 'lucide-react';
 
 const DashboardPage: React.FC = () => {
@@ -254,6 +255,14 @@ const DashboardPage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="h-20 flex flex-col items-center justify-center gap-2"
+                onClick={() => router.push('/procurement')}
+              >
+                <ShoppingCart className="h-6 w-6" />
+                <span className="text-sm">Procurement</span>
+              </Button>
+              <Button 
+                variant="outline" 
+                className="h-20 flex flex-col items-center justify-center gap-2"
                 onClick={() => router.push('/operations')}
               >
                 <Wrench className="h-6 w-6" />
@@ -270,7 +279,7 @@ const DashboardPage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="h-20 flex flex-col items-center justify-center gap-2 relative"
-                onClick={() => router.push('/maintenance')}
+                onClick={() => router.push('/rental')}
               >
                 <Wrench className="h-6 w-6" />
                 <span className="text-sm">Maintenance</span>
@@ -323,7 +332,7 @@ const DashboardPage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="h-20 flex flex-col items-center justify-center gap-2"
-                onClick={() => router.push('/alerts')}
+                onClick={() => router.push('/dashboard')}
               >
                 <AlertTriangle className="h-6 w-6" />
                 <span className="text-sm">Alerts</span>
@@ -335,11 +344,11 @@ const DashboardPage: React.FC = () => {
         {/* Maintenance Overview Card */}
         <MaintenanceCard
           stats={stats.maintenance}
-          onViewMaintenance={() => router.push('/maintenance')}
-          onScheduleMaintenance={() => router.push('/maintenance')}
-          onViewOverdue={() => router.push('/maintenance?tab=overdue')}
-          onViewCompleted={() => router.push('/maintenance?tab=completed')}
-          onViewCostAnalysis={() => router.push('/maintenance?tab=reports')}
+          onViewMaintenance={() => router.push('/rental')}
+          onScheduleMaintenance={() => router.push('/rental')}
+                      onViewOverdue={() => router.push('/rental?tab=overdue')}
+            onViewCompleted={() => router.push('/rental?tab=completed')}
+                      onViewCostAnalysis={() => router.push('/rental?tab=reports')}
         />
 
         {/* Maintenance Alerts */}

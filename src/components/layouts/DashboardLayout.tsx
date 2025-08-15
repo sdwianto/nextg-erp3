@@ -30,7 +30,6 @@ import {
   SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { useRouter } from "next/router";
-import Link from "next/link";
 import { ThemeToggle } from "../ThemeToggle";
 
 
@@ -104,14 +103,12 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
                   tooltip="Dashboard"
                   isActive={isActive("/dashboard")}
+                  onClick={() => router.push('/dashboard')}
                 >
-                  <Link href="/dashboard">
-                    <Activity className="mr-2 h-4 w-4" />
-                    Dashboard
-                  </Link>
+                  <Activity className="mr-2 h-4 w-4" />
+                  Dashboard
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -124,66 +121,56 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
                   tooltip="Inventory Management"
                   isActive={isActive("/inventory")}
+                  onClick={() => router.push('/inventory')}
                 >
-                  <Link href="/inventory">
-                    <Package className="mr-2 h-4 w-4" />
-                    Inventory
-                  </Link>
+                  <Package className="mr-2 h-4 w-4" />
+                  Inventory
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
                   tooltip="Procurement Management"
                   isActive={isActive("/procurement")}
+                  onClick={() => router.push('/procurement')}
                 >
-                  <Link href="/procurement">
-                    <ShoppingCart className="mr-2 h-4 w-4" />
-                    Procurement
-                  </Link>
+                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  Procurement
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
                   tooltip="Asset Management"
                   isActive={isActive("/asset")}
+                  onClick={() => router.push('/asset')}
                 >
-                  <Link href="/asset">
-                    <Building2 className="mr-2 h-4 w-4" />
-                    Asset Management
-                  </Link>
+                  <Building2 className="mr-2 h-4 w-4" />
+                  Asset Management
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
                   tooltip="Operations Management"
                   isActive={isActive("/operations")}
+                  onClick={() => router.push('/operations')}
                 >
-                  <Link href="/operations">
-                    <Wrench className="mr-2 h-4 w-4" />
-                    Operations
-                  </Link>
+                  <Wrench className="mr-2 h-4 w-4" />
+                  Operations
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
                   tooltip="Rental & Maintenance"
                   isActive={isActive("/rental")}
+                  onClick={() => router.push('/rental')}
                 >
-                  <Link href="/rental">
-                    <Truck className="mr-2 h-4 w-4" />
-                    Rental & Maintenance
-                  </Link>
+                  <Truck className="mr-2 h-4 w-4" />
+                  Rental & Maintenance
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -194,40 +181,34 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
                   tooltip="Finance & Accounting"
                   isActive={isActive("/finance")}
+                  onClick={() => router.push('/finance')}
                 >
-                  <Link href="/finance">
-                    <DollarSign className="mr-2 h-4 w-4" />
-                    Finance
-                  </Link>
+                  <DollarSign className="mr-2 h-4 w-4" />
+                  Finance
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
                   tooltip="Human Resources"
                   isActive={isActive("/hrms")}
+                  onClick={() => router.push('/hrms')}
                 >
-                  <Link href="/hrms">
-                    <Users className="mr-2 h-4 w-4" />
-                    HRMS
-                  </Link>
+                  <Users className="mr-2 h-4 w-4" />
+                  HRMS
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
                   tooltip="Customer Management"
                   isActive={isActive("/crm")}
+                  onClick={() => router.push('/crm')}
                 >
-                  <Link href="/crm">
-                    <Building2 className="mr-2 h-4 w-4" />
-                    CRM
-                  </Link>
+                  <Building2 className="mr-2 h-4 w-4" />
+                  CRM
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -238,40 +219,34 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
                   tooltip="Reports & Analytics"
                   isActive={isActive("/reports")}
+                  onClick={() => router.push('/reports')}
                 >
-                  <Link href="/reports">
-                    <BarChart3 className="mr-2 h-4 w-4" />
-                    Reports
-                  </Link>
+                  <BarChart3 className="mr-2 h-4 w-4" />
+                  Reports
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
                   tooltip="Business Intelligence"
                   isActive={isActive("/bi")}
+                  onClick={() => router.push('/bi')}
                 >
-                  <Link href="/bi">
-                    <TrendingUp className="mr-2 h-4 w-4" />
-                    Business Intelligence
-                  </Link>
+                  <TrendingUp className="mr-2 h-4 w-4" />
+                  Business Intelligence
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
                   tooltip="Data Analytics"
                   isActive={isActive("/analytics")}
+                  onClick={() => router.push('/analytics')}
                 >
-                  <Link href="/analytics">
-                    <PieChart className="mr-2 h-4 w-4" />
-                    Analytics
-                  </Link>
+                  <PieChart className="mr-2 h-4 w-4" />
+                  Analytics
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>
@@ -282,53 +257,45 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
                   tooltip="User Management"
                   isActive={isActive("/users")}
+                  onClick={() => router.push('/users')}
                 >
-                  <Link href="/users">
-                    <Shield className="mr-2 h-4 w-4" />
-                    Users & Roles
-                  </Link>
+                  <Shield className="mr-2 h-4 w-4" />
+                  Users & Roles
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
                   tooltip="System Settings"
                   isActive={isActive("/settings")}
+                  onClick={() => router.push('/settings')}
                 >
-                  <Link href="/settings">
-                    <Settings className="mr-2 h-4 w-4" />
-                    Settings
-                  </Link>
+                  <Settings className="mr-2 h-4 w-4" />
+                  Settings
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
                   tooltip="Data Management"
                   isActive={isActive("/data")}
+                  onClick={() => router.push('/data')}
                 >
-                  <Link href="/data">
-                    <Database className="mr-2 h-4 w-4" />
-                    Data Management
-                  </Link>
+                  <Database className="mr-2 h-4 w-4" />
+                  Data Management
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  asChild
                   tooltip="Offline Sync"
                   isActive={isActive("/sync")}
+                  onClick={() => router.push('/sync')}
                 >
-                  <Link href="/sync">
-                    <Cloud className="mr-2 h-4 w-4" />
-                    Offline Sync
-                  </Link>
+                  <Cloud className="mr-2 h-4 w-4" />
+                  Offline Sync
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

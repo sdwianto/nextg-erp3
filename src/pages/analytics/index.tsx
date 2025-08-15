@@ -99,15 +99,30 @@ const AnalyticsPage: React.FC = () => {
             <p className="text-gray-600 dark:text-gray-400">Comprehensive data analysis and performance metrics</p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-            <Button variant="outline" size="sm" className="w-full sm:w-auto">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full sm:w-auto"
+              onClick={() => alert('Opening analytics filter...')}
+            >
               <Filter className="h-4 w-4 mr-2" />
               Filter
             </Button>
-            <Button variant="outline" size="sm" className="w-full sm:w-auto">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full sm:w-auto"
+              onClick={() => alert('Exporting analytics data...')}
+            >
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
-            <Button variant="outline" size="sm" className="w-full sm:w-auto">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full sm:w-auto"
+              onClick={() => alert('Refreshing analytics data...')}
+            >
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
             </Button>
