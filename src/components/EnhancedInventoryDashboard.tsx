@@ -12,7 +12,6 @@ import {
   MapPin, 
   TrendingUp, 
   ShoppingCart,
-  Warehouse,
   Navigation,
   Bell,
   RefreshCw,

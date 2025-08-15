@@ -18,17 +18,12 @@ import {
   AlertTriangle,
   CheckCircle,
   Clock,
-  Calendar,
-  Users,
-  Building2,
   Receipt,
   CreditCard,
   Banknote,
   PieChart,
   DollarSign,
   X,
-  Eye,
-  Edit,
   Shield
 } from 'lucide-react';
 import EnhancedFinanceDashboard from '@/components/EnhancedFinanceDashboard';
@@ -1286,7 +1281,7 @@ const FinancePage: React.FC = () => {
                     className="w-full justify-start"
                     onClick={() => setIsBalanceSheetDialogOpen(true)}
                   >
-                    <Building2 className="mr-2 h-4 w-4" />
+                    <Shield className="mr-2 h-4 w-4" />
                     Balance Sheet
                   </Button>
                   <Button 

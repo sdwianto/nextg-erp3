@@ -4,10 +4,7 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
+
 import { 
   ShoppingCart, 
   Truck, 
@@ -18,8 +15,7 @@ import {
   Eye,
   Settings,
   TrendingUp,
-  Package,
-  AlertTriangle
+  Package
 } from 'lucide-react';
 
 interface PurchaseRequest {
@@ -94,8 +90,6 @@ interface GoodsReceiptItem {
 }
 
 export default function EnhancedProcurementWorkflow() {
-  const [activeTab, setActiveTab] = useState('requests');
-  const [selectedRequest, setSelectedRequest] = useState<PurchaseRequest | null>(null);
 
   // Mock data
   const purchaseRequests: PurchaseRequest[] = [

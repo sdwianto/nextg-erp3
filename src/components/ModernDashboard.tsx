@@ -32,19 +32,15 @@ import {
   TrendingDown,
   DollarSign,
   Package,
-  Users,
   Wrench,
-  Building2,
   Activity,
   BarChart3,
   PieChart as PieChartIcon,
   Target,
   Zap,
-  Calendar,
   AlertTriangle,
   CheckCircle,
   Clock,
-  Eye,
   Download,
   Filter
 } from 'lucide-react';
@@ -111,12 +107,12 @@ const ModernDashboard: React.FC = () => {
     }).format(value);
   };
 
-  const CustomTooltip = ({ active, payload, label }: any) => {
-    if (active && payload && payload.length) {
+  const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ color: string; name: string; value: number }>; label?: string }) => {
+    if (active && payload?.length) {
       return (
         <div className="bg-white dark:bg-gray-800 p-3 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg">
           <p className="font-medium">{label}</p>
-          {payload.map((entry: any, index: number) => (
+          {payload.map((entry, index: number) => (
             <p key={index} style={{ color: entry.color }}>
               {entry.name}: {entry.value}
             </p>
@@ -370,7 +366,7 @@ const ModernDashboard: React.FC = () => {
                     { name: 'Expenses', value: 232000, fill: '#82ca9d' },
                     { name: 'Profit', value: 96000, fill: '#ffc658' },
                   ]}>
-                    <RadialBar minAngle={15} label={{ fill: '#666', position: 'insideStart' }} background />
+                    <RadialBar dataKey="value" label={{ fill: '#666', position: 'insideStart' }} background />
                     <Legend iconSize={10} layout="vertical" verticalAlign="middle" align="right" />
                     <Tooltip content={<CustomTooltip />} />
                   </RadialBarChart>

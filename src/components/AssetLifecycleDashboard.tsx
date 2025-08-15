@@ -1,20 +1,15 @@
 // src/components/AssetLifecycleDashboard.tsx
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { 
   Building2, 
-  TrendingUp, 
-  AlertTriangle, 
-  CheckCircle, 
-  Clock,
   DollarSign,
   Activity,
   Calendar,
   BarChart3,
-  PieChart,
   Target,
   Zap
 } from 'lucide-react';

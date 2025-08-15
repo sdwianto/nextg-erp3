@@ -16,13 +16,8 @@ import {
   BarChart3,
   Calendar,
   Zap,
-  Plus,
-  Search,
-  Filter,
-  Download,
   Settings,
   Users,
-  FileText,
   PieChart
 } from 'lucide-react';
 
@@ -131,7 +126,7 @@ export const OperationsMetrics: React.FC = () => {
     };
     
     void loadMetrics();
-  }, []);
+  }, [mockMetrics]);
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {

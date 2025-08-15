@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -9,8 +9,6 @@ import {
   Building2, 
   TrendingDown, 
   MapPin, 
-  User, 
-  Calendar,
   DollarSign,
   Settings,
   Eye,
@@ -66,7 +64,6 @@ interface ProcurementToAssetFlow {
 }
 
 export default function EnhancedAssetIntegration() {
-  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
 
   // Mock data
   const assets: Asset[] = [

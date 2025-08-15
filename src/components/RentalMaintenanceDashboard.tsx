@@ -106,7 +106,7 @@ export const RentalMaintenanceDashboard: React.FC = () => {
     };
     
     void loadData();
-  }, []);
+  }, [mockStats, mockPredictiveMaintenance]);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
