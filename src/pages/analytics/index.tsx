@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { api } from '@/utils/api';
 import { 
   BarChart3, 
   PieChart,
@@ -20,63 +21,59 @@ import {
 } from 'lucide-react';
 
 const AnalyticsPage: React.FC = () => {
-  // Mock data for analytics
+  const [dateRange, setDateRange] = useState({
+    startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!,
+    endDate: new Date().toISOString().split('T')[0]!,
+  });
+
+  // tRPC API calls
+  const { data: businessMetrics, isLoading: businessLoading } = api.bi.getBusinessMetrics.useQuery({
+    startDate: dateRange.startDate,
+    endDate: dateRange.endDate,
+  });
+
+  const { data: customerAnalytics, isLoading: customerLoading } = api.bi.getCustomerAnalytics.useQuery();
+
+  const { data: equipmentAnalytics, isLoading: equipmentLoading } = api.bi.getEquipmentAnalytics.useQuery();
+
+  // Derived data from API with proper null checks
   const analyticsData = {
-    overview: {
-      totalRevenue: 1250000,
-      totalOrders: 456,
-      avgOrderValue: 2741,
-      conversionRate: 3.2
-    },
-    trends: {
-      revenueGrowth: 27.6,
-      orderGrowth: 8.6,
-      customerGrowth: 5.9,
-      profitGrowth: 14.3
-    },
-    topMetrics: [
-      { name: 'Revenue per Customer', value: 1000, change: 12.5, trend: 'up' },
-      { name: 'Order Completion Rate', value: 94.2, change: 2.1, trend: 'up' },
-      { name: 'Customer Lifetime Value', value: 8500, change: 8.7, trend: 'up' },
-      { name: 'Inventory Turnover', value: 6.8, change: -1.2, trend: 'down' }
+    totalRevenue: businessMetrics?.data?.financial?.totalRevenue || 0,
+    totalOrders: businessMetrics?.data?.sales?.totalOrders || 0,
+    totalCustomers: businessMetrics?.data?.sales?.customerCount || 0,
+    averageOrderValue: businessMetrics?.data?.sales?.averageOrderValue || 0,
+    conversionRate: 0, // Not available in current API
+    revenueMetrics: [
+      { name: 'Total Revenue', value: businessMetrics?.data?.financial?.totalRevenue || 0, change: 0, trend: 'neutral' },
+      { name: 'Monthly Growth', value: 0, change: 0, trend: 'neutral' },
+      { name: 'Revenue per Customer', value: businessMetrics?.data?.financial?.totalRevenue && businessMetrics?.data?.sales?.customerCount ? 
+        businessMetrics.data.financial.totalRevenue / businessMetrics.data.sales.customerCount : 0, change: 0, trend: 'neutral' },
+      { name: 'Average Order Value', value: businessMetrics?.data?.sales?.averageOrderValue || 0, change: 0, trend: 'neutral' },
     ],
-    performanceData: [
-      { month: 'Jan', revenue: 850000, orders: 310, customers: 980 },
-      { month: 'Feb', revenue: 920000, orders: 335, customers: 1020 },
-      { month: 'Mar', revenue: 980000, orders: 365, customers: 1080 },
-      { month: 'Apr', revenue: 1100000, orders: 395, customers: 1150 },
-      { month: 'May', revenue: 1180000, orders: 425, customers: 1200 },
-      { month: 'Jun', revenue: 1250000, orders: 456, customers: 1250 }
+    monthlyData: [
+      { month: 'Jan', revenue: 0, orders: 0, customers: 0 },
+      { month: 'Feb', revenue: 0, orders: 0, customers: 0 },
+      { month: 'Mar', revenue: 0, orders: 0, customers: 0 },
+      { month: 'Apr', revenue: 0, orders: 0, customers: 0 },
+      { month: 'May', revenue: 0, orders: 0, customers: 0 },
+      { month: 'Jun', revenue: 0, orders: 0, customers: 0 }
     ],
-    customerAnalytics: {
-      segments: [
-        { name: 'Mining Companies', count: 562, revenue: 562000, percentage: 45 },
-        { name: 'Construction', count: 375, revenue: 375000, percentage: 30 },
-        { name: 'Infrastructure', count: 188, revenue: 188000, percentage: 15 },
-        { name: 'Others', count: 125, revenue: 125000, percentage: 10 }
-      ],
-      behavior: [
-        { metric: 'Average Session Duration', value: '8.5 minutes', change: 12.3 },
-        { metric: 'Pages per Session', value: '4.2', change: 5.7 },
-        { metric: 'Bounce Rate', value: '32.1%', change: -8.4 },
-        { metric: 'Return Customer Rate', value: '68.5%', change: 15.2 }
-      ]
-    },
-    productAnalytics: {
-      topProducts: [
-        { name: 'Excavator Spare Parts', sales: 125000, units: 45, margin: 28.5 },
-        { name: 'Bulldozer Components', sales: 98000, units: 32, margin: 25.2 },
-        { name: 'Crane Equipment', sales: 87000, units: 28, margin: 22.8 },
-        { name: 'Hydraulic Systems', sales: 76000, units: 25, margin: 30.1 },
-        { name: 'Electrical Parts', sales: 65000, units: 22, margin: 18.9 }
-      ],
-      categories: [
-        { name: 'Heavy Equipment', revenue: 450000, percentage: 36 },
-        { name: 'Spare Parts', revenue: 380000, percentage: 30.4 },
-        { name: 'Tools & Accessories', revenue: 250000, percentage: 20 },
-        { name: 'Safety Equipment', revenue: 170000, percentage: 13.6 }
-      ]
-    }
+    customerSegments: [
+      { name: 'Individual', count: customerAnalytics?.data?.customerSegments?.individual || 0, revenue: 0, percentage: 0 },
+      { name: 'Company', count: customerAnalytics?.data?.customerSegments?.company || 0, revenue: 0, percentage: 0 },
+      { name: 'Government', count: customerAnalytics?.data?.customerSegments?.government || 0, revenue: 0, percentage: 0 },
+      { name: 'Others', count: 0, revenue: 0, percentage: 0 },
+    ],
+    performanceMetrics: [
+      { metric: 'Equipment Utilization', value: `${businessMetrics?.data?.operations?.equipmentUtilization?.toFixed(1) || 0}%`, change: 0 },
+      { metric: 'Active Employees', value: `${businessMetrics?.data?.operations?.activeEmployees || 0}`, change: 0 },
+      { metric: 'Profit Margin', value: `${businessMetrics?.data?.financial?.profitMargin?.toFixed(1) || 0}%`, change: 0 },
+    ],
+    topProducts: [
+      { name: 'Equipment Rental', sales: businessMetrics?.data?.financial?.totalRevenue || 0, units: 0, margin: 0 },
+      { name: 'Maintenance Services', sales: 0, units: 0, margin: 0 },
+      { name: 'Spare Parts', sales: 0, units: 0, margin: 0, revenue: 0, percentage: 0 },
+    ],
   };
 
   const getTrendIcon = (trend: string) => {
@@ -137,10 +134,10 @@ const AnalyticsPage: React.FC = () => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${analyticsData.overview.totalRevenue.toLocaleString()}</div>
+              <div className="text-2xl font-bold">${(analyticsData.totalRevenue || 0).toLocaleString()}</div>
               <div className="flex items-center text-sm text-green-600">
                 <TrendingUp className="h-4 w-4 mr-1" />
-                <span>+{analyticsData.trends.revenueGrowth}%</span>
+                <span>+{analyticsData.revenueMetrics[0]?.change ?? 0}%</span>
                 <span className="text-muted-foreground ml-1">vs last month</span>
               </div>
             </CardContent>
@@ -152,10 +149,10 @@ const AnalyticsPage: React.FC = () => {
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{analyticsData.overview.totalOrders.toLocaleString()}</div>
+              <div className="text-2xl font-bold">{(analyticsData.totalOrders || 0).toLocaleString()}</div>
               <div className="flex items-center text-sm text-green-600">
                 <TrendingUp className="h-4 w-4 mr-1" />
-                <span>+{analyticsData.trends.orderGrowth}%</span>
+                <span>+{analyticsData.revenueMetrics[1]?.change ?? 0}%</span>
                 <span className="text-muted-foreground ml-1">vs last month</span>
               </div>
             </CardContent>
@@ -167,10 +164,10 @@ const AnalyticsPage: React.FC = () => {
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${analyticsData.overview.avgOrderValue.toLocaleString()}</div>
+              <div className="text-2xl font-bold">${(analyticsData.averageOrderValue || 0).toLocaleString()}</div>
               <div className="flex items-center text-sm text-green-600">
                 <TrendingUp className="h-4 w-4 mr-1" />
-                <span>+12.5%</span>
+                <span>+0%</span>
                 <span className="text-muted-foreground ml-1">vs last month</span>
               </div>
             </CardContent>
@@ -182,10 +179,10 @@ const AnalyticsPage: React.FC = () => {
               <Target className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{analyticsData.overview.conversionRate}%</div>
+              <div className="text-2xl font-bold">{analyticsData.conversionRate}%</div>
               <div className="flex items-center text-sm text-green-600">
                 <TrendingUp className="h-4 w-4 mr-1" />
-                <span>+0.8%</span>
+                <span>+0%</span>
                 <span className="text-muted-foreground ml-1">vs last month</span>
               </div>
             </CardContent>
@@ -194,7 +191,7 @@ const AnalyticsPage: React.FC = () => {
 
         {/* Performance Metrics */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {analyticsData.topMetrics.map((metric, index) => (
+          {analyticsData.revenueMetrics.map((metric, index) => (
             <Card key={index}>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">{metric.name}</CardTitle>
@@ -202,7 +199,7 @@ const AnalyticsPage: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {typeof metric.value === 'number' ? metric.value.toLocaleString() : metric.value}
+                  {typeof metric.value === 'number' ? (metric.value || 0).toLocaleString() : metric.value}
                 </div>
                 <div className={`flex items-center text-sm ${getTrendColor(metric.trend)}`}>
                   {getTrendIcon(metric.trend)}
@@ -226,12 +223,12 @@ const AnalyticsPage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {analyticsData.performanceData.map((item, index) => (
+                {analyticsData.monthlyData.map((item, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <span className="text-sm font-medium">{item.month}</span>
                     <div className="flex items-center gap-4">
                       <span className="text-sm text-muted-foreground">
-                        Revenue: ${item.revenue.toLocaleString()}
+                        Revenue: ${(item.revenue || 0).toLocaleString()}
                       </span>
                       <span className="text-sm text-blue-600">
                         Orders: {item.orders}
@@ -256,7 +253,7 @@ const AnalyticsPage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {analyticsData.customerAnalytics.segments.map((segment, index) => (
+                {analyticsData.customerSegments.map((segment, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className={`w-4 h-4 rounded-full ${
@@ -269,7 +266,7 @@ const AnalyticsPage: React.FC = () => {
                     <div className="text-right">
                       <div className="text-sm font-bold">{segment.percentage}%</div>
                       <div className="text-xs text-muted-foreground">
-                        ${segment.revenue.toLocaleString()}
+                        ${(segment.revenue || 0).toLocaleString()}
                       </div>
                     </div>
                   </div>
@@ -289,7 +286,7 @@ const AnalyticsPage: React.FC = () => {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {analyticsData.customerAnalytics.behavior.map((behavior, index) => (
+              {analyticsData.performanceMetrics.map((behavior, index) => (
                 <div key={index} className="text-center p-3 border rounded-md">
                   <div className="text-2xl font-bold text-blue-600">{behavior.value}</div>
                   <div className="text-sm font-medium text-gray-900 dark:text-white">{behavior.metric}</div>
@@ -314,7 +311,7 @@ const AnalyticsPage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {analyticsData.productAnalytics.topProducts.map((product, index) => (
+                {analyticsData.topProducts.map((product, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <div>
                       <div className="font-medium">{product.name}</div>
@@ -323,7 +320,7 @@ const AnalyticsPage: React.FC = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold">${product.sales.toLocaleString()}</div>
+                      <div className="font-bold">${(product.sales || 0).toLocaleString()}</div>
                       <div className="text-sm text-green-600">
                         {product.margin}% margin
                       </div>
@@ -344,7 +341,7 @@ const AnalyticsPage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {analyticsData.productAnalytics.categories.map((category, index) => (
+                {analyticsData.topProducts.map((category, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className={`w-4 h-4 rounded-full ${
@@ -357,7 +354,7 @@ const AnalyticsPage: React.FC = () => {
                     <div className="text-right">
                       <div className="text-sm font-bold">{category.percentage}%</div>
                       <div className="text-xs text-muted-foreground">
-                        ${category.revenue.toLocaleString()}
+                        ${(category.revenue || 0).toLocaleString()}
                       </div>
                     </div>
                   </div>
@@ -377,19 +374,19 @@ const AnalyticsPage: React.FC = () => {
               <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
                 <h4 className="font-medium text-blue-800 dark:text-blue-200 mb-2">Revenue Growth</h4>
                 <p className="text-sm text-blue-700 dark:text-blue-300">
-                  Strong revenue growth of 27.6% driven by increased mining equipment sales and higher average order values.
+                  Revenue growth analysis will be available once data is populated in the system.
                 </p>
               </div>
               <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
                 <h4 className="font-medium text-green-800 dark:text-green-200 mb-2">Customer Retention</h4>
                 <p className="text-sm text-green-700 dark:text-green-300">
-                  High return customer rate of 68.5% indicates strong customer satisfaction and loyalty programs effectiveness.
+                  Customer retention metrics will be calculated from actual customer data once available.
                 </p>
               </div>
               <div className="p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg">
                 <h4 className="font-medium text-yellow-800 dark:text-yellow-200 mb-2">Inventory Optimization</h4>
                 <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                  Inventory turnover rate of 6.8 shows good efficiency, but there is room for improvement in stock management.
+                  Inventory turnover analysis will be available once inventory data is populated.
                 </p>
               </div>
             </div>

@@ -1,0 +1,1706 @@
+// This is your Prisma schema file for NextGen ERP System
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider  = "postgresql"
+    url       = env("DATABASE_URL") // untuk query
+    directUrl = env("DIRECT_URL") // untuk sync ke db supabase (optional)
+}
+
+// ========================================
+// CORE SYSTEM & SECURITY
+// ========================================
+
+model User {
+    id                String   @id @default(uuid())
+    clerkId           String   @unique // External Clerk ID
+    email             String   @unique
+    firstName         String
+    lastName          String
+    phone             String?
+    avatar            String?
+    isActive          Boolean  @default(true)
+    lastLoginAt       DateTime?
+    
+    // Role-based access control
+    roleId            String
+    role              Role     @relation(fields: [roleId], references: [id])
+    
+    // Department assignment
+    departmentId      String?
+    department        Department? @relation(fields: [departmentId], references: [id])
+    
+    // Audit fields
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?
+    updatedBy         String?
+    
+    // Relations
+    posts             Post[]
+    auditLogs         AuditLog[]
+    createdOrders     Order[]  @relation("OrderCreator")
+    approvedOrders    Order[]  @relation("OrderApprover")
+    maintenanceRecords MaintenanceRecord[]
+    inventoryTransactions InventoryTransaction[]
+    financialTransactions FinancialTransaction[]
+    employeeRecords   Employee[]
+    customerContacts  CustomerContact[]
+    assetTransactions AssetTransaction[]
+}
+
+model Role {
+    id                String   @id @default(uuid())
+    name              String   @unique
+    description       String?
+    permissions       Json     // Array of permission strings
+    isActive          Boolean  @default(true)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    users             User[]
+}
+
+model Department {
+    id                String   @id @default(uuid())
+    name              String   @unique
+    code              String   @unique
+    description       String?
+    managerId         String?
+    isActive          Boolean  @default(true)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    users             User[]
+    employees         Employee[]
+}
+
+model AuditLog {
+    id                String   @id @default(uuid())
+    userId            String
+    user              User     @relation(fields: [userId], references: [id])
+    action            String   // CREATE, UPDATE, DELETE, LOGIN, etc.
+    entityType        String   // User, Product, Order, etc.
+    entityId          String?
+    oldValues         Json?
+    newValues         Json?
+    ipAddress         String?
+    userAgent         String?
+    createdAt         DateTime @default(now())
+}
+
+// ========================================
+// INVENTORY & PROCUREMENT
+// ========================================
+
+model Category {
+    id                String   @id @default(uuid())
+    name              String   @unique
+    code              String   @unique
+    description       String?
+    parentId          String?
+    parent            Category? @relation("CategoryHierarchy", fields: [parentId], references: [id])
+    children          Category[] @relation("CategoryHierarchy")
+    isActive          Boolean  @default(true)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    products          Product[]
+    equipment         Equipment[]
+    assets            Asset[]
+}
+
+model Product {
+    id                String   @id @default(uuid())
+    name              String
+    code              String   @unique
+    description       String?
+    sku               String   @unique
+    barcode           String?
+    price             Int      // Price in cents
+    costPrice         Int      // Cost price in cents
+    imageUrl          String?
+    
+    // Inventory fields
+    minStockLevel     Int      @default(0)
+    maxStockLevel     Int?
+    currentStock      Int      @default(0)
+    unitOfMeasure     String   @default("PCS")
+    
+    // Category relation
+    categoryId        String
+    category          Category @relation(fields: [categoryId], references: [id])
+    
+    // Status
+    isActive          Boolean  @default(true)
+    isService         Boolean  @default(false) // For service-based products
+    
+    // Audit fields
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?
+    updatedBy         String?
+    
+    // Relations
+    orderItems        OrderItem[]
+    inventoryItems    InventoryItem[]
+    inventoryTransactions InventoryTransaction[]
+    purchaseOrderItems PurchaseOrderItem[]
+    goodsReceiptItems  GoodsReceiptItem[]
+}
+
+model Warehouse {
+    id                String   @id @default(uuid())
+    name              String   @unique
+    code              String   @unique
+    address           String?
+    contactPerson     String?
+    phone             String?
+    email             String?
+    isActive          Boolean  @default(true)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    inventoryItems    InventoryItem[]
+    inventoryTransactions InventoryTransaction[]
+    goodsReceipts     GoodsReceipt[]
+}
+
+model InventoryItem {
+    id                String   @id @default(uuid())
+    productId         String
+    product           Product  @relation(fields: [productId], references: [id])
+    warehouseId       String
+    warehouse         Warehouse @relation(fields: [warehouseId], references: [id])
+    quantity          Int      @default(0)
+    reservedQuantity  Int      @default(0) // For pending orders
+    availableQuantity Int      @default(0) // quantity - reservedQuantity
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    @@unique([productId, warehouseId])
+}
+
+model InventoryTransaction {
+    id                String   @id @default(uuid())
+    productId         String
+    product           Product  @relation(fields: [productId], references: [id])
+    warehouseId       String
+    warehouse         Warehouse @relation(fields: [warehouseId], references: [id])
+    userId            String
+    user              User     @relation(fields: [userId], references: [id])
+    
+    transactionType   InventoryTransactionType
+    quantity          Int
+    referenceType     String?  // Order, PurchaseOrder, Adjustment, etc.
+    referenceId       String?
+    notes             String?
+    
+    // Asset Integration
+    assetId           String?
+    asset             Asset?   @relation(fields: [assetId], references: [id])
+    
+    // Maintenance Integration
+    maintenanceRecordId String?
+    maintenanceRecord MaintenanceRecord? @relation(fields: [maintenanceRecordId], references: [id])
+    
+    createdAt         DateTime @default(now())
+}
+
+enum InventoryTransactionType {
+    IN
+    OUT
+    ADJUSTMENT
+    TRANSFER
+}
+
+// Purchase Request Model (Missing from current implementation)
+model PurchaseRequest {
+  id          String   @id @default(cuid())
+  prNumber    String   @unique
+  title       String
+  description String?
+  priority    Priority @default(MEDIUM)
+  status      PurchaseRequestStatus @default(DRAFT)
+  requestDate DateTime @default(now())
+  requiredDate DateTime
+  estimatedBudget Decimal @db.Decimal(10, 2)
+  
+  // JDE-style relationships
+  requestedBy String
+  approvedBy  String?
+  department  String?
+  costCenter  String?
+  
+  // Items in the request
+  items       PurchaseRequestItem[]
+  
+  // Related purchase orders
+  purchaseOrders PurchaseOrder[]
+  
+  // Audit fields
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String
+  updatedBy   String?
+  
+  @@map("purchase_requests")
+}
+
+model PurchaseRequestItem {
+  id                String          @id @default(cuid())
+  purchaseRequestId String
+  productId         String
+  quantity          Int
+  unitPrice         Decimal?        @db.Decimal(10, 2)
+  totalPrice        Decimal?        @db.Decimal(10, 2)
+  specifications    String?
+  urgency           Urgency         @default(NORMAL)
+  
+  // Relationships
+  purchaseRequest   PurchaseRequest @relation(fields: [purchaseRequestId], references: [id], onDelete: Cascade)
+  product           Product         @relation(fields: [productId], references: [id])
+  
+  @@map("purchase_request_items")
+}
+
+// Enhanced Purchase Order with JDE-style fields
+model PurchaseOrder {
+  id              String            @id @default(cuid())
+  poNumber        String            @unique
+  supplierId      String
+  orderDate       DateTime          @default(now())
+  expectedDelivery DateTime
+  actualDelivery  DateTime?
+  status          PurchaseOrderStatus @default(DRAFT)
+  grandTotal      Decimal           @db.Decimal(10, 2)
+  notes           String?
+  
+  // JDE-style additional fields
+  purchaseRequestId String?         // Link to purchase request
+  approvedBy       String?
+  approvedDate     DateTime?
+  paymentTerms     String?
+  deliveryTerms    String?
+  currency         String           @default("USD")
+  exchangeRate     Decimal          @default(1) @db.Decimal(10, 4)
+  
+  // Relationships
+  supplier        Supplier          @relation(fields: [supplierId], references: [id])
+  purchaseRequest PurchaseRequest?  @relation(fields: [purchaseRequestId], references: [id])
+  items           PurchaseOrderItem[]
+  goodsReceipts   GoodsReceipt[]
+  
+  // Audit fields
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  createdBy       String
+  updatedBy       String?
+  
+  @@map("purchase_orders")
+}
+
+enum PurchaseOrderStatus {
+    DRAFT
+    SUBMITTED
+    APPROVED
+    ORDERED
+    PARTIALLY_RECEIVED
+    RECEIVED
+    CANCELLED
+}
+
+model PurchaseOrderItem {
+    id                String   @id @default(uuid())
+    purchaseOrderId   String
+    purchaseOrder     PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+    productId         String
+    product           Product  @relation(fields: [productId], references: [id])
+    
+    quantity          Int
+    unitPrice         Int
+    totalPrice        Int
+    receivedQuantity  Int      @default(0)
+    
+    // Asset Management Integration
+    isAsset           Boolean  @default(false)
+    assetId           String?
+    asset             Asset?   @relation(fields: [assetId], references: [id])
+    
+    // Maintenance Integration
+    isMaintenancePart Boolean  @default(false)
+    equipmentId       String?
+    equipment         Equipment? @relation(fields: [equipmentId], references: [id])
+    
+    createdAt         DateTime @default(now())
+    
+    // Relations
+    goodsReceiptItems GoodsReceiptItem[]
+}
+
+// Goods Receipt Model
+model GoodsReceipt {
+    id                String   @id @default(uuid())
+    grNumber          String   @unique
+    purchaseOrderId   String
+    purchaseOrder     PurchaseOrder @relation(fields: [purchaseOrderId], references: [id])
+    
+    receiptDate       DateTime
+    warehouseId       String
+    warehouse         Warehouse @relation(fields: [warehouseId], references: [id])
+    
+    // Quality Check
+    qualityCheckStatus QualityCheckStatus @default(PENDING)
+    qualityCheckBy    String?
+    qualityCheckAt    DateTime?
+    
+    // GPS Tracking
+    gpsCoordinates    Json?    // { latitude: number, longitude: number }
+    
+    // Notes
+    notes             String?
+    
+    // Audit fields
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?
+    
+    // Relations
+    items             GoodsReceiptItem[]
+    assets            Asset[]
+}
+
+// Goods Receipt Items
+model GoodsReceiptItem {
+    id                String   @id @default(uuid())
+    goodsReceiptId    String
+    goodsReceipt      GoodsReceipt @relation(fields: [goodsReceiptId], references: [id])
+    
+    purchaseOrderItemId String
+    purchaseOrderItem   PurchaseOrderItem @relation(fields: [purchaseOrderItemId], references: [id])
+    
+    productId         String
+    product           Product @relation(fields: [productId], references: [id])
+    
+    quantityReceived  Int
+    quantityAccepted  Int
+    quantityRejected  Int      @default(0)
+    
+    unitCost          Int
+    totalCost         Int
+    
+    createdAt         DateTime @default(now())
+}
+
+enum QualityCheckStatus {
+    PENDING
+    PASSED
+    FAILED
+    IN_PROGRESS
+}
+
+model Supplier {
+    id                String   @id @default(uuid())
+    name              String
+    code              String   @unique
+    contactPerson     String?
+    email             String?
+    phone             String?
+    address           String?
+    taxNumber         String?
+    isActive          Boolean  @default(true)
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    purchaseOrders    PurchaseOrder[]
+    performance       SupplierPerformance?
+}
+
+// ========================================
+// RENTAL & MAINTENANCE
+// ========================================
+
+model Equipment {
+    id                String   @id @default(uuid())
+    name              String
+    code              String   @unique
+    model             String?
+    serialNumber      String?  @unique
+    manufacturer      String?
+    yearManufactured  Int?
+    
+    // Equipment details
+    categoryId        String
+    category          Category @relation(fields: [categoryId], references: [id])
+    
+    purchaseDate      DateTime?
+    purchasePrice     Int?
+    currentValue      Int?
+    
+    // Status
+    status            EquipmentStatus @default(AVAILABLE)
+    location          String?
+    assignedTo        String?
+    
+    // Equipment type and specifications
+    type              String?
+    specifications    Json?    // Equipment specifications
+    
+    // Maintenance
+    lastMaintenanceDate DateTime?
+    nextMaintenanceDate DateTime?
+    totalOperatingHours Int @default(0)
+    
+    // Audit fields
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?
+    updatedBy         String?
+    
+    // Relations
+    maintenanceRecords MaintenanceRecord[]
+    rentalOrderItems  RentalOrderItem[]
+    rentalOrders      RentalOrder[] @relation("EquipmentRentals")
+    asset             Asset?
+    maintenanceSchedule MaintenanceSchedule?
+    purchaseOrderItems PurchaseOrderItem[]
+}
+
+enum EquipmentStatus {
+    AVAILABLE
+    IN_USE
+    MAINTENANCE
+    REPAIR
+    RETIRED
+    LOST
+}
+
+model MaintenanceRecord {
+    id                String   @id @default(uuid())
+    equipmentId       String
+    equipment         Equipment @relation(fields: [equipmentId], references: [id])
+    userId            String
+    user              User     @relation(fields: [userId], references: [id])
+    
+    maintenanceType   MaintenanceType
+    title             String
+    description       String?
+    scheduledDate     DateTime?
+    completedDate     DateTime?
+    status            MaintenanceStatus @default(SCHEDULED)
+    priority          Priority @default(MEDIUM)
+    
+    // Cost tracking
+    estimatedCost     Int?
+    actualCost        Int?
+    
+    // Personnel and parts
+    technician        String?
+    parts             Json?    // Array of parts used
+    
+    // Parts used - Enhanced
+    partsUsed         Json?    // Array of parts with quantities
+    
+    // Asset Integration
+    assetId           String?
+    asset             Asset?   @relation(fields: [assetId], references: [id])
+    
+    // Inventory Integration
+    inventoryTransactions InventoryTransaction[]
+    
+    // Work Orders
+    workOrders        WorkOrder[]
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+enum MaintenanceType {
+    PREVENTIVE
+    CORRECTIVE
+    EMERGENCY
+    INSPECTION
+}
+
+enum MaintenanceStatus {
+    SCHEDULED
+    IN_PROGRESS
+    COMPLETED
+    CANCELLED
+}
+
+model RentalOrder {
+    id                String   @id @default(uuid())
+    rentalNumber      String   @unique
+    customerId        String
+    customer          Customer @relation(fields: [customerId], references: [id])
+    
+    startDate         DateTime
+    endDate           DateTime
+    actualReturnDate  DateTime?
+    
+    dailyRate         Int
+    totalDays         Int
+    subtotal          Int
+    tax               Int      @default(0)
+    grandTotal        Int
+    
+    // Additional fields
+    deposit           Int?     // Deposit amount
+    terms             String?  // Rental terms
+    
+    status            RentalOrderStatus @default(DRAFT)
+    notes             String?
+    
+    // Audit fields
+    createdBy         String?
+    approvedBy        String?
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    items             RentalOrderItem[]
+    equipment         Equipment[] @relation("EquipmentRentals")
+}
+
+enum RentalOrderStatus {
+    DRAFT
+    CONFIRMED
+    IN_PROGRESS
+    COMPLETED
+    CANCELLED
+}
+
+model RentalOrderItem {
+    id                String   @id @default(uuid())
+    rentalOrderId     String
+    rentalOrder       RentalOrder @relation(fields: [rentalOrderId], references: [id])
+    equipmentId       String
+    equipment         Equipment @relation(fields: [equipmentId], references: [id])
+    
+    dailyRate         Int
+    quantity          Int      @default(1)
+    totalPrice        Int
+    
+    createdAt         DateTime @default(now())
+}
+
+// ========================================
+// FINANCE & ACCOUNTING
+// ========================================
+
+model FinancialTransaction {
+    id                String   @id @default(uuid())
+    transactionNumber String   @unique
+    userId            String
+    user              User     @relation(fields: [userId], references: [id])
+    
+    transactionType   FinancialTransactionType
+    amount            Int      // Amount in cents
+    currency          String   @default("IDR")
+    
+    // Reference to related entity
+    referenceType     String?  // Order, PurchaseOrder, RentalOrder, etc.
+    referenceId       String?
+    
+    // Account mapping
+    debitAccount      String?
+    creditAccount     String?
+    
+    description       String
+    transactionDate   DateTime
+    status            FinancialTransactionStatus @default(PENDING)
+    
+    // Payment details
+    paymentMethod     String?
+    externalTransactionId String?
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+enum FinancialTransactionType {
+    SALE
+    PURCHASE
+    RENTAL_INCOME
+    MAINTENANCE_EXPENSE
+    SALARY_EXPENSE
+    UTILITY_EXPENSE
+    OTHER_INCOME
+    OTHER_EXPENSE
+}
+
+enum FinancialTransactionStatus {
+    PENDING
+    COMPLETED
+    CANCELLED
+    VOID
+}
+
+model Account {
+    id                String   @id @default(uuid())
+    accountNumber     String   @unique
+    name              String
+    type              AccountType
+    parentAccountId   String?
+    parentAccount     Account? @relation("AccountHierarchy", fields: [parentAccountId], references: [id])
+    childAccounts     Account[] @relation("AccountHierarchy")
+    
+    balance           Int      @default(0)
+    isActive          Boolean  @default(true)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+enum AccountType {
+    ASSET
+    LIABILITY
+    EQUITY
+    REVENUE
+    EXPENSE
+}
+
+// ========================================
+// HRMS & PAYROLL
+// ========================================
+
+model Employee {
+    id                String   @id @default(uuid())
+    employeeNumber    String   @unique
+    userId            String
+    user              User     @relation(fields: [userId], references: [id])
+    
+    // Personal information
+    firstName         String
+    lastName          String
+    email             String   @unique
+    phone             String?
+    address           String?
+    dateOfBirth       DateTime?
+    gender            Gender?
+    maritalStatus     MaritalStatus?
+    
+    // Employment details
+    departmentId      String
+    department        Department @relation(fields: [departmentId], references: [id])
+    position          String
+    hireDate          DateTime
+    terminationDate   DateTime?
+    employmentStatus  EmploymentStatus @default(ACTIVE)
+    
+    // Salary information
+    baseSalary        Int      // Monthly salary in cents
+    allowances        Int      @default(0)
+    taxNumber         String?
+    bankAccount       String?
+    
+    // Emergency contact
+    emergencyContactName String?
+    emergencyContactPhone String?
+    emergencyContactRelation String?
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    attendanceRecords AttendanceRecord[]
+    leaveRequests     LeaveRequest[]
+    payrollRecords    PayrollRecord[]
+}
+
+enum Gender {
+    MALE
+    FEMALE
+    OTHER
+}
+
+enum MaritalStatus {
+    SINGLE
+    MARRIED
+    DIVORCED
+    WIDOWED
+}
+
+enum EmploymentStatus {
+    ACTIVE
+    INACTIVE
+    TERMINATED
+    ON_LEAVE
+}
+
+model AttendanceRecord {
+    id                String   @id @default(uuid())
+    employeeId        String
+    employee          Employee @relation(fields: [employeeId], references: [id])
+    
+    date              DateTime @db.Date
+    checkInTime       DateTime?
+    checkOutTime      DateTime?
+    totalHours        Float?
+    overtimeHours     Float    @default(0)
+    
+    status            AttendanceStatus @default(PRESENT)
+    notes             String?
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    @@unique([employeeId, date])
+}
+
+enum AttendanceStatus {
+    PRESENT
+    ABSENT
+    LATE
+    HALF_DAY
+    ON_LEAVE
+    HOLIDAY
+}
+
+model LeaveRequest {
+    id                String   @id @default(uuid())
+    employeeId        String
+    employee          Employee @relation(fields: [employeeId], references: [id])
+    
+    leaveType         LeaveType
+    startDate         DateTime
+    endDate           DateTime
+    totalDays         Int
+    reason            String
+    
+    status            LeaveRequestStatus @default(PENDING)
+    approvedBy        String?
+    approvedAt        DateTime?
+    rejectionReason   String?
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+enum LeaveType {
+    ANNUAL_LEAVE
+    SICK_LEAVE
+    PERSONAL_LEAVE
+    MATERNITY_LEAVE
+    PATERNITY_LEAVE
+    UNPAID_LEAVE
+}
+
+enum LeaveRequestStatus {
+    PENDING
+    APPROVED
+    REJECTED
+    CANCELLED
+}
+
+model PayrollRecord {
+    id                String   @id @default(uuid())
+    employeeId        String
+    employee          Employee @relation(fields: [employeeId], references: [id])
+    
+    payPeriod         String   // e.g., "2024-01" for January 2024
+    baseSalary        Int
+    allowances        Int      @default(0)
+    overtimePay       Int      @default(0)
+    deductions        Int      @default(0)
+    netSalary         Int
+    
+    paymentDate       DateTime?
+    paymentMethod     String?
+    status            PayrollStatus @default(PENDING)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    @@unique([employeeId, payPeriod])
+}
+
+enum PayrollStatus {
+    PENDING
+    PROCESSED
+    PAID
+    CANCELLED
+}
+
+// ========================================
+// CRM
+// ========================================
+
+model Customer {
+    id                String   @id @default(uuid())
+    customerNumber    String   @unique
+    name              String
+    type              CustomerType @default(INDIVIDUAL)
+    
+    // Contact information
+    email             String?
+    phone             String?
+    address           String?
+    city              String?
+    state             String?
+    postalCode        String?
+    country           String?  @default("Indonesia")
+    
+    // Business information
+    companyName       String?
+    taxNumber         String?
+    industry          String?
+    
+    // Status
+    status            CustomerStatus @default(ACTIVE)
+    source            String?  // How they found us
+    notes             String?
+    
+    // Credit information
+    creditLimit       Int      @default(0)
+    currentBalance    Int      @default(0)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?
+    updatedBy         String?
+    
+    // Relations
+    contacts          CustomerContact[]
+    orders            Order[]
+    rentalOrders      RentalOrder[]
+}
+
+enum CustomerType {
+    INDIVIDUAL
+    COMPANY
+    GOVERNMENT
+}
+
+enum CustomerStatus {
+    ACTIVE
+    INACTIVE
+    PROSPECT
+    LEAD
+}
+
+model CustomerContact {
+    id                String   @id @default(uuid())
+    customerId        String
+    customer          Customer @relation(fields: [customerId], references: [id])
+    userId            String
+    user              User     @relation(fields: [userId], references: [id])
+    
+    contactType       ContactType
+    contactDate       DateTime
+    summary           String
+    details           String?
+    followUpDate      DateTime?
+    status            ContactStatus @default(OPEN)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+enum ContactType {
+    PHONE_CALL
+    EMAIL
+    MEETING
+    VISIT
+    OTHER
+}
+
+enum ContactStatus {
+    OPEN
+    IN_PROGRESS
+    COMPLETED
+    CANCELLED
+}
+
+// ========================================
+// SALES & ORDERS (Enhanced from original)
+// ========================================
+
+model Order {
+    id                String   @id @default(uuid())
+    orderNumber       String   @unique
+    
+    // Customer information
+    customerId        String
+    customer          Customer @relation(fields: [customerId], references: [id])
+    
+    // Order details
+    orderDate         DateTime
+    expectedDeliveryDate DateTime?
+    deliveryDate      DateTime?
+    
+    subtotal          Int
+    tax               Int      @default(0)
+    discount          Int      @default(0)
+    grandTotal        Int
+    
+    // Payment information
+    paymentStatus     PaymentStatus @default(PENDING)
+    paymentMethod     String?
+    externalTransactionId String?
+    paidAt            DateTime?
+    
+    // Order status
+    status            OrderStatus @default(DRAFT)
+    
+    // Shipping information
+    shippingAddress   String?
+    shippingMethod    String?
+    shippingCost      Int      @default(0)
+    
+    // Notes and audit
+    notes             String?
+    createdBy         String
+    creator           User     @relation("OrderCreator", fields: [createdBy], references: [id])
+    approvedBy        String?
+    approver          User?    @relation("OrderApprover", fields: [approvedBy], references: [id])
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    
+    // Relations
+    orderItems        OrderItem[]
+}
+
+enum OrderStatus {
+    DRAFT
+    CONFIRMED
+    PROCESSING
+    SHIPPED
+    DELIVERED
+    CANCELLED
+    RETURNED
+}
+
+enum PaymentStatus {
+    PENDING
+    PARTIAL
+    PAID
+    REFUNDED
+    VOID
+}
+
+model OrderItem {
+    id                String   @id @default(uuid())
+    orderId           String
+    order             Order    @relation(fields: [orderId], references: [id])
+    productId         String
+    product           Product  @relation(fields: [productId], references: [id])
+    
+    quantity          Int
+    unitPrice         Int
+    discount          Int      @default(0)
+    totalPrice        Int
+    
+    createdAt         DateTime @default(now())
+}
+
+// ========================================
+// OFFLINE SYNC SUPPORT
+// ========================================
+
+model SyncLog {
+    id                String   @id @default(uuid())
+    entityType        String   // User, Product, Order, etc.
+    entityId          String
+    action            String   // CREATE, UPDATE, DELETE
+    data              Json     // The actual data
+    deviceId          String?  // For offline sync
+    syncStatus        SyncStatus @default(PENDING)
+    syncAttempts      Int      @default(0)
+    lastSyncAttempt   DateTime?
+    errorMessage      String?
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+enum SyncStatus {
+    PENDING
+    SYNCED
+    FAILED
+    CONFLICT
+}
+
+// ========================================
+// LEGACY SUPPORT (keeping original models)
+// ========================================
+
+model Post {
+    id                String   @id @default(uuid())
+    name              String
+    createdAt         DateTime @default(now())
+    
+    createdBy         String
+    creator           User     @relation(fields: [createdBy], references: [id])
+}
+
+// ========================================
+// ENHANCED INTEGRATION MODELS
+// ========================================
+
+// Asset Management Integration
+model Asset {
+    id                String   @id @default(uuid())
+    assetNumber       String   @unique
+    name              String
+    description       String?
+    
+    // Asset Classification
+    assetType         AssetType
+    categoryId        String
+    category          Category @relation(fields: [categoryId], references: [id])
+    
+    // Financial Information
+    purchaseCost      Int      // Cost in cents
+    currentValue      Int      // Current book value
+    depreciationRate  Float    @default(0.0)
+    accumulatedDepreciation Int @default(0)
+    salvageValue      Int      @default(0) // Salvage value in cents
+    usefulLife        Int      // Useful life in years
+    
+    // Depreciation Methods
+    depreciationMethod DepreciationMethod @default(STRAIGHT_LINE)
+    depreciationStartDate DateTime?
+    lastDepreciationDate DateTime?
+    nextDepreciationDate DateTime?
+    
+    // Location and Assignment
+    location          String?
+    assignedTo        String?
+    department        String?
+    costCenter        String?
+    
+    // Status and Lifecycle
+    status            AssetStatus @default(ACTIVE)
+    lifecycleStage    AssetLifecycleStage @default(ACQUISITION)
+    acquisitionDate   DateTime
+    disposalDate      DateTime?
+    replacementDate   DateTime?
+    
+    // Performance Metrics
+    uptime            Float    @default(0.0) // Percentage
+    efficiency        Float    @default(0.0) // Percentage
+    utilization       Float    @default(0.0) // Percentage
+    totalOperatingHours Int    @default(0)
+    
+    // Integration with Equipment
+    equipmentId       String?  @unique
+    equipment         Equipment? @relation(fields: [equipmentId], references: [id])
+    
+    // Procurement Integration
+    sourceDocument    String?  // PO Number
+    sourceType        ProcurementSourceType @default(DIRECT)
+    goodsReceiptId    String?
+    goodsReceipt      GoodsReceipt? @relation(fields: [goodsReceiptId], references: [id])
+    
+    // Rental Integration
+    rentalStatus      RentalStatus @default(AVAILABLE)
+    rentalRate        Int?     // Daily rental rate in cents
+    currentRentalId   String?  @unique
+    currentRental     AssetRentalContract? @relation("CurrentAssetRental", fields: [currentRentalId], references: [id])
+    
+    // Maintenance Integration
+    lastMaintenance   DateTime?
+    nextMaintenance   DateTime?
+    
+    // Audit fields
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?
+    updatedBy         String?
+    
+    // Relations
+    assetTransactions AssetTransaction[]
+    maintenanceRecords MaintenanceRecord[]
+    purchaseOrderItems PurchaseOrderItem[]
+    inventoryTransactions InventoryTransaction[]
+    depreciationSchedules DepreciationSchedule[]
+    rentalContracts   AssetRentalContract[] @relation("AssetRentals")
+    procurementFlows  ProcurementToAssetFlow[]
+}
+
+// Asset Rental Contracts
+model AssetRentalContract {
+    id                String   @id @default(uuid())
+    contractNumber    String   @unique
+    assetId           String
+    asset             Asset    @relation("AssetRentals", fields: [assetId], references: [id])
+    
+    // Customer Information
+    customerName      String
+    customerEmail     String?
+    customerPhone     String?
+    customerAddress   String?
+    
+    // Rental Details
+    startDate         DateTime
+    endDate           DateTime
+    actualReturnDate  DateTime?
+    dailyRate         Int      // Daily rate in cents
+    totalAmount       Int      @default(0) // Total rental amount in cents
+    deposit           Int?     // Deposit amount in cents
+    
+    // Location and Terms
+    rentalLocation    String?
+    terms             String?
+    notes             String?
+    
+    // Status
+    status            RentalContractStatus @default(ACTIVE)
+    
+    // Financial
+    paidAmount        Int      @default(0)
+    outstandingAmount Int      @default(0)
+    
+    // Audit fields
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?
+    approvedBy        String?
+    
+    // Relations
+    currentAsset      Asset?   @relation("CurrentAssetRental")
+    rentalTransactions AssetRentalTransaction[]
+}
+
+// Asset Rental Transactions
+model AssetRentalTransaction {
+    id                String   @id @default(uuid())
+    rentalContractId  String
+    rentalContract    AssetRentalContract @relation(fields: [rentalContractId], references: [id])
+    
+    transactionType   RentalTransactionType
+    amount            Int      // Amount in cents
+    currency          String   @default("IDR")
+    transactionDate   DateTime
+    description       String?
+    
+    // Reference
+    referenceType     String?
+    referenceId       String?
+    
+    createdAt         DateTime @default(now())
+}
+
+// Procurement to Asset Flow Tracking
+model ProcurementToAssetFlow {
+    id                String   @id @default(uuid())
+    poNumber          String
+    grNumber          String
+    assetId           String
+    asset             Asset    @relation(fields: [assetId], references: [id])
+    
+    productName       String
+    purchaseCost      Int      // Cost in cents
+    currentValue      Int      // Current value in cents
+    depreciationRate  Float
+    
+    status            ProcurementFlowStatus @default(COMPLETED)
+    completedAt       DateTime @default(now())
+    
+    // Audit
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+enum AssetType {
+    EQUIPMENT
+    VEHICLE
+    BUILDING
+    LAND
+    INTANGIBLE
+    SOFTWARE
+    FURNITURE
+    MACHINERY
+    TOOLS
+    OTHER
+}
+
+enum AssetStatus {
+    ACTIVE
+    INACTIVE
+    DISPOSED
+    UNDER_MAINTENANCE
+    RETIRED
+    TRANSFERRED
+    LOST
+    DAMAGED
+    RENTED
+}
+
+enum DepreciationMethod {
+    STRAIGHT_LINE
+    DECLINING_BALANCE
+    UNITS_OF_PRODUCTION
+    SUM_OF_YEARS_DIGITS
+    DOUBLE_DECLINING_BALANCE
+}
+
+enum AssetLifecycleStage {
+    ACQUISITION
+    COMMISSIONING
+    OPERATION
+    MAINTENANCE
+    UPGRADE
+    DECOMMISSIONING
+    DISPOSAL
+}
+
+model AssetTransaction {
+    id                String   @id @default(uuid())
+    assetId           String
+    asset             Asset    @relation(fields: [assetId], references: [id])
+    userId            String
+    user              User     @relation(fields: [userId], references: [id])
+    
+    transactionType   AssetTransactionType
+    amount            Int      // Amount in cents
+    description       String
+    
+    // Reference to related entity
+    referenceType     String?  // PurchaseOrder, MaintenanceRecord, etc.
+    referenceId       String?
+    
+    transactionDate   DateTime
+    createdAt         DateTime @default(now())
+}
+
+enum AssetTransactionType {
+    ACQUISITION
+    DEPRECIATION
+    MAINTENANCE
+    DISPOSAL
+    TRANSFER
+    REVALUATION
+    IMPAIRMENT
+    UPGRADE
+    REPAIR
+}
+
+// Asset Depreciation Schedule
+model DepreciationSchedule {
+    id                String   @id @default(uuid())
+    assetId           String
+    asset             Asset    @relation(fields: [assetId], references: [id])
+    
+    // Depreciation Period
+    periodStart       DateTime
+    periodEnd         DateTime
+    depreciationAmount Int     // Amount in cents
+    
+    // Calculation Details
+    bookValueStart    Int      // Book value at start of period
+    bookValueEnd      Int      // Book value at end of period
+    accumulatedDepreciation Int // Total accumulated depreciation
+    
+    // Status
+    isPosted          Boolean  @default(false)
+    postedDate        DateTime?
+    postedBy          String?
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+
+
+// Supplier Performance Tracking
+model SupplierPerformance {
+    id                String   @id @default(uuid())
+    supplierId        String   @unique
+    supplier          Supplier @relation(fields: [supplierId], references: [id])
+    
+    // Performance Metrics
+    onTimeDelivery    Float    @default(0.0) // Percentage
+    qualityRating     Float    @default(0.0) // 1-5 scale
+    costCompetitiveness Float  @default(0.0) // Percentage
+    responseTime      Int      @default(0) // Hours
+    
+    // Financial Metrics
+    totalSpend        Int      @default(0) // Total spend in cents
+    paymentTerms      String?
+    creditRating      String?
+    
+    // Contract Information
+    contractStartDate DateTime?
+    contractEndDate   DateTime?
+    contractValue     Int?     // Contract value in cents
+    
+    // Audit
+    lastEvaluated     DateTime @default(now())
+    evaluatedBy       String?
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+// Equipment Maintenance Schedule
+model MaintenanceSchedule {
+    id                String   @id @default(uuid())
+    equipmentId       String   @unique
+    equipment         Equipment @relation(fields: [equipmentId], references: [id])
+    
+    maintenanceType   MaintenanceType
+    frequency         MaintenanceFrequency
+    interval          Int      // Days, hours, or cycles
+    lastMaintenance   DateTime?
+    nextMaintenance   DateTime
+    
+    // Parts Requirements
+    requiredParts     Json?    // Array of required parts
+    
+    // Cost Estimation
+    estimatedCost     Int?     // Estimated cost in cents
+    
+    // Status
+    isActive          Boolean  @default(true)
+    
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+}
+
+enum MaintenanceFrequency {
+    DAILY
+    WEEKLY
+    MONTHLY
+    QUARTERLY
+    SEMI_ANNUALLY
+    ANNUALLY
+    HOURS_BASED
+    CYCLE_BASED
+}
+
+// ========================================
+// OPERATIONS MANAGEMENT
+// ========================================
+
+model Operation {
+    id                String   @id @default(uuid())
+    name              String
+    code              String   @unique
+    type              OperationType
+    description       String?
+    location          String?
+    
+    // Status and Priority
+    status            OperationStatus @default(ACTIVE)
+    priority          Priority @default(MEDIUM)
+    
+    // Timeline
+    startDate         DateTime?
+    endDate           DateTime?
+    estimatedDuration Int?     // Duration in hours
+    actualDuration    Int?     // Actual duration in hours
+    
+    // Financial
+    budget            BigInt?  // Budget in cents
+    actualCost        BigInt?  // Actual cost in cents
+    
+    // Team and Resources
+    manager           String?
+    team              Json?    // Array of team member IDs
+    equipment         Json?    // Array of equipment IDs
+    requirements      Json?    // Array of requirements
+    risks             Json?    // Array of risks
+    
+    // Notes
+    notes             String?
+    
+    // Audit fields
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?
+    updatedBy         String?
+    
+    // Relations
+    tasks             Task[]
+    performanceMetrics PerformanceMetric[]
+    incidents         Incident[]
+}
+
+enum OperationType {
+    MINING
+    PROCESSING
+    LOGISTICS
+    MAINTENANCE
+    SAFETY
+    ENVIRONMENTAL
+}
+
+enum OperationStatus {
+    ACTIVE
+    INACTIVE
+    SUSPENDED
+}
+
+enum Priority {
+    LOW
+    MEDIUM
+    HIGH
+    CRITICAL
+}
+
+model Task {
+    id                String   @id @default(uuid())
+    operationId       String
+    operation         Operation @relation(fields: [operationId], references: [id])
+    
+    title             String
+    description       String?
+    type              TaskType
+    priority          Priority @default(MEDIUM)
+    status            TaskStatus @default(PENDING)
+    
+    // Assignment
+    assignedTo        String?
+    startDate         DateTime?
+    dueDate           DateTime?
+    completedDate     DateTime?
+    
+    // Time tracking
+    estimatedHours    Int?
+    actualHours       Int?
+    
+    // Dependencies and checklist
+    dependencies      Json?    // Array of task IDs
+    checklist         Json?    // Array of checklist items
+    
+    // Notes
+    notes             String?
+    
+    // Audit fields
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?
+    updatedBy         String?
+}
+
+enum TaskType {
+    DAILY
+    WEEKLY
+    MONTHLY
+    SPECIAL
+    EMERGENCY
+}
+
+enum TaskStatus {
+    PENDING
+    IN_PROGRESS
+    COMPLETED
+    CANCELLED
+    ON_HOLD
+}
+
+model PerformanceMetric {
+    id                String   @id @default(uuid())
+    operationId       String
+    operation         Operation @relation(fields: [operationId], references: [id])
+    
+    metricType        MetricType
+    name              String
+    value             Float
+    unit              String?
+    target            Float?
+    date              DateTime
+    period            MetricPeriod @default(DAILY)
+    
+    // Notes
+    notes             String?
+    
+    // Audit fields
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?
+    updatedBy         String?
+}
+
+enum MetricType {
+    PRODUCTION
+    EFFICIENCY
+    SAFETY
+    QUALITY
+    COST
+    TIME
+}
+
+enum MetricPeriod {
+    HOURLY
+    DAILY
+    WEEKLY
+    MONTHLY
+    QUARTERLY
+    YEARLY
+}
+
+model Incident {
+    id                String   @id @default(uuid())
+    operationId       String
+    operation         Operation @relation(fields: [operationId], references: [id])
+    
+    title             String
+    description       String?
+    type              IncidentType
+    severity          Priority @default(MEDIUM)
+    status            IncidentStatus @default(REPORTED)
+    
+    // Reporting
+    reportedBy        String?
+    reportedDate      DateTime
+    location          String?
+    
+    // Affected resources
+    affectedEquipment Json?    // Array of equipment IDs
+    affectedPersonnel Json?    // Array of personnel IDs
+    
+    // Actions
+    immediateActions  String?
+    rootCause         String?
+    correctiveActions String?
+    preventiveActions String?
+    
+    // Timeline
+    investigationDate DateTime?
+    resolvedDate      DateTime?
+    
+    // Notes
+    notes             String?
+    
+    // Audit fields
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?
+    updatedBy         String?
+}
+
+enum IncidentType {
+    SAFETY
+    ENVIRONMENTAL
+    EQUIPMENT
+    PROCESS
+    SECURITY
+    OTHER
+}
+
+enum IncidentStatus {
+    REPORTED
+    INVESTIGATING
+    RESOLVING
+    RESOLVED
+    CLOSED
+}
+
+// ========================================
+// WORK ORDER MANAGEMENT
+// ========================================
+
+model WorkOrder {
+    id                String   @id @default(uuid())
+    maintenanceRecordId String
+    maintenanceRecord MaintenanceRecord @relation(fields: [maintenanceRecordId], references: [id])
+    
+    title             String
+    description       String?
+    assignedTo        String?
+    priority          Priority @default(MEDIUM)
+    status            WorkOrderStatus @default(PENDING)
+    
+    // Time tracking
+    estimatedHours    Int?
+    actualHours       Int?
+    startDate         DateTime?
+    endDate           DateTime?
+    
+    // Notes
+    notes             String?
+    
+    // Audit fields
+    createdAt         DateTime @default(now())
+    updatedAt         DateTime @updatedAt
+    createdBy         String?
+    updatedBy         String?
+}
+
+enum WorkOrderStatus {
+    PENDING
+    IN_PROGRESS
+    COMPLETED
+    CANCELLED
+}
+
+// ========================================
+// ENHANCED ASSET RENTAL INTEGRATION ENUMS
+// ========================================
+
+enum ProcurementSourceType {
+    DIRECT
+    PROCUREMENT
+    TRANSFER
+    DONATION
+}
+
+enum RentalStatus {
+    AVAILABLE
+    RENTED
+    MAINTENANCE
+    OUT_OF_SERVICE
+}
+
+enum RentalContractStatus {
+    DRAFT
+    ACTIVE
+    COMPLETED
+    CANCELLED
+    OVERDUE
+}
+
+enum RentalTransactionType {
+    RENTAL_INCOME
+    DEPOSIT
+    REFUND
+    DAMAGE_CHARGE
+    EXTENSION_FEE
+    CANCELLATION_FEE
+}
+
+enum ProcurementFlowStatus {
+    PENDING
+    IN_PROGRESS
+    COMPLETED
+    FAILED
+}
+
+// Enhanced enums for JDE compliance
+enum PurchaseRequestStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum PurchaseRequestPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum Urgency {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}

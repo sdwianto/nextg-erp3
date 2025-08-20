@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { api } from '@/utils/api';
 import { 
   Wrench, 
   Truck, 
@@ -16,7 +17,9 @@ import {
   Calendar,
   Activity
 } from 'lucide-react';
-// import { api } from '@/utils/api';
+
+// API base URL - Using Next.js API routes to avoid CORS issues
+const API_BASE_URL = '';
 
 interface DashboardStats {
   totalEquipment: number;
@@ -41,72 +44,51 @@ interface PredictiveMaintenance {
   estimatedCost: number;
 }
 
-// Mock data moved outside component to prevent recreation on every render
-const mockStats: DashboardStats = {
-  totalEquipment: 45,
-  activeEquipment: 38,
-  underMaintenance: 7,
-  totalRentals: 18,
-  activeRentals: 15,
-  pendingReturns: 3,
-  maintenanceDue: 5,
-  revenue: 450000,
-  utilization: 84.4
-};
-
-const mockPredictiveMaintenance: PredictiveMaintenance[] = [
-  {
-    id: '1',
-    equipmentName: 'Loader LD-005',
-    equipmentCode: 'LD-005',
-    maintenanceType: 'PREVENTIVE',
-    predictedDate: '2024-01-20',
-    confidence: 85,
-    priority: 'HIGH',
-    estimatedCost: 2500
-  },
-  {
-    id: '2',
-    equipmentName: 'Bulldozer BD-003',
-    equipmentCode: 'BD-003',
-    maintenanceType: 'CORRECTIVE',
-    predictedDate: '2024-01-25',
-    confidence: 92,
-    priority: 'CRITICAL',
-    estimatedCost: 5000
-  },
-  {
-    id: '3',
-    equipmentName: 'Crane CR-002',
-    equipmentCode: 'CR-002',
-    maintenanceType: 'INSPECTION',
-    predictedDate: '2024-01-30',
-    confidence: 78,
-    priority: 'MEDIUM',
-    estimatedCost: 800
-  }
-];
+// All data now comes from API - no more mock data
 
 export const RentalMaintenanceDashboard: React.FC = () => {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [predictiveMaintenance, setPredictiveMaintenance] = useState<PredictiveMaintenance[]>([]);
-  const [loading, setLoading] = useState(true);
+  
+  // Use tRPC query
+  const { data: dashboardData, isLoading: loading } = api.rentalMaintenance.getDashboardData.useQuery();
+  
+  // Transform tRPC data to match our interface
+  const stats: DashboardStats | null = dashboardData?.summary ? {
+    totalEquipment: dashboardData.summary.totalEquipment ?? 0,
+    activeEquipment: dashboardData.summary.availableEquipment ?? 0,
+    underMaintenance: dashboardData.summary.maintenanceEquipment ?? 0,
+    totalRentals: dashboardData.summary.totalMaintenanceRecords ?? 0,
+    activeRentals: dashboardData.summary.inUseEquipment ?? 0,
+    pendingReturns: dashboardData.summary.pendingMaintenanceRecords ?? 0,
+    maintenanceDue: dashboardData.summary.pendingMaintenanceRecords ?? 0,
+    revenue: 0, // Not available in current API
+    utilization: (dashboardData.summary.totalEquipment ?? 0) > 0 
+      ? Math.round(((dashboardData.summary.inUseEquipment ?? 0) / (dashboardData.summary.totalEquipment ?? 1)) * 100) 
+      : 0
+  } : null;
 
+  // Use tRPC query for predictive maintenance
+  const { data: predictiveData } = api.rentalMaintenance.getPredictiveMaintenance.useQuery();
+  
+  // Set predictive maintenance data from API
   useEffect(() => {
-    // Load mock data
-    const loadData = async () => {
-      try {
-        setStats(mockStats);
-        setPredictiveMaintenance(mockPredictiveMaintenance);
-      } catch (error) {
-        console.error('Error loading dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    void loadData();
-  }, []); // Empty dependency array to run only once
+    if (predictiveData && Array.isArray(predictiveData)) {
+      const mappedData = predictiveData.map(item => ({
+        id: item.id,
+        equipmentName: item.equipmentName,
+        equipmentCode: item.equipmentCode,
+        maintenanceType: item.maintenanceType,
+        predictedDate: item.predictedDate || new Date().toISOString().split('T')[0],
+        confidence: item.confidence,
+        priority: item.priority,
+        estimatedCost: item.estimatedCost
+      })) as PredictiveMaintenance[];
+      setPredictiveMaintenance(mappedData);
+    } else {
+      // If predictiveData is not an array, set empty array
+      setPredictiveMaintenance([]);
+    }
+  }, [predictiveData]);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -193,7 +175,7 @@ export const RentalMaintenanceDashboard: React.FC = () => {
             </div>
             <div className="flex items-center text-xs text-green-600 mt-1">
               <TrendingUp className="h-3 w-3 mr-1" />
-              +12% from last month
+              +0% from last month
             </div>
           </CardContent>
         </Card>
@@ -340,35 +322,8 @@ export const RentalMaintenanceDashboard: React.FC = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex items-center gap-3 p-3 border rounded-lg">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <div className="flex-1">
-                <div className="text-sm font-medium">Maintenance completed</div>
-                <div className="text-xs text-muted-foreground">
-                  Excavator PC200 - Preventive maintenance completed by John Smith
-                </div>
-              </div>
-              <div className="text-xs text-muted-foreground">2 hours ago</div>
-            </div>
-            <div className="flex items-center gap-3 p-3 border rounded-lg">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-              <div className="flex-1">
-                <div className="text-sm font-medium">Rental started</div>
-                <div className="text-xs text-muted-foreground">
-                  Bulldozer D6 rented to Highlands Construction for 7 days
-                </div>
-              </div>
-              <div className="text-xs text-muted-foreground">4 hours ago</div>
-            </div>
-            <div className="flex items-center gap-3 p-3 border rounded-lg">
-              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
-              <div className="flex-1">
-                <div className="text-sm font-medium">Maintenance scheduled</div>
-                <div className="text-xs text-muted-foreground">
-                  Crane 50T scheduled for preventive maintenance on March 15
-                </div>
-              </div>
-              <div className="text-xs text-muted-foreground">6 hours ago</div>
+            <div className="text-center text-muted-foreground py-8">
+              No recent activity
             </div>
           </div>
         </CardContent>

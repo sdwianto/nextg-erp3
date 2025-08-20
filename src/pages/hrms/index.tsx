@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { api } from '@/utils/api';
 import { 
   Users, 
   UserPlus,
@@ -30,28 +31,34 @@ import {
 import EnhancedHRMSDashboard from '@/components/EnhancedHRMSDashboard';
 
 interface Employee {
-  id: number;
-  employeeId: string;
-  name: string;
-  position: string;
-  department: string;
+  id: string;
+  employeeNumber: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  phone: string;
-  status: string;
+  phone?: string;
+  position: string;
+  department: {
+    name: string;
+    code: string;
+  };
+  employmentStatus: string;
   hireDate: string;
-  salary: number;
-  location: string;
-  attendance: number;
+  baseSalary: number;
+  allowances: number;
 }
 
 interface LeaveRequest {
-  id: number;
-  employeeName: string;
-  employeeId: string;
-  type: string;
+  id: string;
+  employee: {
+    firstName: string;
+    lastName: string;
+    employeeNumber: string;
+  };
+  leaveType: string;
   startDate: string;
   endDate: string;
-  days: number;
+  totalDays: number;
   status: string;
   reason: string;
 }
@@ -82,121 +89,64 @@ const HRMSPage: React.FC = () => {
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [selectedLeave, setSelectedLeave] = useState<LeaveRequest | null>(null);
 
-  const hrStats = {
-    totalEmployees: 45,
-    activeEmployees: 42,
-    onLeave: 3,
-    newHires: 2,
-    attendance: 98.5,
-    payroll: {
-      monthly: 125000,
-      pending: 125000,
-      processed: 0
-    }
-  };
+  // tRPC API calls
+  const { data: dashboardData, isLoading: dashboardLoading } = api.hrms.getDashboardData.useQuery();
+  const { data: employeesData, isLoading: employeesLoading } = api.hrms.getEmployees.useQuery({
+    page: 1,
+    limit: 50,
+    search: filters.search || undefined,
+    departmentId: filters.department !== 'all' ? filters.department : undefined,
+    status: filters.status !== 'all' ? filters.status as any : undefined,
+  });
+  const { data: leaveRequestsData, isLoading: leaveRequestsLoading } = api.hrms.getLeaveRequests.useQuery({
+    page: 1,
+    limit: 20,
+  });
 
-  const [employees, setEmployees] = useState<Employee[]>([
-    {
-      id: 1,
-      employeeId: 'EMP-001',
-      name: 'John Smith',
-      position: 'Equipment Operator',
-      department: 'Operations',
-      email: 'john.smith@nextgen.com',
-      phone: '+675 1234 5678',
-      status: 'active',
-      hireDate: '2023-01-15',
-      salary: 3500,
-      location: 'Port Moresby',
-      attendance: 95
-    },
-    {
-      id: 2,
-      employeeId: 'EMP-002',
-      name: 'Sarah Johnson',
-      position: 'Maintenance Technician',
-      department: 'Maintenance',
-      email: 'sarah.johnson@nextgen.com',
-      phone: '+675 1234 5679',
-      status: 'active',
-      hireDate: '2023-03-20',
-      salary: 4200,
-      location: 'Lae',
-      attendance: 98
-    },
-    {
-      id: 3,
-      employeeId: 'EMP-003',
-      name: 'Mike Wilson',
-      position: 'Inventory Manager',
-      department: 'Inventory',
-      email: 'mike.wilson@nextgen.com',
-      phone: '+675 1234 5680',
-      status: 'on-leave',
-      hireDate: '2022-11-10',
-      salary: 4800,
-      location: 'Port Moresby',
-      attendance: 92
-    },
-    {
-      id: 4,
-      employeeId: 'EMP-004',
-      name: 'Lisa Brown',
-      position: 'Finance Officer',
-      department: 'Finance',
-      email: 'lisa.brown@nextgen.com',
-      phone: '+675 1234 5681',
-      status: 'active',
-      hireDate: '2023-06-05',
-      salary: 3800,
-      location: 'Port Moresby',
-      attendance: 100
+  // Derived data from API
+  const hrStats = useMemo(() => {
+    if (!dashboardData?.data) {
+      return {
+        totalEmployees: 0,
+        activeEmployees: 0,
+        onLeave: 0,
+        newHires: 0,
+        attendance: 0,
+        payroll: {
+          monthly: 0,
+          pending: 0,
+          processed: 0
+        }
+      };
     }
-  ]);
 
-  const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([
-    {
-      id: 1,
-      employeeName: 'Mike Wilson',
-      employeeId: 'EMP-003',
-      type: 'Annual Leave',
-      startDate: '2024-03-15',
-      endDate: '2024-03-22',
-      days: 8,
-      status: 'approved',
-      reason: 'Family vacation'
-    },
-    {
-      id: 2,
-      employeeName: 'David Lee',
-      employeeId: 'EMP-005',
-      type: 'Sick Leave',
-      startDate: '2024-03-12',
-      endDate: '2024-03-14',
-      days: 3,
-      status: 'approved',
-      reason: 'Medical appointment'
-    },
-    {
-      id: 3,
-      employeeName: 'Anna Garcia',
-      employeeId: 'EMP-006',
-      type: 'Maternity Leave',
-      startDate: '2024-04-01',
-      endDate: '2024-07-01',
-      days: 90,
-      status: 'pending',
-      reason: 'Maternity leave'
-    }
-  ]);
+    const stats = dashboardData.data;
+    return {
+      totalEmployees: stats.totalEmployees,
+      activeEmployees: stats.activeEmployees,
+      onLeave: stats.onLeaveEmployees,
+      newHires: 0, // Not available in current API
+      attendance: 0, // Default value
+      payroll: {
+        monthly: 0, // Not available in current API
+        pending: 0,
+        processed: 0
+      }
+    };
+  }, [dashboardData]);
 
-  const [departments, setDepartments] = useState([
-    { id: 1, name: 'Operations', count: 18, manager: 'John Smith' },
-    { id: 2, name: 'Maintenance', count: 12, manager: 'Sarah Johnson' },
-    { id: 3, name: 'Inventory', count: 8, manager: 'Mike Wilson' },
-    { id: 4, name: 'Finance', count: 5, manager: 'Lisa Brown' },
-    { id: 5, name: 'HR', count: 3, manager: 'David Lee' }
-  ]);
+  const employees = useMemo(() => {
+    return employeesData?.data || [];
+  }, [employeesData]);
+
+  const leaveRequests = useMemo(() => {
+    return leaveRequestsData?.data || [];
+  }, [leaveRequestsData]);
+
+  // Loading states
+  const isLoading = dashboardLoading || employeesLoading || leaveRequestsLoading;
+
+  const [departments, setDepartments] = useState<any[]>([]);
 
   const [newEmployee, setNewEmployee] = useState({
     employeeId: '',
@@ -233,7 +183,7 @@ const HRMSPage: React.FC = () => {
   });
 
   const departmentsList = useMemo(() => 
-    Array.from(new Set(employees.map(item => item.department))), 
+    Array.from(new Set(employees.map(item => item.department.name))), 
     [employees]
   );
 
@@ -243,12 +193,12 @@ const HRMSPage: React.FC = () => {
   );
 
   const locations = useMemo(() => 
-    Array.from(new Set(employees.map(item => item.location))), 
+    Array.from(new Set(employees.map(item => item.department.name))), 
     [employees]
   );
 
   const statuses = useMemo(() => 
-    Array.from(new Set(employees.map(item => item.status))), 
+    Array.from(new Set(employees.map(item => item.employmentStatus))), 
     [employees]
   );
 
@@ -256,16 +206,17 @@ const HRMSPage: React.FC = () => {
     return employees.filter(item => {
       const searchLower = filters.search.toLowerCase();
       const matchesSearch = !filters.search || 
-        item.name.toLowerCase().includes(searchLower) ||
-        item.employeeId.toLowerCase().includes(searchLower) || 
+        item.firstName.toLowerCase().includes(searchLower) ||
+        item.lastName.toLowerCase().includes(searchLower) ||
+        item.employeeNumber.toLowerCase().includes(searchLower) ||
         item.email.toLowerCase().includes(searchLower) ||
         item.position.toLowerCase().includes(searchLower) ||
-        item.department.toLowerCase().includes(searchLower);
+        item.department.name.toLowerCase().includes(searchLower);
 
-      const matchesDepartment = !filters.department || filters.department === 'all' || item.department === filters.department;
-      const matchesStatus = !filters.status || filters.status === 'all' || item.status === filters.status;
+      const matchesDepartment = !filters.department || filters.department === 'all' || item.department.name === filters.department;
+      const matchesStatus = !filters.status || filters.status === 'all' || item.employmentStatus === filters.status;
       const matchesPosition = !filters.position || filters.position === 'all' || item.position === filters.position;
-      const matchesLocation = !filters.location || filters.location === 'all' || item.location === filters.location;
+      const matchesLocation = !filters.location || filters.location === 'all' || item.department.name === filters.location;
 
       return matchesSearch && matchesDepartment && matchesStatus && matchesPosition && matchesLocation;
     });
@@ -283,21 +234,21 @@ const HRMSPage: React.FC = () => {
 
   const addNewEmployee = () => {
     const employee: Employee = {
-      id: Math.max(...employees.map(item => item.id)) + 1,
-      employeeId: newEmployee.employeeId,
-      name: newEmployee.name,
-      position: newEmployee.position,
-      department: newEmployee.department,
+      id: 'emp-001', // Placeholder, will be generated by API
+      employeeNumber: newEmployee.employeeId,
+      firstName: newEmployee.name.split(' ')[0] || '',
+      lastName: newEmployee.name.split(' ')[1] || '',
       email: newEmployee.email,
       phone: newEmployee.phone,
-      status: newEmployee.status,
-      hireDate: new Date().toISOString().split('T')[0] ?? '',
-      salary: parseFloat(newEmployee.salary) || 0,
-      location: newEmployee.location,
-      attendance: 100
+      position: newEmployee.position,
+      department: { name: newEmployee.department, code: 'dep-001' }, // Placeholder
+      employmentStatus: newEmployee.status,
+      hireDate: new Date().toISOString().split('T')[0] || '',
+      baseSalary: parseFloat(newEmployee.salary) || 0,
+      allowances: 0 // Placeholder
     };
 
-    setEmployees(prevEmployees => [...prevEmployees, employee]);
+    // setEmployees(prevEmployees => [...prevEmployees, employee]); // API call
     
     setNewEmployee({
       employeeId: '',
@@ -318,20 +269,19 @@ const HRMSPage: React.FC = () => {
 
     const updatedEmployee: Employee = {
       ...selectedEmployee,
-      employeeId: editEmployee.employeeId,
-      name: editEmployee.name,
-      position: editEmployee.position,
-      department: editEmployee.department,
+      employeeNumber: editEmployee.employeeId,
+      firstName: editEmployee.name.split(' ')[0] || '',
+      lastName: editEmployee.name.split(' ')[1] || '',
       email: editEmployee.email,
       phone: editEmployee.phone,
-      salary: parseFloat(editEmployee.salary) || 0,
-      location: editEmployee.location,
-      status: editEmployee.status
+      baseSalary: parseFloat(editEmployee.salary) || 0,
+      department: { name: editEmployee.department, code: 'dep-001' }, // Placeholder
+      employmentStatus: editEmployee.status
     };
 
-    setEmployees(prevEmployees => 
-      prevEmployees.map(item => item.id === selectedEmployee.id ? updatedEmployee : item)
-    );
+    // setEmployees(prevEmployees => 
+    //   prevEmployees.map(item => item.id === selectedEmployee.id ? updatedEmployee : item) // API call
+    // );
     
     setEditEmployee({
       employeeId: '',
@@ -348,30 +298,22 @@ const HRMSPage: React.FC = () => {
     setIsEditEmployeeDialogOpen(false);
   };
 
-  const handleEditEmployeeClick = (item: Employee) => {
-    setSelectedEmployee(item);
-    setEditEmployee({
-      employeeId: item.employeeId,
-      name: item.name,
-      position: item.position,
-      department: item.department,
-      email: item.email,
-      phone: item.phone,
-      salary: item.salary.toString(),
-      location: item.location,
-      status: item.status
-    });
+  const handleEditEmployeeClick = (item: any) => {
+    // TODO: Implement edit employee functionality
+    console.log('Edit employee:', item);
     setIsEditEmployeeDialogOpen(true);
   };
 
-  const handleViewEmployeeClick = (item: Employee) => {
-    setSelectedEmployee(item);
+  const handleViewEmployeeClick = (item: any) => {
+    // TODO: Implement view employee functionality
+    console.log('View employee:', item);
     setIsViewEmployeeDialogOpen(true);
   };
 
   // Handle view leave details
-  const handleViewLeaveClick = (item: LeaveRequest) => {
-    setSelectedLeave(item);
+  const handleViewLeaveClick = (item: any) => {
+    // TODO: Implement view leave functionality
+    console.log('View leave:', item);
     setIsViewLeaveDialogOpen(true);
   };
 
@@ -382,18 +324,21 @@ const HRMSPage: React.FC = () => {
     const days = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 
     const leaveRequest: LeaveRequest = {
-      id: Math.max(...leaveRequests.map(item => item.id)) + 1,
-      employeeName: newLeaveRequest.employeeName,
-      employeeId: newLeaveRequest.employeeId,
-      type: newLeaveRequest.type,
+      id: 'leave-001', // Placeholder, will be generated by API
+      employee: {
+        firstName: newLeaveRequest.employeeName.split(' ')[0] || '',
+        lastName: newLeaveRequest.employeeName.split(' ')[1] || '',
+        employeeNumber: newLeaveRequest.employeeId
+      },
+      leaveType: newLeaveRequest.type,
       startDate: newLeaveRequest.startDate,
       endDate: newLeaveRequest.endDate,
-      days: days,
+      totalDays: days,
       status: 'pending',
       reason: newLeaveRequest.reason
     };
 
-    setLeaveRequests(prevRequests => [...prevRequests, leaveRequest]);
+    // setLeaveRequests(prevRequests => [...prevRequests, leaveRequest]); // API call
     
     setNewLeaveRequest({
       employeeId: '',
@@ -407,21 +352,22 @@ const HRMSPage: React.FC = () => {
   };
 
   // Handle leave approval status change
-  const handleLeaveApproval = (leaveId: number, newStatus: string) => {
-    setLeaveRequests(prevRequests => 
-      prevRequests.map(request => 
-        request.id === leaveId 
-          ? { ...request, status: newStatus }
-          : request
-      )
-    );
+  const handleLeaveApproval = (leaveId: string, newStatus: string) => {
+    // setLeaveRequests(prevRequests => 
+    //   prevRequests.map(request => 
+    //     request.id === leaveId 
+    //       ? { ...request, status: newStatus }
+    //       : request
+    //   )
+    // ); // API call
     setIsLeaveApprovalDialogOpen(false);
     setSelectedLeave(null);
   };
 
   // Handle leave approval button click
-  const handleLeaveApprovalClick = (leave: LeaveRequest) => {
-    setSelectedLeave(leave);
+  const handleLeaveApprovalClick = (leave: any) => {
+    // TODO: Implement leave approval functionality
+    console.log('Leave approval:', leave);
     setIsLeaveApprovalDialogOpen(true);
   };
 
@@ -503,12 +449,12 @@ const HRMSPage: React.FC = () => {
                     </div>
                     <div className="grid gap-2">
                       <Label htmlFor="name">Full Name *</Label>
-                      <Input
-                        id="name"
-                        placeholder="e.g., John Smith"
-                        value={newEmployee.name}
-                        onChange={(e) => setNewEmployee(prev => ({ ...prev, name: e.target.value }))}
-                      />
+                                             <Input
+                         id="name"
+                         placeholder="e.g., Employee Full Name"
+                         value={newEmployee.name}
+                         onChange={(e) => setNewEmployee(prev => ({ ...prev, name: e.target.value }))}
+                       />
                     </div>
                   </div>
 
@@ -522,24 +468,20 @@ const HRMSPage: React.FC = () => {
                         onChange={(e) => setNewEmployee(prev => ({ ...prev, position: e.target.value }))}
                       />
                     </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="department">Department *</Label>
-                      <Select 
-                        value={newEmployee.department} 
-                        onValueChange={(value) => setNewEmployee(prev => ({ ...prev, department: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select department" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Operations">Operations</SelectItem>
-                          <SelectItem value="Maintenance">Maintenance</SelectItem>
-                          <SelectItem value="Inventory">Inventory</SelectItem>
-                          <SelectItem value="Finance">Finance</SelectItem>
-                          <SelectItem value="HR">HR</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
+                                           <div className="grid gap-2">
+                         <Label htmlFor="department">Department *</Label>
+                         <Select 
+                           value={newEmployee.department} 
+                           onValueChange={(value) => setNewEmployee(prev => ({ ...prev, department: value }))}
+                         >
+                           <SelectTrigger>
+                             <SelectValue placeholder="Select department" />
+                           </SelectTrigger>
+                           <SelectContent>
+                             <SelectItem value="no-departments">No departments available</SelectItem>
+                           </SelectContent>
+                         </Select>
+                       </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -585,10 +527,7 @@ const HRMSPage: React.FC = () => {
                           <SelectValue placeholder="Select location" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Port Moresby">Port Moresby</SelectItem>
-                          <SelectItem value="Lae">Lae</SelectItem>
-                          <SelectItem value="Mount Hagen">Mount Hagen</SelectItem>
-                          <SelectItem value="Goroka">Goroka</SelectItem>
+                          <SelectItem value="no-locations">No locations available</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -753,8 +692,8 @@ const HRMSPage: React.FC = () => {
                           <tr key={employee.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
                             <td className="p-3">
                               <div>
-                                <div className="font-medium">{employee.name}</div>
-                                <div className="text-sm text-gray-500">{employee.employeeId}</div>
+                                <div className="font-medium">{`${employee.firstName} ${employee.lastName}`}</div>
+                                <div className="text-sm text-gray-500">{employee.employeeNumber}</div>
                                 <div className="text-sm text-gray-500">{employee.email}</div>
                               </div>
                             </td>
@@ -767,21 +706,21 @@ const HRMSPage: React.FC = () => {
                             <td className="p-3">
                               <div className="flex items-center gap-2">
                                 <Building2 className="h-4 w-4 text-gray-400" />
-                                <span>{employee.department}</span>
+                                <span>{employee.department.name}</span>
                               </div>
                             </td>
                             <td className="p-3">
-                              {getStatusBadge(employee.status)}
+                              {getStatusBadge(employee.employmentStatus)}
                             </td>
                             <td className="p-3">
                               <div className="flex items-center gap-1">
                                 <DollarSign className="h-4 w-4 text-gray-400" />
-                                <span>{formatCurrency(employee.salary)}</span>
+                                <span>{formatCurrency(employee.baseSalary)}</span>
                               </div>
                             </td>
                             <td className="p-3">
-                              <span className={`font-medium ${getAttendanceColor(employee.attendance)}`}>
-                                {employee.attendance}%
+                              <span className={`font-medium ${getAttendanceColor(0)}`}>
+                                {0}%
                               </span>
                             </td>
                             <td className="p-3">
@@ -826,12 +765,12 @@ const HRMSPage: React.FC = () => {
                       <div className="flex items-start gap-4">
                         <Calendar className="h-4 w-4 text-blue-500" />
                         <div>
-                          <div className="font-medium">{request.employeeName}</div>
+                          <div className="font-medium">{`${request.employee.firstName} ${request.employee.lastName}`}</div>
                           <div className="text-sm text-gray-500">
-                            {request.employeeId} • {request.type} • {request.days} days
+                            {request.employee.employeeNumber} • {request.leaveType} • {request.totalDays} days
                           </div>
                           <div className="text-sm text-gray-500">
-                            {request.startDate} to {request.endDate}
+                            {request.startDate instanceof Date ? request.startDate.toLocaleDateString() : request.startDate} to {request.endDate instanceof Date ? request.endDate.toLocaleDateString() : request.endDate}
                           </div>
                         </div>
                       </div>
@@ -843,7 +782,7 @@ const HRMSPage: React.FC = () => {
                         {getStatusBadge(request.status)}
                         <div className="flex gap-2 w-full sm:w-auto">
                           <Button size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={() => handleViewLeaveClick(request)}>View Details</Button>
-                          {request.status === 'pending' && (
+                          {request.status === 'PENDING' && (
                             <Button size="sm" className="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700" onClick={() => handleLeaveApprovalClick(request)}>
                               Leave Approval
                             </Button>
@@ -1031,7 +970,7 @@ const HRMSPage: React.FC = () => {
                   <Label htmlFor="editName">Full Name *</Label>
                   <Input
                     id="editName"
-                    placeholder="e.g., John Smith"
+                    placeholder="e.g., Employee Full Name"
                     value={editEmployee.name}
                     onChange={(e) => setEditEmployee(prev => ({ ...prev, name: e.target.value }))}
                   />
@@ -1048,24 +987,20 @@ const HRMSPage: React.FC = () => {
                     onChange={(e) => setEditEmployee(prev => ({ ...prev, position: e.target.value }))}
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="editDepartment">Department *</Label>
-                  <Select 
-                    value={editEmployee.department} 
-                    onValueChange={(value) => setEditEmployee(prev => ({ ...prev, department: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Operations">Operations</SelectItem>
-                      <SelectItem value="Maintenance">Maintenance</SelectItem>
-                      <SelectItem value="Inventory">Inventory</SelectItem>
-                      <SelectItem value="Finance">Finance</SelectItem>
-                      <SelectItem value="HR">HR</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                                     <div className="grid gap-2">
+                       <Label htmlFor="editDepartment">Department *</Label>
+                       <Select 
+                         value={editEmployee.department} 
+                         onValueChange={(value) => setEditEmployee(prev => ({ ...prev, department: value }))}
+                       >
+                         <SelectTrigger>
+                           <SelectValue placeholder="Select department" />
+                         </SelectTrigger>
+                         <SelectContent>
+                           <SelectItem value="no-departments">No departments available</SelectItem>
+                         </SelectContent>
+                       </Select>
+                     </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -1111,10 +1046,7 @@ const HRMSPage: React.FC = () => {
                       <SelectValue placeholder="Select location" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Port Moresby">Port Moresby</SelectItem>
-                      <SelectItem value="Lae">Lae</SelectItem>
-                      <SelectItem value="Mount Hagen">Mount Hagen</SelectItem>
-                      <SelectItem value="Goroka">Goroka</SelectItem>
+                      <SelectItem value="no-locations">No locations available</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1179,11 +1111,11 @@ const HRMSPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label>Employee ID</Label>
-                    <div className="font-medium">{selectedEmployee.employeeId}</div>
+                    <div className="font-medium">{selectedEmployee.employeeNumber}</div>
                   </div>
                   <div className="grid gap-2">
                     <Label>Full Name</Label>
-                    <div className="font-medium">{selectedEmployee.name}</div>
+                    <div className="font-medium">{`${selectedEmployee.firstName} ${selectedEmployee.lastName}`}</div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -1193,7 +1125,7 @@ const HRMSPage: React.FC = () => {
                   </div>
                   <div className="grid gap-2">
                     <Label>Department</Label>
-                    <div className="font-medium">{selectedEmployee.department}</div>
+                    <div className="font-medium">{selectedEmployee.department.name}</div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -1203,23 +1135,23 @@ const HRMSPage: React.FC = () => {
                   </div>
                   <div className="grid gap-2">
                     <Label>Phone</Label>
-                    <div className="font-medium">{selectedEmployee.phone}</div>
+                    <div className="font-medium">{selectedEmployee.phone || 'N/A'}</div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label>Salary</Label>
-                    <div className="font-medium">{formatCurrency(selectedEmployee.salary)}</div>
+                    <div className="font-medium">{formatCurrency(selectedEmployee.baseSalary)}</div>
                   </div>
                   <div className="grid gap-2">
                     <Label>Location</Label>
-                    <div className="font-medium">{selectedEmployee.location}</div>
+                    <div className="font-medium">{selectedEmployee.department.name}</div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label>Status</Label>
-                    <div className="font-medium">{getStatusBadge(selectedEmployee.status)}</div>
+                    <div className="font-medium">{getStatusBadge(selectedEmployee.employmentStatus)}</div>
                   </div>
                   <div className="grid gap-2">
                     <Label>Hire Date</Label>
@@ -1229,8 +1161,8 @@ const HRMSPage: React.FC = () => {
                 <div className="grid gap-2">
                   <Label>Attendance</Label>
                   <div className="font-medium">
-                    <span className={`${getAttendanceColor(selectedEmployee.attendance)}`}>
-                      {selectedEmployee.attendance}%
+                    <span className={`${getAttendanceColor(0)}`}>
+                      {0}%
                     </span>
                   </div>
                 </div>
@@ -1255,17 +1187,17 @@ const HRMSPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label>Employee Name</Label>
-                    <div className="font-medium">{selectedLeave.employeeName}</div>
+                    <div className="font-medium">{`${selectedLeave.employee.firstName} ${selectedLeave.employee.lastName}`}</div>
                   </div>
                   <div className="grid gap-2">
                     <Label>Employee ID</Label>
-                    <div className="font-medium">{selectedLeave.employeeId}</div>
+                    <div className="font-medium">{selectedLeave.employee.employeeNumber}</div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label>Leave Type</Label>
-                    <div className="font-medium">{selectedLeave.type}</div>
+                    <div className="font-medium">{selectedLeave.leaveType}</div>
                   </div>
                   <div className="grid gap-2">
                     <Label>Status</Label>
@@ -1285,7 +1217,7 @@ const HRMSPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label>Duration</Label>
-                    <div className="font-medium">{selectedLeave.days} days</div>
+                    <div className="font-medium">{selectedLeave.totalDays} days</div>
                   </div>
                 </div>
                 <div className="grid gap-2">
@@ -1323,7 +1255,7 @@ const HRMSPage: React.FC = () => {
                   <Label htmlFor="newLeaveEmployeeName">Full Name *</Label>
                   <Input
                     id="newLeaveEmployeeName"
-                    placeholder="e.g., John Smith"
+                    placeholder="e.g., Employee Full Name"
                     value={newLeaveRequest.employeeName}
                     onChange={(e) => setNewLeaveRequest(prev => ({ ...prev, employeeName: e.target.value }))}
                   />
@@ -1418,11 +1350,11 @@ const HRMSPage: React.FC = () => {
             {selectedLeave && (
               <div className="space-y-4">
                 <div className="p-4 border rounded-lg bg-gray-50">
-                  <div className="font-medium">{selectedLeave.employeeName}</div>
-                  <div className="text-sm text-gray-500">{selectedLeave.employeeId}</div>
-                  <div className="text-sm font-medium mt-2">{selectedLeave.type}</div>
+                  <div className="font-medium">{`${selectedLeave.employee.firstName} ${selectedLeave.employee.lastName}`}</div>
+                  <div className="text-sm text-gray-500">{selectedLeave.employee.employeeNumber}</div>
+                  <div className="text-sm font-medium mt-2">{selectedLeave.leaveType}</div>
                   <div className="text-sm text-gray-500">
-                    {selectedLeave.startDate} to {selectedLeave.endDate} ({selectedLeave.days} days)
+                    {selectedLeave.startDate} to {selectedLeave.endDate} ({selectedLeave.totalDays} days)
                   </div>
                   <div className="text-sm mt-2">
                     <span className="font-medium">Reason:</span> {selectedLeave.reason}

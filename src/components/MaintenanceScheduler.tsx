@@ -42,53 +42,8 @@ export const MaintenanceScheduler: React.FC<MaintenanceSchedulerProps> = ({ isOp
     alertLevel: ''
   });
 
-  // Mock data for equipment conditions
-  const equipmentConditions = [
-    {
-      id: 'EX-001',
-      name: 'Excavator EX-001',
-      condition: 85,
-      status: 'good',
-      lastMaintenance: '2024-01-10',
-      nextMaintenance: '2024-02-10',
-      alerts: 0,
-      type: 'Heavy Equipment',
-      location: 'Site A'
-    },
-    {
-      id: 'BD-003',
-      name: 'Bulldozer BD-003',
-      condition: 45,
-      status: 'warning',
-      lastMaintenance: '2024-01-05',
-      nextMaintenance: '2024-01-25',
-      alerts: 2,
-      type: 'Heavy Equipment',
-      location: 'Site B'
-    },
-    {
-      id: 'CR-002',
-      name: 'Crane CR-002',
-      condition: 92,
-      status: 'excellent',
-      lastMaintenance: '2024-01-15',
-      nextMaintenance: '2024-03-15',
-      alerts: 0,
-      type: 'Lifting Equipment',
-      location: 'Site C'
-    },
-    {
-      id: 'LD-005',
-      name: 'Loader LD-005',
-      condition: 30,
-      status: 'critical',
-      lastMaintenance: '2024-01-01',
-      nextMaintenance: '2024-01-20',
-      alerts: 3,
-      type: 'Material Handling',
-      location: 'Site A'
-    }
-  ];
+  // Empty equipment conditions - ready for real data
+  const equipmentConditions: any[] = [];
 
   const handleScheduleInputChange = (field: string, value: string) => {
     setScheduleData(prev => ({ ...prev, [field]: value }));
@@ -178,10 +133,7 @@ export const MaintenanceScheduler: React.FC<MaintenanceSchedulerProps> = ({ isOp
                             <SelectValue placeholder="Select equipment" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="EX-001">Excavator EX-001</SelectItem>
-                            <SelectItem value="BD-003">Bulldozer BD-003</SelectItem>
-                            <SelectItem value="CR-002">Crane CR-002</SelectItem>
-                            <SelectItem value="LD-005">Loader LD-005</SelectItem>
+                            <SelectItem value="no-equipment">No equipment available</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -229,10 +181,7 @@ export const MaintenanceScheduler: React.FC<MaintenanceSchedulerProps> = ({ isOp
                             <SelectValue placeholder="Select technician" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="john-smith">John Smith</SelectItem>
-                            <SelectItem value="mike-johnson">Mike Johnson</SelectItem>
-                            <SelectItem value="sarah-wilson">Sarah Wilson</SelectItem>
-                            <SelectItem value="david-brown">David Brown</SelectItem>
+                                                    <SelectItem value="no-technicians">No technicians available</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -313,10 +262,7 @@ export const MaintenanceScheduler: React.FC<MaintenanceSchedulerProps> = ({ isOp
                             <SelectValue placeholder="Select equipment" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="EX-001">Excavator EX-001</SelectItem>
-                            <SelectItem value="BD-003">Bulldozer BD-003</SelectItem>
-                            <SelectItem value="CR-002">Crane CR-002</SelectItem>
-                            <SelectItem value="LD-005">Loader LD-005</SelectItem>
+                            <SelectItem value="no-equipment">No equipment available</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -450,7 +396,7 @@ export const MaintenanceScheduler: React.FC<MaintenanceSchedulerProps> = ({ isOp
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground mb-1">Next Maintenance</p>
-                        <p className="text-2xl font-bold">3</p>
+                                                 <p className="text-2xl font-bold">0</p>
                       </div>
                       <Calendar className="h-8 w-8 text-muted-foreground" />
                     </div>

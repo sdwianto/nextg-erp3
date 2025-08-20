@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -7,8 +7,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { api } from '@/utils/api';
 import { 
-  Wrench, 
   Plus, 
   Search, 
   Filter,
@@ -21,8 +22,16 @@ import {
   Truck,
   X,
   Eye,
-  Edit
+  Edit,
+  MapPin,
+  BarChart3,
+  TrendingUp,
+  Activity,
+  FileText,
+  Download,
+  Building2
 } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Equipment {
   id: number;
@@ -32,20 +41,22 @@ interface Equipment {
   status: string;
   currentRental: string | null;
   rentalRate: number;
-  maintenanceDue: string;
   location: string;
-  lastMaintenance: string;
+  operatingHours: number;
+  lastRentalDate: string;
 }
 
-interface MaintenanceRecord {
+interface RentalContract {
   id: number;
   equipmentCode: string;
   equipmentName: string;
-  type: string;
+  customerName: string;
+  startDate: string;
+  endDate: string;
   status: string;
-  scheduledDate: string;
-  technician: string;
-  description: string;
+  totalAmount: number;
+  deposit: number;
+  location: string;
 }
 
 interface FilterState {
@@ -71,589 +82,499 @@ const RentalPage: React.FC = () => {
   const [isNewRentalDialogOpen, setIsNewRentalDialogOpen] = useState(false);
   const [isEditEquipmentDialogOpen, setIsEditEquipmentDialogOpen] = useState(false);
   const [isViewEquipmentDialogOpen, setIsViewEquipmentDialogOpen] = useState(false);
-  const [isViewMaintenanceDialogOpen, setIsViewMaintenanceDialogOpen] = useState(false);
-  const [isScheduleMaintenanceDialogOpen, setIsScheduleMaintenanceDialogOpen] = useState(false);
+  const [isViewRentalContractDialogOpen, setIsViewRentalContractDialogOpen] = useState(false);
+  const [isEditRentalContractDialogOpen, setIsEditRentalContractDialogOpen] = useState(false);
+  const [isReturnEquipmentDialogOpen, setIsReturnEquipmentDialogOpen] = useState(false);
+  const [isExtendRentalDialogOpen, setIsExtendRentalDialogOpen] = useState(false);
+  const [isCancelRentalDialogOpen, setIsCancelRentalDialogOpen] = useState(false);
+  const [isExportReportDialogOpen, setIsExportReportDialogOpen] = useState(false);
   const [selectedEquipment, setSelectedEquipment] = useState<Equipment | null>(null);
-  const [selectedMaintenance, setSelectedMaintenance] = useState<MaintenanceRecord | null>(null);
+  const [selectedRental, setSelectedRental] = useState<RentalContract | null>(null);
 
-  // Mock data for demonstration
-  const [equipment, setEquipment] = useState<Equipment[]>([
-    {
-      id: 1,
-      code: 'EXC-001',
-      name: 'Excavator PC200',
-      type: 'Heavy Equipment',
-      status: 'rented',
-      currentRental: 'Highlands Construction',
-      rentalRate: 2500,
-      maintenanceDue: '2024-03-15',
-      location: 'Site A',
-      lastMaintenance: '2024-02-15'
-    },
-    {
-      id: 2,
-      code: 'BD-002',
-      name: 'Bulldozer D6',
-      type: 'Heavy Equipment',
-      status: 'available',
-      currentRental: null,
-      rentalRate: 1800,
-      maintenanceDue: '2024-03-20',
-      location: 'Warehouse',
-      lastMaintenance: '2024-02-20'
-    },
-    {
-      id: 3,
-      code: 'CR-003',
-      name: 'Crane 50T',
-      type: 'Lifting Equipment',
-      status: 'maintenance',
-      currentRental: null,
-      rentalRate: 3200,
-      maintenanceDue: '2024-03-10',
-      location: 'Service Center',
-      lastMaintenance: '2024-03-05'
-    },
-    {
-      id: 4,
-      code: 'GR-004',
-      name: 'Grader CAT 12',
-      type: 'Heavy Equipment',
-      status: 'rented',
-      currentRental: 'Mining Corp PNG',
-      rentalRate: 2200,
-      maintenanceDue: '2024-03-25',
-      location: 'Site B',
-      lastMaintenance: '2024-02-25'
+  // Form states
+  const [editEquipmentForm, setEditEquipmentForm] = useState({
+    name: '',
+    code: '',
+    type: '',
+    rentalRate: '',
+    location: '',
+    description: ''
+  });
+
+  const [newRentalForm, setNewRentalForm] = useState({
+    equipmentId: '',
+    customerName: '',
+    startDate: '',
+    endDate: '',
+    rentalRate: '',
+    deposit: '',
+    location: '',
+    notes: ''
+  });
+
+  const [editRentalForm, setEditRentalForm] = useState({
+    customerName: '',
+    startDate: '',
+    endDate: '',
+    rentalRate: '',
+    deposit: '',
+    location: '',
+    notes: ''
+  });
+
+  const [returnForm, setReturnForm] = useState({
+    returnDate: '',
+    condition: '',
+    notes: '',
+    additionalCharges: ''
+  });
+
+  const [extendForm, setExtendForm] = useState({
+    newEndDate: '',
+    reason: ''
+  });
+
+  // Use tRPC query for equipment data
+  const { data: equipmentData, isLoading: equipmentLoading } = api.rentalMaintenance.getEquipment.useQuery({
+    page: 1,
+    limit: 50
+  });
+
+  const { data: dashboardData, isLoading: dashboardLoading } = api.rentalMaintenance.getDashboardData.useQuery();
+
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
+  const [rentalContracts, setRentalContracts] = useState<RentalContract[]>([]);
+
+  useEffect(() => {
+    if (equipmentData?.equipment) {
+      const apiEquipment: Equipment[] = equipmentData.equipment.map(item => ({
+        id: parseInt(item.id),
+        code: item.code,
+        name: item.name,
+        type: item.category?.name || 'Heavy Equipment',
+        status: item.status.toLowerCase(),
+        currentRental: null, // TODO: Add rental info to API
+        rentalRate: 0, // TODO: Add rental rate to API
+        location: item.location || 'Warehouse',
+        operatingHours: 0, // TODO: Add operating hours to API
+        lastRentalDate: '2024-02-15' // TODO: Get from rental records
+      }));
+      setEquipment(apiEquipment);
     }
-  ]);
+  }, [equipmentData]);
 
-  const [maintenanceRecords, setMaintenanceRecords] = useState<MaintenanceRecord[]>([
+  // Load assets from Asset Management for rental
+  const [availableAssets, setAvailableAssets] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Load assets from Asset Management that are available for rental
+    const storedAssets = localStorage.getItem('procurementAssets');
+    if (storedAssets) {
+      try {
+        const parsedAssets = JSON.parse(storedAssets);
+        const rentalAssets = parsedAssets.filter((asset: any) => 
+          asset.rentalStatus === 'available' && asset.status === 'active'
+        );
+        setAvailableAssets(rentalAssets);
+      } catch (error) {
+        console.error('Error parsing assets for rental:', error);
+      }
+    }
+  }, []);
+
+  // Combine equipment and assets for rental
+  const allRentalItems = [...equipment, ...availableAssets.map((asset: any) => ({
+    id: asset.id,
+    code: asset.assetNumber,
+    name: asset.assetName,
+    type: asset.assetType,
+    status: asset.rentalStatus,
+    currentRental: asset.currentRental,
+    rentalRate: asset.rentalRate ?? 0,
+    location: asset.location,
+    operatingHours: 0,
+    lastRentalDate: asset.purchaseDate,
+    isAsset: true,
+    assetData: asset
+  }))];
+
+  // Mock rental data
+  const rentalStats = {
+    totalEquipment: dashboardData?.summary?.totalEquipment ?? 0,
+    availableEquipment: dashboardData?.summary?.availableEquipment ?? 0,
+    rentedEquipment: dashboardData?.summary?.inUseEquipment ?? 0,
+    totalRevenue: 0,
+    activeContracts: 0,
+    pendingReturns: 0
+  };
+
+  // Mock rental contracts data
+  const mockRentalContracts: RentalContract[] = [
     {
       id: 1,
       equipmentCode: 'EXC-001',
       equipmentName: 'Excavator PC200',
-      type: 'Preventive',
-      status: 'scheduled',
-      scheduledDate: '2024-03-15',
-      technician: 'John Smith',
-      description: 'Regular maintenance and oil change'
+      customerName: 'PT Construction Jaya',
+      startDate: '2024-01-15',
+      endDate: '2024-02-15',
+      status: 'active',
+      totalAmount: 15000000,
+      deposit: 5000000,
+      location: 'Site A - Jakarta'
     },
     {
       id: 2,
       equipmentCode: 'CR-003',
       equipmentName: 'Crane 50T',
-      type: 'Repair',
-      status: 'in-progress',
-      scheduledDate: '2024-03-10',
-      technician: 'Mike Johnson',
-      description: 'Hydraulic system repair'
+      customerName: 'PT Building Solutions',
+      startDate: '2024-01-20',
+      endDate: '2024-03-20',
+      status: 'active',
+      totalAmount: 25000000,
+      deposit: 8000000,
+      location: 'Site B - Bandung'
     },
     {
       id: 3,
       equipmentCode: 'BD-002',
       equipmentName: 'Bulldozer D6',
-      type: 'Preventive',
-      status: 'scheduled',
-      scheduledDate: '2024-03-20',
-      technician: 'David Wilson',
-      description: 'Engine inspection and filter replacement'
+      customerName: 'PT Infrastructure Pro',
+      startDate: '2024-01-10',
+      endDate: '2024-01-25',
+      status: 'completed',
+      totalAmount: 8000000,
+      deposit: 3000000,
+      location: 'Site C - Surabaya'
+    },
+    {
+      id: 4,
+      equipmentCode: 'FL-004',
+      equipmentName: 'Forklift 3T',
+      customerName: 'PT Warehouse Management',
+      startDate: '2024-02-01',
+      endDate: '2024-02-28',
+      status: 'pending',
+      totalAmount: 5000000,
+      deposit: 2000000,
+      location: 'Warehouse - Jakarta'
     }
-  ]);
+  ];
 
-  // Get unique values for filter options
-  const types = useMemo(() => 
-    Array.from(new Set(equipment.map(item => item.type))), 
-    [equipment]
-  );
+  useEffect(() => {
+    setRentalContracts(mockRentalContracts);
+    // Update stats based on mock data
+    const activeContracts = mockRentalContracts.filter(c => c.status === 'active').length;
+    const pendingReturns = mockRentalContracts.filter(c => c.status === 'pending').length;
+    const totalRevenue = mockRentalContracts.reduce((sum, c) => sum + c.totalAmount, 0);
+    
+    setRentalContracts((_prev) => {
+      // Update stats
+      rentalStats.activeContracts = activeContracts;
+      rentalStats.pendingReturns = pendingReturns;
+      rentalStats.totalRevenue = totalRevenue;
+      return mockRentalContracts;
+    });
+  }, []);
 
-  const locations = useMemo(() => 
-    Array.from(new Set(equipment.map(item => item.location))), 
-    [equipment]
-  );
-
-  const statuses = useMemo(() => 
-    Array.from(new Set(equipment.map(item => item.status))), 
-    [equipment]
-  );
-
-  // Filtered equipment
   const filteredEquipment = useMemo(() => {
-    return equipment.filter(item => {
+    return allRentalItems.filter(item => {
       // Search filter
       const searchLower = filters.search.toLowerCase();
       const matchesSearch = !filters.search || 
-        item.name.toLowerCase().includes(searchLower) ||
-        item.code.toLowerCase().includes(searchLower) || 
-        item.type.toLowerCase().includes(searchLower) ||
-        item.location.toLowerCase().includes(searchLower) ||
-        item.status.toLowerCase().includes(searchLower);
+        (item as any).name.toLowerCase().includes(searchLower) ||
+        (item as any).code.toLowerCase().includes(searchLower) ||
+        (item as any).type.toLowerCase().includes(searchLower);
 
       // Type filter
-      const matchesType = !filters.type || filters.type === 'all' || item.type === filters.type;
-      
+      const matchesType = filters.type === 'all' || item.type === filters.type;
+
       // Status filter
-      const matchesStatus = !filters.status || filters.status === 'all' || item.status === filters.status;
-      
+      const matchesStatus = filters.status === 'all' || item.status === filters.status;
+
       // Location filter
-      const matchesLocation = !filters.location || filters.location === 'all' || item.location === filters.location;
-      
+      const matchesLocation = filters.location === 'all' || item.location === filters.location;
+
       // Rental rate filter
-      const matchesRentalRate = !filters.rentalRate || item.rentalRate.toString() === filters.rentalRate;
+      const matchesRate = !filters.rentalRate || item.rentalRate >= parseFloat(filters.rentalRate);
 
-      return matchesSearch && matchesType && matchesStatus && matchesLocation && matchesRentalRate;
+      return matchesSearch && matchesType && matchesStatus && matchesLocation && matchesRate;
     });
-  }, [equipment, filters]);
+  }, [allRentalItems, filters]);
 
-  // Clear all filters
-  const clearFilters = () => {
-    setFilters({
-      search: '',
-      type: 'all',
-      status: 'all',
-      location: 'all',
-      rentalRate: ''
-    });
-  };
-
-  // Close filter dialog
-  const closeFilterDialog = () => {
-    setIsFilterDialogOpen(false);
-  };
-
-  // New rental form state
-  const [newRental, setNewRental] = useState({
-    code: '',
-    name: '',
-    type: '',
-    rentalRate: '',
-    location: '',
-    status: 'available'
-  });
-
-  // Edit equipment form state
-  const [editEquipment, setEditEquipment] = useState({
-    code: '',
-    name: '',
-    type: '',
-    rentalRate: '',
-    location: '',
-    status: 'available'
-  });
-
-  // Schedule maintenance form state
-  const [scheduleMaintenance, setScheduleMaintenance] = useState({
-    equipmentCode: '',
-    equipmentName: '',
-    type: 'Preventive',
-    scheduledDate: '',
-    technician: '',
-    description: ''
-  });
-
-  // Add new rental
-  const addNewRental = () => {
-    const newEquipment: Equipment = {
-      id: Math.max(...equipment.map(item => item.id)) + 1,
-      code: newRental.code,
-      name: newRental.name,
-      type: newRental.type,
-      status: newRental.status,
-      currentRental: null,
-      rentalRate: parseInt(newRental.rentalRate) || 0,
-      maintenanceDue: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] ?? '',
-      location: newRental.location,
-      lastMaintenance: new Date().toISOString().split('T')[0] ?? ''
-    };
-
-    setEquipment(prevEquipment => [...prevEquipment, newEquipment]);
-    
-    setNewRental({
-      code: '',
-      name: '',
-      type: '',
-      rentalRate: '',
-      location: '',
-      status: 'available'
-    });
-    setIsNewRentalDialogOpen(false);
-  };
-
-  // Edit equipment
-  const editEquipmentItem = () => {
-    if (!selectedEquipment) return;
-
-    const updatedEquipment: Equipment = {
-      ...selectedEquipment,
-      code: editEquipment.code,
-      name: editEquipment.name,
-      type: editEquipment.type,
-      rentalRate: parseInt(editEquipment.rentalRate) || 0,
-      location: editEquipment.location,
-      status: editEquipment.status
-    };
-
-    setEquipment(prevEquipment => 
-      prevEquipment.map(item => item.id === selectedEquipment.id ? updatedEquipment : item)
-    );
-    
-    setEditEquipment({
-      code: '',
-      name: '',
-      type: '',
-      rentalRate: '',
-      location: '',
-      status: 'available'
-    });
-    setSelectedEquipment(null);
-    setIsEditEquipmentDialogOpen(false);
-  };
-
-  // Schedule maintenance
-  const scheduleNewMaintenance = () => {
-    const newMaintenance: MaintenanceRecord = {
-      id: Math.max(...maintenanceRecords.map(item => item.id)) + 1,
-      equipmentCode: scheduleMaintenance.equipmentCode,
-      equipmentName: scheduleMaintenance.equipmentName,
-      type: scheduleMaintenance.type,
-      status: 'scheduled',
-      scheduledDate: scheduleMaintenance.scheduledDate,
-      technician: scheduleMaintenance.technician,
-      description: scheduleMaintenance.description
-    };
-
-    setMaintenanceRecords(prevRecords => [...prevRecords, newMaintenance]);
-    
-    setScheduleMaintenance({
-      equipmentCode: '',
-      equipmentName: '',
-      type: 'Preventive',
-      scheduledDate: '',
-      technician: '',
-      description: ''
-    });
-    setIsScheduleMaintenanceDialogOpen(false);
-  };
-
-  // Handle edit button click
-  const handleEditClick = (item: Equipment) => {
-    setSelectedEquipment(item);
-    setEditEquipment({
-      code: item.code,
-      name: item.name,
-      type: item.type,
-      rentalRate: item.rentalRate.toString(),
-      location: item.location,
-      status: item.status
-    });
-    setIsEditEquipmentDialogOpen(true);
-  };
-
-  // Handle view button click
-  const handleViewClick = (item: Equipment) => {
-    setSelectedEquipment(item);
+  const handleViewEquipment = (equipment: Equipment) => {
+    setSelectedEquipment(equipment);
     setIsViewEquipmentDialogOpen(true);
   };
 
-  // Handle view maintenance details
-  const handleViewMaintenanceClick = (record: MaintenanceRecord) => {
-    setSelectedMaintenance(record);
-    setIsViewMaintenanceDialogOpen(true);
+  const handleEditEquipment = (equipment: Equipment) => {
+    setSelectedEquipment(equipment);
+    setIsEditEquipmentDialogOpen(true);
   };
 
-  // Check if forms are valid
-  const isNewRentalFormValid = newRental.code && newRental.name && newRental.type && 
-    newRental.rentalRate && newRental.location;
+  const handleNewRental = (equipment: Equipment) => {
+    setSelectedEquipment(equipment);
+    setNewRentalForm({
+      equipmentId: equipment.id.toString(),
+      customerName: '',
+      startDate: '',
+      endDate: '',
+      rentalRate: equipment.rentalRate.toString(),
+      deposit: '',
+      location: '',
+      notes: ''
+    });
+    setIsNewRentalDialogOpen(true);
+  };
 
-  const isEditFormValid = editEquipment.code && editEquipment.name && editEquipment.type && 
-    editEquipment.rentalRate && editEquipment.location;
+  const handleViewRentalContract = (contract: RentalContract) => {
+    setSelectedRental(contract);
+    setIsViewRentalContractDialogOpen(true);
+  };
 
-  const isScheduleFormValid = scheduleMaintenance.equipmentCode && scheduleMaintenance.equipmentName && 
-    scheduleMaintenance.scheduledDate && scheduleMaintenance.technician;
+  const handleEditRentalContract = (contract: RentalContract) => {
+    setSelectedRental(contract);
+    setEditRentalForm({
+      customerName: contract.customerName,
+      startDate: contract.startDate,
+      endDate: contract.endDate,
+      rentalRate: contract.totalAmount.toString(),
+      deposit: contract.deposit.toString(),
+      location: contract.location,
+      notes: ''
+    });
+    setIsEditRentalContractDialogOpen(true);
+  };
 
-  // Check if any filters are active
-  const hasActiveFilters = filters.search || 
-    (filters.type && filters.type !== 'all') || 
-    (filters.status && filters.status !== 'all') || 
-    (filters.location && filters.location !== 'all') || 
-    filters.rentalRate;
+  const handleReturnEquipment = (contract: RentalContract) => {
+    setSelectedRental(contract);
+    setReturnForm({
+      returnDate: new Date().toISOString().split('T')[0] ?? '',
+      condition: '',
+      notes: '',
+      additionalCharges: ''
+    });
+    setIsReturnEquipmentDialogOpen(true);
+  };
 
-  const getStatusBadge = (status: string) => {
+  const handleExtendRental = (contract: RentalContract) => {
+    setSelectedRental(contract);
+    setExtendForm({
+      newEndDate: '',
+      reason: ''
+    });
+    setIsExtendRentalDialogOpen(true);
+  };
+
+  const handleCancelRental = (contract: RentalContract) => {
+    setSelectedRental(contract);
+    setIsCancelRentalDialogOpen(true);
+  };
+
+  const handleExportReport = () => {
+    setIsExportReportDialogOpen(true);
+  };
+
+  const handleCreateRental = () => {
+    console.log('Creating rental contract:', newRentalForm);
+    // Add logic to create rental contract
+    setIsNewRentalDialogOpen(false);
+  };
+
+  const handleUpdateRental = () => {
+    console.log('Updating rental contract:', editRentalForm);
+    // Add logic to update rental contract
+    setIsEditRentalContractDialogOpen(false);
+  };
+
+  const handleProcessReturn = () => {
+    console.log('Processing return:', returnForm);
+    // Add logic to process equipment return
+    setIsReturnEquipmentDialogOpen(false);
+  };
+
+  const handleProcessExtension = () => {
+    console.log('Processing extension:', extendForm);
+    // Add logic to extend rental
+    setIsExtendRentalDialogOpen(false);
+  };
+
+  const handleProcessCancellation = () => {
+    console.log('Processing cancellation for contract:', selectedRental?.id);
+    // Add logic to cancel rental
+    setIsCancelRentalDialogOpen(false);
+  };
+
+  const handleExportRentalReport = () => {
+    console.log('Exporting rental report...');
+    // Add logic to export report
+    setIsExportReportDialogOpen(false);
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
+
+  const getStatusColor = (status: string) => {
     switch (status) {
-      case 'rented':
-        return <Badge variant="secondary">Rented</Badge>;
-      case 'available':
-        return <Badge variant="default">Available</Badge>;
-      case 'maintenance':
-        return <Badge variant="destructive">In Maintenance</Badge>;
-      case 'scheduled':
-        return <Badge variant="outline">Scheduled</Badge>;
-      case 'in-progress':
-        return <Badge variant="destructive">In Progress</Badge>;
-      case 'completed':
-        return <Badge variant="default">Completed</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
+      case 'available': return 'bg-green-100 text-green-800';
+      case 'rented': return 'bg-blue-100 text-blue-800';
+      case 'maintenance': return 'bg-yellow-100 text-yellow-800';
+      case 'out_of_service': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getStatusIcon = (status: string) => {
+  const getRentalStatusColor = (status: string) => {
     switch (status) {
-      case 'rented':
-        return <Truck className="h-4 w-4 text-blue-500" />;
-      case 'available':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'maintenance':
-        return <Wrench className="h-4 w-4 text-red-500" />;
-      case 'scheduled':
-        return <Calendar className="h-4 w-4 text-yellow-500" />;
-      case 'in-progress':
-        return <Clock className="h-4 w-4 text-orange-500" />;
-      case 'completed':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      default:
-        return <Clock className="h-4 w-4 text-gray-500" />;
+      case 'active': return 'bg-green-100 text-green-800';
+      case 'pending': return 'bg-yellow-100 text-yellow-800';
+      case 'completed': return 'bg-blue-100 text-blue-800';
+      case 'cancelled': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
     }
   };
+
+  if (equipmentLoading || dashboardLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Rental & Maintenance</h1>
-            <p className="text-gray-600 dark:text-gray-400">Manage equipment rentals, maintenance schedules, and service records</p>
+            <h1 className="text-3xl font-bold tracking-tight">Rental Management</h1>
+            <p className="text-muted-foreground">
+              Equipment rental contracts, availability tracking, and revenue management
+            </p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <Dialog open={isScheduleMaintenanceDialogOpen} onOpenChange={setIsScheduleMaintenanceDialogOpen}>
-              <DialogTrigger asChild>
-                <Button variant="outline" className="w-full sm:w-auto flex items-center gap-2">
-                  <Wrench className="h-4 w-4" />
-                  Schedule Maintenance
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="sm:max-w-[600px]">
-                <DialogHeader>
-                  <DialogTitle>Schedule Maintenance</DialogTitle>
-                </DialogHeader>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="equipmentCode">Equipment Code *</Label>
-                      <Input
-                        id="equipmentCode"
-                        placeholder="e.g., EXC-001"
-                        value={scheduleMaintenance.equipmentCode}
-                        onChange={(e) => setScheduleMaintenance(prev => ({ ...prev, equipmentCode: e.target.value }))}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="equipmentName">Equipment Name *</Label>
-                      <Input
-                        id="equipmentName"
-                        placeholder="e.g., Excavator PC200"
-                        value={scheduleMaintenance.equipmentName}
-                        onChange={(e) => setScheduleMaintenance(prev => ({ ...prev, equipmentName: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="maintenanceType">Maintenance Type</Label>
-                      <Select 
-                        value={scheduleMaintenance.type} 
-                        onValueChange={(value) => setScheduleMaintenance(prev => ({ ...prev, type: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Preventive">Preventive</SelectItem>
-                          <SelectItem value="Repair">Repair</SelectItem>
-                          <SelectItem value="Emergency">Emergency</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="scheduledDate">Scheduled Date *</Label>
-                      <Input
-                        id="scheduledDate"
-                        type="date"
-                        value={scheduleMaintenance.scheduledDate}
-                        onChange={(e) => setScheduleMaintenance(prev => ({ ...prev, scheduledDate: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="technician">Technician *</Label>
-                    <Input
-                      id="technician"
-                      placeholder="e.g., John Smith"
-                      value={scheduleMaintenance.technician}
-                      onChange={(e) => setScheduleMaintenance(prev => ({ ...prev, technician: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="grid gap-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Input
-                      id="description"
-                      placeholder="e.g., Regular maintenance and oil change"
-                      value={scheduleMaintenance.description}
-                      onChange={(e) => setScheduleMaintenance(prev => ({ ...prev, description: e.target.value }))}
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setScheduleMaintenance({
-                        equipmentCode: '',
-                        equipmentName: '',
-                        type: 'Preventive',
-                        scheduledDate: '',
-                        technician: '',
-                        description: ''
-                      });
-                      setIsScheduleMaintenanceDialogOpen(false);
-                    }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button 
-                    onClick={scheduleNewMaintenance}
-                    disabled={!isScheduleFormValid}
-                  >
-                    Schedule Maintenance
-                  </Button>
-                </div>
-              </DialogContent>
-            </Dialog>
-
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" onClick={handleExportReport}>
+              <Download className="mr-2 h-4 w-4" />
+              Export Report
+            </Button>
             <Dialog open={isNewRentalDialogOpen} onOpenChange={setIsNewRentalDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="w-full sm:w-auto flex items-center gap-2">
-                  <Plus className="h-4 w-4" />
-                  New Rental
+                <Button>
+                  <Plus className="mr-2 h-4 w-4" />
+                  New Rental Contract
                 </Button>
               </DialogTrigger>
               <DialogContent className="sm:max-w-[600px]">
                 <DialogHeader>
-                  <DialogTitle>Add New Equipment</DialogTitle>
+                  <DialogTitle>Create New Rental Contract</DialogTitle>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="code">Equipment Code *</Label>
-                      <Input
-                        id="code"
-                        placeholder="e.g., EXC-001"
-                        value={newRental.code}
-                        onChange={(e) => setNewRental(prev => ({ ...prev, code: e.target.value }))}
-                      />
+                    <div>
+                      <Label htmlFor="equipment">Equipment/Asset</Label>
+                      <Select value={newRentalForm.equipmentId} onValueChange={(value) => setNewRentalForm({...newRentalForm, equipmentId: value})}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select equipment or asset" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {allRentalItems.filter(e => e.status === 'available').map((item: any) => (
+                            <SelectItem key={item.id} value={item.id.toString()}>
+                              {item.name} - {item.code}
+                              {item.isAsset && (
+                                <Badge variant="outline" className="text-xs ml-2">
+                                  <Building2 className="h-3 w-3 mr-1" />
+                                  Asset
+                                </Badge>
+                              )}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="name">Equipment Name *</Label>
-                      <Input
-                        id="name"
-                        placeholder="e.g., Excavator PC200"
-                        value={newRental.name}
-                        onChange={(e) => setNewRental(prev => ({ ...prev, name: e.target.value }))}
+                    <div>
+                      <Label htmlFor="customer">Customer</Label>
+                      <Input 
+                        id="customer" 
+                        placeholder="Enter customer name"
+                        value={newRentalForm.customerName}
+                        onChange={(e) => setNewRentalForm({...newRentalForm, customerName: e.target.value})}
                       />
                     </div>
                   </div>
-
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="type">Equipment Type *</Label>
-                      <Select 
-                        value={newRental.type} 
-                        onValueChange={(value) => setNewRental(prev => ({ ...prev, type: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Heavy Equipment">Heavy Equipment</SelectItem>
-                          <SelectItem value="Lifting Equipment">Lifting Equipment</SelectItem>
-                          <SelectItem value="Transport Equipment">Transport Equipment</SelectItem>
-                          <SelectItem value="Tools">Tools</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="location">Location *</Label>
-                      <Select 
-                        value={newRental.location} 
-                        onValueChange={(value) => setNewRental(prev => ({ ...prev, location: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select location" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Warehouse">Warehouse</SelectItem>
-                          <SelectItem value="Site A">Site A</SelectItem>
-                          <SelectItem value="Site B">Site B</SelectItem>
-                          <SelectItem value="Service Center">Service Center</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="rentalRate">Daily Rental Rate *</Label>
-                      <Input
-                        id="rentalRate"
-                        type="number"
-                        placeholder="e.g., 2500"
-                        value={newRental.rentalRate}
-                        onChange={(e) => setNewRental(prev => ({ ...prev, rentalRate: e.target.value }))}
+                    <div>
+                      <Label htmlFor="startDate">Start Date</Label>
+                      <Input 
+                        id="startDate" 
+                        type="date"
+                        value={newRentalForm.startDate}
+                        onChange={(e) => setNewRentalForm({...newRentalForm, startDate: e.target.value})}
                       />
                     </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="status">Initial Status</Label>
-                      <Select 
-                        value={newRental.status} 
-                        onValueChange={(value) => setNewRental(prev => ({ ...prev, status: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="available">Available</SelectItem>
-                          <SelectItem value="maintenance">In Maintenance</SelectItem>
-                        </SelectContent>
-                      </Select>
+                    <div>
+                      <Label htmlFor="endDate">End Date</Label>
+                      <Input 
+                        id="endDate" 
+                        type="date"
+                        value={newRentalForm.endDate}
+                        onChange={(e) => setNewRentalForm({...newRentalForm, endDate: e.target.value})}
+                      />
                     </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="rentalRate">Daily Rate</Label>
+                      <Input 
+                        id="rentalRate" 
+                        type="number" 
+                        placeholder="Enter daily rate"
+                        value={newRentalForm.rentalRate}
+                        onChange={(e) => setNewRentalForm({...newRentalForm, rentalRate: e.target.value})}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="deposit">Deposit</Label>
+                      <Input 
+                        id="deposit" 
+                        type="number" 
+                        placeholder="Enter deposit amount"
+                        value={newRentalForm.deposit}
+                        onChange={(e) => setNewRentalForm({...newRentalForm, deposit: e.target.value})}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label htmlFor="location">Project Location</Label>
+                    <Input 
+                      id="location" 
+                      placeholder="Enter project location"
+                      value={newRentalForm.location}
+                      onChange={(e) => setNewRentalForm({...newRentalForm, location: e.target.value})}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="notes">Notes</Label>
+                    <Textarea
+                      id="notes"
+                      placeholder="Enter any additional notes"
+                      value={newRentalForm.notes}
+                      onChange={(e) => setNewRentalForm({...newRentalForm, notes: e.target.value})}
+                    />
                   </div>
                 </div>
-                <div className="flex justify-end gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => {
-                      setNewRental({
-                        code: '',
-                        name: '',
-                        type: '',
-                        rentalRate: '',
-                        location: '',
-                        status: 'available'
-                      });
-                      setIsNewRentalDialogOpen(false);
-                    }}
-                  >
+                <div className="flex justify-end space-x-2">
+                  <Button variant="outline" onClick={() => setIsNewRentalDialogOpen(false)}>
                     Cancel
                   </Button>
-                  <Button 
-                    onClick={addNewRental}
-                    disabled={!isNewRentalFormValid}
-                  >
-                    Add Equipment
+                  <Button onClick={handleCreateRental}>
+                    Create Contract
                   </Button>
                 </div>
               </DialogContent>
@@ -662,596 +583,948 @@ const RentalPage: React.FC = () => {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-6">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total Equipment</CardTitle>
               <Truck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">45</div>
+              <div className="text-2xl font-bold">{rentalStats.totalEquipment}</div>
               <p className="text-xs text-muted-foreground">
-                <CheckCircle className="inline h-3 w-3 text-green-500" /> All equipment operational
+                Available for rental
               </p>
             </CardContent>
           </Card>
-
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Rentals</CardTitle>
+              <CardTitle className="text-sm font-medium">Available</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{rentalStats.availableEquipment}</div>
+              <p className="text-xs text-muted-foreground">
+                Ready for rental
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Currently Rented</CardTitle>
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{rentalStats.rentedEquipment}</div>
+              <p className="text-xs text-muted-foreground">
+                Active contracts
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Active Contracts</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{rentalStats.activeContracts}</div>
+              <p className="text-xs text-muted-foreground">
+                Ongoing rentals
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pending Returns</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{rentalStats.pendingReturns}</div>
+              <p className="text-xs text-muted-foreground">
+                Due for return
+              </p>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">18</div>
+              <div className="text-2xl font-bold">{formatCurrency(rentalStats.totalRevenue)}</div>
               <p className="text-xs text-muted-foreground">
-                <Truck className="inline h-3 w-3 text-blue-500" /> Currently rented out
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Maintenance Due</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-yellow-500" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">7</div>
-              <p className="text-xs text-muted-foreground">
-                <Wrench className="inline h-3 w-3 text-orange-500" /> Scheduled this week
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">$450K</div>
-              <p className="text-xs text-muted-foreground">
-                <DollarSign className="inline h-3 w-3 text-green-500" /> +15% from last month
+                This month
               </p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Equipment Management */}
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <CardTitle>Equipment Management</CardTitle>
-              {hasActiveFilters && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={clearFilters}
-                  className="flex items-center gap-2"
-                >
-                  <X className="h-4 w-4" />
-                  Clear Filters
-                </Button>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="flex gap-4 mb-6">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input 
-                    placeholder="Search equipment by name, code, type, location, or status..." 
-                    className="pl-10"
-                    value={filters.search}
-                    onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                  />
-                </div>
-              </div>
-              
-              <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" className="flex items-center gap-2">
-                    <Filter className="h-4 w-4" />
-                    Filters
-                    {hasActiveFilters && (
-                      <Badge variant="secondary" className="ml-1">
-                        {[
-                          filters.type !== 'all' ? filters.type : null,
-                          filters.status !== 'all' ? filters.status : null,
-                          filters.location !== 'all' ? filters.location : null,
-                          filters.rentalRate
-                        ].filter(Boolean).length}
-                      </Badge>
-                    )}
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Filter Equipment</DialogTitle>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <Label htmlFor="type">Equipment Type</Label>
-                      <Select 
-                        value={filters.type} 
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, type: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Types</SelectItem>
-                          {types.map((type) => (
-                            <SelectItem key={type} value={type}>
-                              {type}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="status">Status</Label>
-                      <Select 
-                        value={filters.status} 
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Statuses</SelectItem>
-                          {statuses.map((status) => (
-                            <SelectItem key={status} value={status}>
-                              {status === 'rented' ? 'Rented' : 
-                               status === 'available' ? 'Available' : 
-                               status === 'maintenance' ? 'In Maintenance' : status}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div className="grid gap-2">
-                      <Label htmlFor="location">Location</Label>
-                      <Select 
-                        value={filters.location} 
-                        onValueChange={(value) => setFilters(prev => ({ ...prev, location: value }))}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select location" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">All Locations</SelectItem>
-                          {locations.map((location) => (
-                            <SelectItem key={location} value={location}>
-                              {location}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+        {/* Main Content */}
+        <Tabs defaultValue="equipment" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="equipment">Equipment</TabsTrigger>
+            <TabsTrigger value="contracts">Rental Contracts</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
 
-                    <div className="grid gap-2">
-                      <Label htmlFor="rentalRate">Rental Rate</Label>
-                      <Input 
-                        type="number"
-                        placeholder="Enter rental rate"
-                        value={filters.rentalRate}
-                        onChange={(e) => setFilters(prev => ({ ...prev, rentalRate: e.target.value }))}
+          <TabsContent value="equipment" className="space-y-4">
+            {/* Filters */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center justify-between">
+                  <span>Equipment & Assets Inventory</span>
+                  <div className="flex items-center space-x-2">
+                    <Button variant="outline" size="sm" onClick={() => setIsFilterDialogOpen(true)}>
+                      <Filter className="h-4 w-4 mr-2" />
+                      Filters
+                    </Button>
+                    <div className="relative">
+                      <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search equipment or assets..."
+                        value={filters.search}
+                        onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
+                        className="pl-8 w-64"
                       />
                     </div>
                   </div>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={clearFilters}>
-                      Clear All
-                    </Button>
-                    <Button onClick={closeFilterDialog}>
-                      Apply Filters
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-
-            {/* Active Filters Display */}
-            {hasActiveFilters && (
-              <div className="flex flex-wrap gap-2 mb-4">
-                {filters.type && filters.type !== 'all' && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Type: {filters.type}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => setFilters(prev => ({ ...prev, type: 'all' }))}
-                    />
-                  </Badge>
-                )}
-                {filters.status && filters.status !== 'all' && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Status: {filters.status === 'rented' ? 'Rented' : 
-                            filters.status === 'available' ? 'Available' : 
-                            filters.status === 'maintenance' ? 'In Maintenance' : filters.status}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => setFilters(prev => ({ ...prev, status: 'all' }))}
-                    />
-                  </Badge>
-                )}
-                {filters.location && filters.location !== 'all' && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Location: {filters.location}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => setFilters(prev => ({ ...prev, location: 'all' }))}
-                    />
-                  </Badge>
-                )}
-                {filters.rentalRate && (
-                  <Badge variant="secondary" className="flex items-center gap-1">
-                    Rental Rate: {filters.rentalRate}
-                    <X 
-                      className="h-3 w-3 cursor-pointer" 
-                      onClick={() => setFilters(prev => ({ ...prev, rentalRate: '' }))}
-                    />
-                  </Badge>
-                )}
-              </div>
-            )}
-
-            {/* Results Count */}
-            <div className="mb-4 text-sm text-gray-500">
-              Showing {filteredEquipment.length} of {equipment.length} equipment
-            </div>
-
-            {/* Equipment Table */}
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b">
-                    <th className="text-left p-3 font-medium">Equipment</th>
-                    <th className="text-left p-3 font-medium">Type</th>
-                    <th className="text-left p-3 font-medium">Status</th>
-                    <th className="text-left p-3 font-medium">Current Rental</th>
-                    <th className="text-left p-3 font-medium">Rental Rate</th>
-                    <th className="text-left p-3 font-medium">Maintenance Due</th>
-                    <th className="text-left p-3 font-medium">Location</th>
-                    <th className="text-left p-3 font-medium">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredEquipment.length > 0 ? (
-                    filteredEquipment.map((item) => (
-                      <tr key={item.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800">
-                        <td className="p-3">
-                          <div>
-                            <div className="font-medium">{item.name}</div>
-                            <div className="text-sm text-gray-500">{item.code}</div>
-                          </div>
-                        </td>
-                        <td className="p-3">{item.type}</td>
-                        <td className="p-3">
-                          <div className="flex items-center gap-2">
-                            {getStatusIcon(item.status)}
-                            {getStatusBadge(item.status)}
-                          </div>
-                        </td>
-                        <td className="p-3">
-                          {item.currentRental ? (
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4 text-gray-400" />
-                              <span>{item.currentRental}</span>
-                            </div>
-                          ) : (
-                            <span className="text-gray-500">-</span>
-                          )}
-                        </td>
-                        <td className="p-3">
-                          <div className="flex items-center gap-1">
-                            <DollarSign className="h-4 w-4 text-gray-400" />
-                            <span>{item.rentalRate}/day</span>
-                          </div>
-                        </td>
-                        <td className="p-3">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-gray-400" />
-                            <span className="text-sm">{item.maintenanceDue}</span>
-                          </div>
-                        </td>
-                        <td className="p-3">{item.location}</td>
-                        <td className="p-3">
-                          <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => handleViewClick(item)}>View</Button>
-                            <Button size="sm" variant="outline" onClick={() => handleEditClick(item)}>Edit</Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {filteredEquipment.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Truck className="mx-auto h-12 w-12 text-muted-foreground" />
+                      <h3 className="mt-2 text-sm font-semibold">No equipment or assets found</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Try adjusting your search or filter criteria.
+                      </p>
+                    </div>
                   ) : (
-                    <tr>
-                      <td colSpan={8} className="p-8 text-center text-gray-500">
-                        No equipment found matching your filters.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Maintenance Records */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Maintenance Records</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {maintenanceRecords.map((record) => (
-                <div key={record.id} className="flex flex-col gap-3 p-4 border rounded-lg">
-                  <div className="flex items-center gap-4">
-                    {getStatusIcon(record.status)}
-                    <div>
-                      <div className="font-medium">{record.equipmentName}</div>
-                      <div className="text-sm text-gray-500">
-                        {record.equipmentCode} • {record.type} • {record.technician}
+                    filteredEquipment.map((item) => (
+                      <div key={item.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center space-x-4">
+                          <div>
+                            <h4 className="font-medium">{item.name}</h4>
+                            <p className="text-sm text-muted-foreground">{item.code}</p>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <MapPin className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground">{item.location}</span>
+                              {(item as any).isAsset && (
+                                <Badge variant="outline" className="text-xs">
+                                  <Building2 className="h-3 w-3 mr-1" />
+                                  Asset
+                                </Badge>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                          <Badge className={getStatusColor(item.status)}>
+                            {item.status}
+                          </Badge>
+                          <div className="text-right">
+                            <p className="text-sm font-medium">{formatCurrency(item.rentalRate)}</p>
+                            <p className="text-xs text-muted-foreground">per day</p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewEquipment(item)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditEquipment(item)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            {item.status === 'available' && (
+                              <Button
+                                size="sm"
+                                onClick={() => handleNewRental(item)}
+                              >
+                                <Plus className="h-4 w-4 mr-2" />
+                                Rent
+                              </Button>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <div className="text-sm text-gray-500 mt-1">{record.description}</div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Assets from Asset Management */}
+            {availableAssets.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Building2 className="h-5 w-5 mr-2" />
+                    Assets Available for Rental
+                    <Badge variant="secondary" className="ml-2">{availableAssets.length} Assets</Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {availableAssets.map((asset) => (
+                      <div key={asset.id} className="flex items-center justify-between p-4 border rounded-lg bg-blue-50">
+                        <div className="flex items-center space-x-4">
+                          <div>
+                            <h4 className="font-medium">{asset.assetName}</h4>
+                            <p className="text-sm text-muted-foreground">{asset.assetNumber}</p>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <MapPin className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground">{asset.location}</span>
+                              <Badge variant="outline" className="text-xs">
+                                <Building2 className="h-3 w-3 mr-1" />
+                                Asset from Procurement
+                              </Badge>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                          <Badge className="bg-green-100 text-green-800">
+                            Available
+                          </Badge>
+                          <div className="text-right">
+                            <p className="text-sm font-medium">{formatCurrency(asset.rentalRate)}</p>
+                            <p className="text-xs text-muted-foreground">per day</p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewEquipment({
+                                id: asset.id,
+                                code: asset.assetNumber,
+                                name: asset.assetName,
+                                type: asset.assetType,
+                                status: asset.rentalStatus,
+                                currentRental: asset.currentRental,
+                                rentalRate: asset.rentalRate ?? 0,
+                                location: asset.location,
+                                operatingHours: 0,
+                                lastRentalDate: asset.purchaseDate
+                              } as any)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              onClick={() => handleNewRental({
+                                id: asset.id,
+                                code: asset.assetNumber,
+                                name: asset.assetName,
+                                type: asset.assetType,
+                                status: asset.rentalStatus,
+                                currentRental: asset.currentRental,
+                                rentalRate: asset.rentalRate ?? 0,
+                                location: asset.location,
+                                operatingHours: 0,
+                                lastRentalDate: asset.purchaseDate
+                              } as any)}
+                            >
+                              <Plus className="h-4 w-4 mr-2" />
+                              Rent Asset
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </TabsContent>
+
+          <TabsContent value="contracts" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Rental Contracts</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {rentalContracts.length === 0 ? (
+                    <div className="text-center py-8">
+                      <FileText className="mx-auto h-12 w-12 text-muted-foreground" />
+                      <h3 className="mt-2 text-sm font-semibold">No rental contracts</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Create your first rental contract to get started.
+                      </p>
+                    </div>
+                  ) : (
+                    rentalContracts.map((contract) => (
+                      <div key={contract.id} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center space-x-4">
+                          <div>
+                            <h4 className="font-medium">{contract.equipmentName}</h4>
+                            <p className="text-sm text-muted-foreground">{contract.customerName}</p>
+                            <div className="flex items-center space-x-2 mt-1">
+                              <Calendar className="h-3 w-3 text-muted-foreground" />
+                              <span className="text-xs text-muted-foreground">
+                                {contract.startDate} - {contract.endDate}
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center space-x-4">
+                          <Badge className={getRentalStatusColor(contract.status)}>
+                            {contract.status}
+                          </Badge>
+                          <div className="text-right">
+                            <p className="text-sm font-medium">{formatCurrency(contract.totalAmount)}</p>
+                            <p className="text-xs text-muted-foreground">Total</p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleViewRentalContract(contract)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleEditRentalContract(contract)}
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            {contract.status === 'active' && (
+                              <>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleReturnEquipment(contract)}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleExtendRental(contract)}
+                                >
+                                  <Clock className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleCancelRental(contract)}
+                                >
+                                  <AlertTriangle className="h-4 w-4" />
+                                </Button>
+                              </>
+                            )}
+                            {contract.status === 'pending' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleProcessReturn()}
+                              >
+                                <CheckCircle className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {contract.status === 'completed' && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleExportRentalReport()}
+                              >
+                                <FileText className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BarChart3 className="h-5 w-5" />
+                    Rental Overview
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Equipment utilization</span>
+                      <Badge variant="default">75%</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Average rental duration</span>
+                      <Badge variant="default">14 days</Badge>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Customer satisfaction</span>
+                      <Badge variant="default">4.8/5</Badge>
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-2 justify-between">
-                    <div className="text-left sm:text-right">
-                      <div className="text-sm font-medium">Scheduled</div>
-                      <div className="text-sm text-gray-500">{record.scheduledDate}</div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {getStatusBadge(record.status)}
-                      <Button size="sm" variant="outline" onClick={() => handleViewMaintenanceClick(record)}>View Details</Button>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <TrendingUp className="h-5 w-5" />
+                    Revenue Trends
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="text-center py-8">
+                      <DollarSign className="mx-auto h-12 w-12 text-muted-foreground" />
+                      <h3 className="mt-2 text-sm font-semibold">Revenue Analytics</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">
+                        Track rental revenue and performance metrics.
+                      </p>
                     </div>
                   </div>
-                </div>
-              ))}
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-        </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
 
-        {/* Edit Equipment Dialog */}
-        <Dialog open={isEditEquipmentDialogOpen} onOpenChange={setIsEditEquipmentDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Edit Equipment</DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
+      {/* Equipment Detail Dialog */}
+      <Dialog open={isViewEquipmentDialogOpen} onOpenChange={setIsViewEquipmentDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Equipment Details</DialogTitle>
+          </DialogHeader>
+          {selectedEquipment && (
+            <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="editCode">Equipment Code *</Label>
-                  <Input
-                    id="editCode"
-                    placeholder="e.g., EXC-001"
-                    value={editEquipment.code}
-                    onChange={(e) => setEditEquipment(prev => ({ ...prev, code: e.target.value }))}
-                  />
+                <div>
+                  <Label>Equipment Name</Label>
+                  <p className="text-sm font-medium">{selectedEquipment.name}</p>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="editName">Equipment Name *</Label>
-                  <Input
-                    id="editName"
-                    placeholder="e.g., Excavator PC200"
-                    value={editEquipment.name}
-                    onChange={(e) => setEditEquipment(prev => ({ ...prev, name: e.target.value }))}
-                  />
+                <div>
+                  <Label>Equipment Code</Label>
+                  <p className="text-sm font-medium">{selectedEquipment.code}</p>
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="editType">Equipment Type *</Label>
-                  <Select 
-                    value={editEquipment.type} 
-                    onValueChange={(value) => setEditEquipment(prev => ({ ...prev, type: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Heavy Equipment">Heavy Equipment</SelectItem>
-                      <SelectItem value="Lifting Equipment">Lifting Equipment</SelectItem>
-                      <SelectItem value="Transport Equipment">Transport Equipment</SelectItem>
-                      <SelectItem value="Tools">Tools</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div>
+                  <Label>Type</Label>
+                  <p className="text-sm font-medium">{selectedEquipment.type}</p>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="editLocation">Location *</Label>
-                  <Select 
-                    value={editEquipment.location} 
-                    onValueChange={(value) => setEditEquipment(prev => ({ ...prev, location: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select location" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Warehouse">Warehouse</SelectItem>
-                      <SelectItem value="Site A">Site A</SelectItem>
-                      <SelectItem value="Site B">Site B</SelectItem>
-                      <SelectItem value="Service Center">Service Center</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div>
+                  <Label>Status</Label>
+                  <Badge className={getStatusColor(selectedEquipment.status)}>
+                    {selectedEquipment.status}
+                  </Badge>
                 </div>
               </div>
-
               <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="editRentalRate">Daily Rental Rate *</Label>
-                  <Input
-                    id="editRentalRate"
-                    type="number"
-                    placeholder="e.g., 2500"
-                    value={editEquipment.rentalRate}
-                    onChange={(e) => setEditEquipment(prev => ({ ...prev, rentalRate: e.target.value }))}
-                  />
+                <div>
+                  <Label>Location</Label>
+                  <p className="text-sm font-medium">{selectedEquipment.location}</p>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="editStatus">Status</Label>
-                  <Select 
-                    value={editEquipment.status} 
-                    onValueChange={(value) => setEditEquipment(prev => ({ ...prev, status: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="available">Available</SelectItem>
-                      <SelectItem value="rented">Rented</SelectItem>
-                      <SelectItem value="maintenance">In Maintenance</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div>
+                  <Label>Daily Rate</Label>
+                  <p className="text-sm font-medium">{formatCurrency(selectedEquipment.rentalRate)}</p>
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Operating Hours</Label>
+                  <p className="text-sm font-medium">{selectedEquipment.operatingHours} hours</p>
+                </div>
+                <div>
+                  <Label>Last Rental</Label>
+                  <p className="text-sm font-medium">{selectedEquipment.lastRentalDate}</p>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setIsViewEquipmentDialogOpen(false)}>
+                  Close
+                </Button>
+                {selectedEquipment.status === 'available' && (
+                  <Button onClick={() => handleNewRental(selectedEquipment)}>
+                    Rent Equipment
+                  </Button>
+                )}
               </div>
             </div>
-            <div className="flex justify-end gap-2">
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setEditEquipment({
-                    code: '',
-                    name: '',
-                    type: '',
-                    rentalRate: '',
-                    location: '',
-                    status: 'available'
-                  });
-                  setSelectedEquipment(null);
-                  setIsEditEquipmentDialogOpen(false);
-                }}
-              >
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Filter Dialog */}
+      <Dialog open={isFilterDialogOpen} onOpenChange={setIsFilterDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Filter Equipment</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="type">Equipment Type</Label>
+              <Select value={filters.type} onValueChange={(value) => setFilters(prev => ({ ...prev, type: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Types</SelectItem>
+                  <SelectItem value="excavator">Excavator</SelectItem>
+                  <SelectItem value="bulldozer">Bulldozer</SelectItem>
+                  <SelectItem value="crane">Crane</SelectItem>
+                  <SelectItem value="loader">Loader</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="status">Status</Label>
+              <Select value={filters.status} onValueChange={(value) => setFilters(prev => ({ ...prev, status: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="available">Available</SelectItem>
+                  <SelectItem value="rented">Rented</SelectItem>
+                  <SelectItem value="maintenance">Maintenance</SelectItem>
+                  <SelectItem value="out_of_service">Out of Service</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="location">Location</Label>
+              <Select value={filters.location} onValueChange={(value) => setFilters(prev => ({ ...prev, location: value }))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Locations</SelectItem>
+                  <SelectItem value="warehouse">Warehouse</SelectItem>
+                  <SelectItem value="site_a">Site A</SelectItem>
+                  <SelectItem value="site_b">Site B</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="rentalRate">Minimum Daily Rate</Label>
+              <Input
+                id="rentalRate"
+                type="number"
+                placeholder="Enter minimum rate"
+                value={filters.rentalRate}
+                onChange={(e) => setFilters(prev => ({ ...prev, rentalRate: e.target.value }))}
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setFilters({
+                search: '',
+                type: 'all',
+                status: 'all',
+                location: 'all',
+                rentalRate: ''
+              })}>
+                Clear All
+              </Button>
+              <Button onClick={() => setIsFilterDialogOpen(false)}>
+                Apply Filters
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Rental Contract Dialog */}
+      <Dialog open={isViewRentalContractDialogOpen} onOpenChange={setIsViewRentalContractDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Rental Contract Details</DialogTitle>
+          </DialogHeader>
+          {selectedRental && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Contract ID</Label>
+                  <p className="text-sm font-medium">#{selectedRental.id}</p>
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <Badge className={getRentalStatusColor(selectedRental.status)}>
+                    {selectedRental.status}
+                  </Badge>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Equipment</Label>
+                  <p className="text-sm font-medium">{selectedRental.equipmentName}</p>
+                </div>
+                <div>
+                  <Label>Equipment Code</Label>
+                  <p className="text-sm font-medium">{selectedRental.equipmentCode}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Customer</Label>
+                  <p className="text-sm font-medium">{selectedRental.customerName}</p>
+                </div>
+                <div>
+                  <Label>Location</Label>
+                  <p className="text-sm font-medium">{selectedRental.location}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Start Date</Label>
+                  <p className="text-sm font-medium">{selectedRental.startDate}</p>
+                </div>
+                <div>
+                  <Label>End Date</Label>
+                  <p className="text-sm font-medium">{selectedRental.endDate}</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Total Amount</Label>
+                  <p className="text-sm font-medium">{formatCurrency(selectedRental.totalAmount)}</p>
+                </div>
+                <div>
+                  <Label>Deposit</Label>
+                  <p className="text-sm font-medium">{formatCurrency(selectedRental.deposit)}</p>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setIsViewRentalContractDialogOpen(false)}>
+                  Close
+                </Button>
+                <Button onClick={() => handleEditRentalContract(selectedRental)}>
+                  Edit Contract
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Rental Contract Dialog */}
+      <Dialog open={isEditRentalContractDialogOpen} onOpenChange={setIsEditRentalContractDialogOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Edit Rental Contract</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="editCustomerName">Customer Name</Label>
+                <Input
+                  id="editCustomerName"
+                  value={editRentalForm.customerName}
+                  onChange={(e) => setEditRentalForm({...editRentalForm, customerName: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="editLocation">Location</Label>
+                <Input
+                  id="editLocation"
+                  value={editRentalForm.location}
+                  onChange={(e) => setEditRentalForm({...editRentalForm, location: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="editStartDate">Start Date</Label>
+                <Input
+                  id="editStartDate"
+                  type="date"
+                  value={editRentalForm.startDate}
+                  onChange={(e) => setEditRentalForm({...editRentalForm, startDate: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="editEndDate">End Date</Label>
+                <Input
+                  id="editEndDate"
+                  type="date"
+                  value={editRentalForm.endDate}
+                  onChange={(e) => setEditRentalForm({...editRentalForm, endDate: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="editRentalRate">Daily Rate</Label>
+                <Input
+                  id="editRentalRate"
+                  type="number"
+                  value={editRentalForm.rentalRate}
+                  onChange={(e) => setEditRentalForm({...editRentalForm, rentalRate: e.target.value})}
+                />
+              </div>
+              <div>
+                <Label htmlFor="editDeposit">Deposit</Label>
+                <Input
+                  id="editDeposit"
+                  type="number"
+                  value={editRentalForm.deposit}
+                  onChange={(e) => setEditRentalForm({...editRentalForm, deposit: e.target.value})}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="editNotes">Notes</Label>
+              <Textarea
+                id="editNotes"
+                value={editRentalForm.notes}
+                onChange={(e) => setEditRentalForm({...editRentalForm, notes: e.target.value})}
+                placeholder="Enter any additional notes"
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setIsEditRentalContractDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button 
-                onClick={editEquipmentItem}
-                disabled={!isEditFormValid}
-              >
-                Save Changes
+              <Button onClick={handleUpdateRental}>
+                Update Contract
               </Button>
             </div>
-          </DialogContent>
-        </Dialog>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-        {/* View Equipment Dialog */}
-        <Dialog open={isViewEquipmentDialogOpen} onOpenChange={setIsViewEquipmentDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Equipment Details</DialogTitle>
-            </DialogHeader>
-            {selectedEquipment ? (
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Equipment Code</Label>
-                    <div className="font-medium">{selectedEquipment.code}</div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Equipment Name</Label>
-                    <div className="font-medium">{selectedEquipment.name}</div>
-                  </div>
+      {/* Return Equipment Dialog */}
+      <Dialog open={isReturnEquipmentDialogOpen} onOpenChange={setIsReturnEquipmentDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Return Equipment</DialogTitle>
+          </DialogHeader>
+          {selectedRental && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <h4 className="font-medium">{selectedRental.equipmentName}</h4>
+                <p className="text-sm text-muted-foreground">Contract #{selectedRental.id}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="returnDate">Return Date</Label>
+                  <Input
+                    id="returnDate"
+                    type="date"
+                    value={returnForm.returnDate}
+                    onChange={(e) => setReturnForm({...returnForm, returnDate: e.target.value})}
+                  />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Equipment Type</Label>
-                    <div className="font-medium">{selectedEquipment.type}</div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Location</Label>
-                    <div className="font-medium">{selectedEquipment.location}</div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Daily Rental Rate</Label>
-                    <div className="font-medium">${selectedEquipment.rentalRate}/day</div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Status</Label>
-                    <div className="font-medium">{getStatusBadge(selectedEquipment.status)}</div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Current Rental</Label>
-                    <div className="font-medium">
-                      {selectedEquipment.currentRental ?? 'Not currently rented'}
-                    </div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Maintenance Due</Label>
-                    <div className="font-medium">{selectedEquipment.maintenanceDue}</div>
-                  </div>
-                </div>
-                <div className="grid gap-2">
-                  <Label>Last Maintenance</Label>
-                  <div className="font-medium">{selectedEquipment.lastMaintenance}</div>
+                <div>
+                  <Label htmlFor="condition">Equipment Condition</Label>
+                  <Select value={returnForm.condition} onValueChange={(value) => setReturnForm({...returnForm, condition: value})}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select condition" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="excellent">Excellent</SelectItem>
+                      <SelectItem value="good">Good</SelectItem>
+                      <SelectItem value="fair">Fair</SelectItem>
+                      <SelectItem value="poor">Poor</SelectItem>
+                      <SelectItem value="damaged">Damaged</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-            ) : (
-              <div className="p-8 text-center text-gray-500">No equipment selected for viewing.</div>
-            )}
-            <div className="flex justify-end">
-              <Button onClick={() => setIsViewEquipmentDialogOpen(false)}>Close</Button>
+              <div>
+                <Label htmlFor="additionalCharges">Additional Charges</Label>
+                <Input
+                  id="additionalCharges"
+                  type="number"
+                  value={returnForm.additionalCharges}
+                  onChange={(e) => setReturnForm({...returnForm, additionalCharges: e.target.value})}
+                  placeholder="Enter additional charges if any"
+                />
+              </div>
+              <div>
+                <Label htmlFor="returnNotes">Return Notes</Label>
+                <Textarea
+                  id="returnNotes"
+                  value={returnForm.notes}
+                  onChange={(e) => setReturnForm({...returnForm, notes: e.target.value})}
+                  placeholder="Enter return notes"
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setIsReturnEquipmentDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleProcessReturn}>
+                  Process Return
+                </Button>
+              </div>
             </div>
-          </DialogContent>
-        </Dialog>
+          )}
+        </DialogContent>
+      </Dialog>
 
-        {/* View Maintenance Details Dialog */}
-        <Dialog open={isViewMaintenanceDialogOpen} onOpenChange={setIsViewMaintenanceDialogOpen}>
-          <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>Maintenance Details</DialogTitle>
-            </DialogHeader>
-            {selectedMaintenance ? (
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Equipment Code</Label>
-                    <div className="font-medium">{selectedMaintenance.equipmentCode}</div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Equipment Name</Label>
-                    <div className="font-medium">{selectedMaintenance.equipmentName}</div>
-                  </div>
+      {/* Extend Rental Dialog */}
+      <Dialog open={isExtendRentalDialogOpen} onOpenChange={setIsExtendRentalDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Extend Rental</DialogTitle>
+          </DialogHeader>
+          {selectedRental && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <h4 className="font-medium">{selectedRental.equipmentName}</h4>
+                <p className="text-sm text-muted-foreground">Contract #{selectedRental.id}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Current End Date</Label>
+                  <p className="text-sm font-medium">{selectedRental.endDate}</p>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Maintenance Type</Label>
-                    <div className="font-medium">{selectedMaintenance.type}</div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Status</Label>
-                    <div className="font-medium">{getStatusBadge(selectedMaintenance.status)}</div>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label>Scheduled Date</Label>
-                    <div className="font-medium">{selectedMaintenance.scheduledDate}</div>
-                  </div>
-                  <div className="grid gap-2">
-                    <Label>Technician</Label>
-                    <div className="font-medium">{selectedMaintenance.technician}</div>
-                  </div>
-                </div>
-                <div className="grid gap-2">
-                  <Label>Description</Label>
-                  <div className="font-medium">{selectedMaintenance.description}</div>
+                <div>
+                  <Label htmlFor="newEndDate">New End Date</Label>
+                  <Input
+                    id="newEndDate"
+                    type="date"
+                    value={extendForm.newEndDate}
+                    onChange={(e) => setExtendForm({...extendForm, newEndDate: e.target.value})}
+                  />
                 </div>
               </div>
-            ) : (
-              <div className="p-8 text-center text-gray-500">No maintenance record selected for viewing.</div>
-            )}
-            <div className="flex justify-end">
-              <Button onClick={() => setIsViewMaintenanceDialogOpen(false)}>Close</Button>
+              <div>
+                <Label htmlFor="extendReason">Extension Reason</Label>
+                <Textarea
+                  id="extendReason"
+                  value={extendForm.reason}
+                  onChange={(e) => setExtendForm({...extendForm, reason: e.target.value})}
+                  placeholder="Enter reason for extension"
+                />
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setIsExtendRentalDialogOpen(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={handleProcessExtension}>
+                  Extend Rental
+                </Button>
+              </div>
             </div>
-          </DialogContent>
-        </Dialog>
-      </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Cancel Rental Dialog */}
+      <Dialog open={isCancelRentalDialogOpen} onOpenChange={setIsCancelRentalDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Cancel Rental Contract</DialogTitle>
+          </DialogHeader>
+          {selectedRental && (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <h4 className="font-medium">{selectedRental.equipmentName}</h4>
+                <p className="text-sm text-muted-foreground">Contract #{selectedRental.id}</p>
+              </div>
+              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-center space-x-2">
+                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                  <p className="text-sm text-yellow-800">
+                    Are you sure you want to cancel this rental contract? This action cannot be undone.
+                  </p>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Customer</Label>
+                  <p className="text-sm font-medium">{selectedRental.customerName}</p>
+                </div>
+                <div>
+                  <Label>Total Amount</Label>
+                  <p className="text-sm font-medium">{formatCurrency(selectedRental.totalAmount)}</p>
+                </div>
+              </div>
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setIsCancelRentalDialogOpen(false)}>
+                  Keep Contract
+                </Button>
+                <Button variant="destructive" onClick={handleProcessCancellation}>
+                  Cancel Contract
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Export Report Dialog */}
+      <Dialog open={isExportReportDialogOpen} onOpenChange={setIsExportReportDialogOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Export Rental Report</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="reportType">Report Type</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select report type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="rental-summary">Rental Summary</SelectItem>
+                  <SelectItem value="equipment-utilization">Equipment Utilization</SelectItem>
+                  <SelectItem value="revenue-report">Revenue Report</SelectItem>
+                  <SelectItem value="contract-details">Contract Details</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="dateRange">Date Range</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select date range" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="this-month">This Month</SelectItem>
+                  <SelectItem value="last-month">Last Month</SelectItem>
+                  <SelectItem value="this-quarter">This Quarter</SelectItem>
+                  <SelectItem value="this-year">This Year</SelectItem>
+                  <SelectItem value="custom">Custom Range</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="format">Format</Label>
+              <Select>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select format" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="pdf">PDF</SelectItem>
+                  <SelectItem value="excel">Excel</SelectItem>
+                  <SelectItem value="csv">CSV</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button variant="outline" onClick={() => setIsExportReportDialogOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleExportRentalReport}>
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </DashboardLayout>
   );
 };

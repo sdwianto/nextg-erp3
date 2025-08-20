@@ -7,6 +7,11 @@ import { type AppProps } from "next/app";
 import { Outfit } from "next/font/google";
 import type { ReactElement, ReactNode } from "react";
 import { useEffect, useState } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { httpBatchLink } from "@trpc/client";
+import { useState as useStateReact } from "react";
+import { api } from "@/utils/api";
+import superjson from "superjson";
 
 const outfit = Outfit({
   subsets: ["latin"],
@@ -23,6 +28,19 @@ type AppPropsWithLayout = AppProps & {
 const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
   const getLayout = Component.getLayout ?? ((page) => page);
   const [mounted, setMounted] = useState(false);
+
+  // tRPC setup
+  const [queryClient] = useStateReact(() => new QueryClient());
+  const [trpcClient] = useStateReact(() =>
+    api.createClient({
+      links: [
+        httpBatchLink({
+          url: "/api/trpc",
+          transformer: superjson,
+        }),
+      ],
+    })
+  );
 
   // Handle hydration
   useEffect(() => {
@@ -45,12 +63,16 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
   }
 
   return (
-    <ThemeProvider>
-      <div className={`${outfit.className}`}>
-        {getLayout(<Component {...pageProps} />)}
-        <Toaster position="top-right" />
-      </div>
-    </ThemeProvider>
+    <api.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <ThemeProvider>
+          <div className={`${outfit.className}`}>
+            {getLayout(<Component {...pageProps} />)}
+            <Toaster position="top-right" />
+          </div>
+        </ThemeProvider>
+      </QueryClientProvider>
+    </api.Provider>
   );
 };
 

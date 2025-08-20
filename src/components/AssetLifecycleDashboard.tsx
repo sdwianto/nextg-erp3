@@ -1,9 +1,9 @@
 // src/components/AssetLifecycleDashboard.tsx
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import { api } from '@/utils/api';
 import { 
   Building2, 
   DollarSign,
@@ -52,54 +52,51 @@ export const AssetLifecycleDashboard: React.FC = () => {
   const [analytics, setAnalytics] = useState<AssetAnalytics | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Mock data for Oracle JDE-inspired asset management
-  const mockStats: AssetLifecycleStats = {
-    totalAssets: 156,
-    activeAssets: 142,
-    underMaintenance: 14,
-    retiredAssets: 8,
-    totalValue: 25000000, // $25M
-    depreciationValue: 8750000, // $8.75M
-    netBookValue: 16250000, // $16.25M
-    averageAge: 4.2,
-    replacementNeeded: 12
-  };
-
-  const mockAnalytics: AssetAnalytics = {
-    predictiveMaintenance: {
-      highRiskAssets: 8,
-      mediumRiskAssets: 15,
-      lowRiskAssets: 119,
-      totalSavings: 1250000 // $1.25M
-    },
-    performanceMetrics: {
-      averageUptime: 94.5,
-      averageEfficiency: 87.2,
-      averageUtilization: 82.1,
-      averageROI: 156.8
-    },
-    financialMetrics: {
-      totalCostOfOwnership: 3125000, // $3.125M
-      maintenanceCosts: 875000, // $875K
-      depreciationExpense: 2187500, // $2.1875M
-      assetROI: 156.8
-    }
-  };
+  // Use tRPC query for asset lifecycle data
+  const { data: assetData, isLoading: assetLoading } = api.rentalMaintenance.getDashboardData.useQuery();
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        setStats(mockStats);
-        setAnalytics(mockAnalytics);
-      } catch (error) {
-        console.error('Error loading asset lifecycle data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    void loadData();
-  }, []);
+    if (assetData?.summary) {
+      // Transform API data to match our interface
+      const apiStats: AssetLifecycleStats = {
+        totalAssets: assetData.summary.totalEquipment,
+        activeAssets: assetData.summary.availableEquipment + assetData.summary.inUseEquipment,
+        underMaintenance: assetData.summary.maintenanceEquipment,
+        retiredAssets: 0, // TODO: Add retired assets to API
+        totalValue: 0, // TODO: Calculate from equipment purchase prices
+        depreciationValue: 0, // TODO: Calculate depreciation
+        netBookValue: 0, // TODO: Calculate net book value
+        averageAge: 0, // TODO: Calculate from equipment purchase dates
+        replacementNeeded: assetData.summary.pendingMaintenanceRecords
+      };
+
+      const apiAnalytics: AssetAnalytics = {
+        predictiveMaintenance: {
+          highRiskAssets: assetData.summary.pendingMaintenanceRecords,
+          mediumRiskAssets: Math.floor(assetData.summary.totalEquipment * 0.1),
+          lowRiskAssets: assetData.summary.availableEquipment,
+          totalSavings: 0, // TODO: Calculate from maintenance costs
+        },
+        performanceMetrics: {
+          averageUptime: 0, // TODO: Calculate from equipment logs
+          averageEfficiency: 0, // TODO: Calculate from performance data
+          averageUtilization: assetData.summary.totalEquipment > 0 ? 
+            Math.round((assetData.summary.inUseEquipment / assetData.summary.totalEquipment) * 100) : 0,
+          averageROI: 0 // TODO: Calculate ROI
+        },
+        financialMetrics: {
+          totalCostOfOwnership: 0, // TODO: Calculate TCO
+          maintenanceCosts: 0, // TODO: Calculate from maintenance records
+          depreciationExpense: 0, // TODO: Calculate depreciation
+          assetROI: 0 // TODO: Calculate ROI
+        }
+      };
+
+      setStats(apiStats);
+      setAnalytics(apiAnalytics);
+      setLoading(false);
+    }
+  }, [assetData]);
 
   if (loading) {
     return (

@@ -36,6 +36,10 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
   return next({
     ctx: {
       ...ctx,
+      user: {
+        id: 'default-user',
+        email: 'default@example.com',
+      },
     },
   });
 });

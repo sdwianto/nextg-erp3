@@ -27,142 +27,43 @@ import {
 } from 'lucide-react';
 
 const OfflineSyncPage: React.FC = () => {
-  // Mock data for offline sync
-  const syncStats = {
-    totalDevices: 12,
-    onlineDevices: 8,
-    offlineDevices: 4,
-    pendingSync: 156,
-    syncedToday: 1247,
-    conflicts: 3
+  // Empty data arrays - ready for real data
+  const syncData = {
+    totalDevices: 0,
+    connectedDevices: 0,
+    syncedToday: 0,
+    pendingSync: 0,
+    lastSync: 'Never'
   };
 
-  const devices = [
-    {
-      id: 1,
-      name: 'Port Moresby Office',
-      type: 'Desktop',
-      status: 'Online',
-      lastSync: '2024-01-15 10:30',
-      pendingRecords: 0,
-      syncProgress: 100,
-      location: 'Port Moresby',
-      ip: '192.168.1.100'
-    },
-    {
-      id: 2,
-      name: 'Lae Warehouse',
-      type: 'Desktop',
-      status: 'Online',
-      lastSync: '2024-01-15 10:25',
-      pendingRecords: 0,
-      syncProgress: 100,
-      location: 'Lae',
-      ip: '192.168.1.101'
-    },
-    {
-      id: 3,
-      name: 'Mount Hagen Site',
-      type: 'Tablet',
-      status: 'Offline',
-      lastSync: '2024-01-15 08:15',
-      pendingRecords: 45,
-      syncProgress: 0,
-      location: 'Mount Hagen',
-      ip: '192.168.1.102'
-    },
-    {
-      id: 4,
-      name: 'Goroka Field Office',
-      type: 'Mobile',
-      status: 'Offline',
-      lastSync: '2024-01-15 07:30',
-      pendingRecords: 23,
-      syncProgress: 0,
-      location: 'Goroka',
-      ip: '192.168.1.103'
-    },
-    {
-      id: 5,
-      name: 'Madang Branch',
-      type: 'Desktop',
-      status: 'Online',
-      lastSync: '2024-01-15 10:20',
-      pendingRecords: 0,
-      syncProgress: 100,
-      location: 'Madang',
-      ip: '192.168.1.104'
-    }
-  ];
-
-  const syncQueue = [
-    {
-      id: 1,
-      type: 'Inventory Update',
-      device: 'Mount Hagen Site',
-      records: 45,
-      status: 'Pending',
-      timestamp: '2024-01-15 08:15',
-      priority: 'High'
-    },
-    {
-      id: 2,
-      type: 'Customer Data',
-      device: 'Goroka Field Office',
-      records: 23,
-      status: 'Pending',
-      timestamp: '2024-01-15 07:30',
-      priority: 'Medium'
-    },
-    {
-      id: 3,
-      type: 'Financial Transaction',
-      device: 'Port Moresby Office',
-      records: 12,
-      status: 'Synced',
-      timestamp: '2024-01-15 10:30',
-      priority: 'High'
-    },
-    {
-      id: 4,
-      type: 'Equipment Status',
-      device: 'Lae Warehouse',
-      records: 8,
-      status: 'Synced',
-      timestamp: '2024-01-15 10:25',
-      priority: 'Low'
-    }
-  ];
-
-  const conflicts = [
-    {
-      id: 1,
-      type: 'Inventory Conflict',
-      device: 'Mount Hagen Site',
-      description: 'Duplicate inventory entry for Excavator #EX-001',
-      timestamp: '2024-01-15 08:15',
-      status: 'Resolved',
-      resolution: 'Auto-merged duplicate entries'
-    },
-    {
-      id: 2,
-      type: 'Customer Data Conflict',
-      device: 'Goroka Field Office',
-      description: 'Conflicting customer phone numbers',
-      timestamp: '2024-01-15 07:30',
-      status: 'Pending',
-      resolution: 'Manual review required'
-    },
-    {
-      id: 3,
-      type: 'Financial Data Conflict',
-      device: 'Port Moresby Office',
-      description: 'Duplicate transaction ID detected',
-      timestamp: '2024-01-15 10:30',
-      status: 'Resolved',
-      resolution: 'Kept most recent transaction'
-    }
-  ];
+  const devices: Array<{
+    id: string;
+    name: string;
+    type: string;
+    ip: string;
+    status: string;
+    lastSync: string;
+    syncProgress: number;
+    location: string;
+  }> = [];
+  const syncQueue: Array<{
+    id: string;
+    type: string;
+    status: string;
+    priority: string;
+    device: string;
+    records: number;
+    timestamp: string;
+  }> = [];
+  const conflicts: Array<{
+    id: string;
+    type: string;
+    status: string;
+    priority: string;
+    device: string;
+    records: number;
+    timestamp: string;
+  }> = [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -258,7 +159,7 @@ const OfflineSyncPage: React.FC = () => {
               <Database className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{syncStats.totalDevices}</div>
+              <div className="text-2xl font-bold">{syncData.totalDevices}</div>
               <p className="text-xs text-muted-foreground">Connected devices</p>
             </CardContent>
           </Card>
@@ -269,7 +170,7 @@ const OfflineSyncPage: React.FC = () => {
               <Wifi className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{syncStats.onlineDevices}</div>
+              <div className="text-2xl font-bold text-green-600">{syncData.connectedDevices}</div>
               <p className="text-xs text-muted-foreground">Currently connected</p>
             </CardContent>
           </Card>
@@ -280,7 +181,7 @@ const OfflineSyncPage: React.FC = () => {
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{syncStats.pendingSync}</div>
+              <div className="text-2xl font-bold text-yellow-600">{syncData.pendingSync}</div>
               <p className="text-xs text-muted-foreground">Records waiting</p>
             </CardContent>
           </Card>
@@ -291,7 +192,7 @@ const OfflineSyncPage: React.FC = () => {
               <AlertTriangle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{syncStats.conflicts}</div>
+              <div className="text-2xl font-bold text-red-600">{conflicts.length}</div>
               <p className="text-xs text-muted-foreground">Need resolution</p>
             </CardContent>
           </Card>

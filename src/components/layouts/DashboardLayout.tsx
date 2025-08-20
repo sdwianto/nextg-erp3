@@ -118,6 +118,16 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             {/* Operations */}
             <SidebarMenu>
 
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  tooltip="Procurement Management"
+                  isActive={isActive("/procurement")}
+                  onClick={() => router.push('/procurement')}
+                >
+                  <ShoppingCart className="mr-2 h-4 w-4" />
+                  Procurement
+                </SidebarMenuButton>
+              </SidebarMenuItem>
 
               <SidebarMenuItem>
                 <SidebarMenuButton
@@ -132,12 +142,12 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  tooltip="Procurement Management"
-                  isActive={isActive("/procurement")}
-                  onClick={() => router.push('/procurement')}
+                  tooltip="Maintenance Management"
+                  isActive={isActive("/maintenance")}
+                  onClick={() => router.push('/maintenance')}
                 >
-                  <ShoppingCart className="mr-2 h-4 w-4" />
-                  Procurement
+                  <Wrench className="mr-2 h-4 w-4" />
+                  Maintenance Management
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
@@ -154,23 +164,12 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  tooltip="Operations Management"
-                  isActive={isActive("/operations")}
-                  onClick={() => router.push('/operations')}
-                >
-                  <Wrench className="mr-2 h-4 w-4" />
-                  Operations
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  tooltip="Rental & Maintenance"
+                  tooltip="Rental Management"
                   isActive={isActive("/rental")}
                   onClick={() => router.push('/rental')}
                 >
                   <Truck className="mr-2 h-4 w-4" />
-                  Rental & Maintenance
+                  Rental Management
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

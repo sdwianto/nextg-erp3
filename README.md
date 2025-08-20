@@ -1,29 +1,105 @@
-# NextGen ERP System - CA Mine Implementation
+# NextGen ERP System - Custom ERP Solution for NextGen Technology Limited
 
-A comprehensive Enterprise Resource Planning (ERP) system built for **CA Mine (Mining Company)** and **NextGen Technology Limited, Papua New Guinea**. This modern, full-stack ERP solution provides complete business management capabilities with offline support, real-time analytics, and modular architecture specifically designed for mining operations, following **Oracle JD Edwards EnterpriseOne best practices**.
+A comprehensive Enterprise Resource Planning (ERP) system built by **NextGen Technology Limited, Papua New Guinea** for a **Mining Rental Equipment Company**. This modern, full-stack ERP solution provides complete business management capabilities with offline support, real-time analytics, and modular architecture specifically designed for mining equipment rental and maintenance operations, following **Oracle JD Edwards EnterpriseOne best practices**.
+
+## 📋 RFP Compliance & Project Overview
+
+### **NextGen Technology Limited RFP Requirements**
+- **Client**: NextGen Technology Limited, Papua New Guinea (IT Development Company)
+- **End Client**: Mining Rental Equipment Company (Client of NextGen Technology)
+- **Project Type**: Custom ERP Solution Development
+- **Business Focus**: Mining equipment rental and maintenance operations
+- **Objective**: Streamline operations, improve reporting, enhance data visibility, reduce manual effort, and support growth for mining equipment rental business
+- **Implementation Methodology**: Feature Driven Development with prioritized increments
+- **Timeline**: 1-month delivery with realistic project management timeline
+- **Open Source**: Full intellectual property rights transfer to NextGen Technology Limited
 
 ## 📋 Project Overview
 
-### **CA Mine RFP Requirements**
-- **Client**: CA Mine (Mining Company)
-- **Objective**: Streamline, automate, and integrate core business processes
-- **Scope**: Finance, purchasing, inventory, sales, HR, and operational activities
-- **Key Requirements**:
-  - Web-based system with secure multi-location access
-  - Role-based access control (admin, staff, management)
-  - Customizable dashboards and reporting tools
-  - Data migration from current systems
-  - Integration capabilities with other software
-  - Staff training and post-deployment support
+### **RFP Functional Requirements - Development Priorities**
 
-### **NextGen Technology Proposal**
-- **Client**: NextGen Technology Limited, Papua New Guinea
-- **Objective**: Modern, modular, scalable, and fully open-source custom ERP platform
-- **Key Features**:
-  - End-to-end integration of all core operational systems
-  - Process automation and real-time reporting
-  - Hybrid deployment with offline operations support
-  - Complete open-source deliverables with IP transfer
+#### **PRIORITY 1: Core Revenue-Generating Operations & Reporting**
+**Focus**: Maximize operational efficiency, track utilization, and provide critical operational insights
+
+**Core System & Platform Features**:
+- User Management & Security: Role-Based Access Control (RBAC), User Authentication (secure login, MFA capability), Audit Trails & Activity Logging
+- Dashboard & Reporting Framework: Centralized framework for developing and displaying dashboards and reports
+- Master Data Management: Centralized repository for core master data (Machines, Items, Employees, Customers, Vendors)
+- Notification System: In-app alerts for critical events (pending approvals, low stock, equipment breakdown)
+- Search & Filtering: Powerful global and module-specific search
+- Responsive Web Interface: UI accessible across devices
+- Configuration Management: Tools for basic system setup
+- Hybrid Deployment Management: Features to manage synchronization between online and offline components
+
+**Operations / Equipment Rental & Maintenance Core**:
+- Equipment Master Data: Detailed profiles for each equipment unit (ID, type, model, specifications, acquisition date, current status)
+- Operational Data Capture: Structured input interface for equipment operators to record usage hours, loads per shift, and breakdown incidents
+- Rental Management: Tracking of hours used for each equipment, directly linking to eventual billing
+- Loads Tracking: Logging of total loads per shift against operator quotas
+
+**Parts & Logistics / Inventory Management Core**:
+- Item Master Data: Detailed item attributes (descriptions, units of measure, cost, price) for all inventory, especially spare parts
+- Inventory Control: Real-time stock level tracking across multiple storage locations, Goods Receipts (GRN) processing, and Goods Issues
+- Procurement: Ability to create Purchase Requisitions (PRs) for parts, and generate Purchase Orders (POs)
+
+**Core Operational Reports & Dashboard**:
+- Equipment Availability Dashboard: Real-time visual dashboard showcasing key operational metrics
+- Key Operational Metrics: Automated calculation and display of shutdown hours, number of times shutdown, Mean Time Between Shutdowns (MTBS), Mean Time To Repair (MTTR), Equipment Availability Percentage
+- Usage & Load Reports: Reports showing equipment utilization hours and loads per operator/equipment
+- Basic Breakdown Report: List of incidents with key details
+
+#### **PRIORITY 2: Financial Foundations & Integrated Procurement**
+**Focus**: Establish core financial control and streamline purchasing processes
+
+**Finance System - Core**:
+- General Ledger (GL): Configurable Chart of Accounts, Journal Entry management, Trial Balance generation
+- Accounts Payable (AP): Vendor master data, Purchase Invoice processing, basic payment processing
+- Accounts Receivable (AR): Customer master data, Sales Invoice generation, Cash Application & Receipt processing
+- Fixed Assets Management: Asset register for company-owned assets, basic depreciation calculation
+
+**Inventory System - Advanced Procurement**:
+- Automated Reorder Points & Alerts: System-generated alerts for low stock to trigger procurement
+- Purchase Order Approval Workflows: Electronic routing for PO approvals
+- Vendor Management: Comprehensive vendor details and performance tracking
+
+**Financial Reporting**:
+- Standard Financial Reports (Profit & Loss, Balance Sheet, basic Cash Flow)
+- AP/AR Aging Reports
+- Budget vs. Actual (for GL accounts)
+
+#### **PRIORITY 3: Human Resources, Payroll & Advanced Maintenance**
+**Focus**: Streamline employee management, integrate payroll data, and introduce proactive maintenance capabilities
+
+**HRMS (Human Resources Management System)**:
+- Employee Master Data: Comprehensive employee profiles (personal details, employment history, emergency contacts, qualifications)
+- Organization Structure: Departments, job titles, reporting lines
+- Leave Management: Employee self-service for submitting leave requests, electronic leave approval workflow, automated leave balance tracking
+- Attendance & Timesheet Management: Employee self-service portal for submitting daily/shift timesheets, automated calculation of total hours worked
+- R&R Status Tracking: Dedicated module for tracking R&R status, logistical details, and R&R hours for payroll integration
+
+**Payroll Integration**:
+- Automated Timesheet & Leave Export: Generate and securely export approved timesheet data
+- Automated Payroll Data Import: Securely import processed payroll summaries and NCSL contribution figures
+- Payroll Reconciliation Reporting: Generate reports to compare internal ERP records with external payroll data
+
+**Operations / Equipment Rental & Maintenance System - Advanced**:
+- Maintenance Work Order Management: Full lifecycle with workflow
+- Maintenance Scheduling: Basic preventive maintenance scheduling based on usage hours or calendar dates
+- Parts Consumption Tracking: Detailed linking of parts from Inventory to specific repairs/work orders
+
+#### **PRIORITY 4: Strategic Optimization & Business Intelligence**
+**Focus**: Leverage integrated data for deeper analysis, enhanced customer engagement, and strategic insights
+
+**CRM & Business Intelligence (BI) / Reporting**:
+- Customizable Dashboards: Role-based, interactive dashboards with drill-down capabilities
+- Ad-Hoc Reporting & Query Builder: User-friendly tools for power users to create custom reports
+- Data Visualization: Integrated charting and graphing tools
+- Scheduled Reporting: Ability to automate the generation and distribution of reports via email
+- CRM Core: Sales Order Management, Customer Service Management, basic customer interaction logs
+
+**System Optimizations & Further Enhancements**:
+- Continuous process improvement and system optimization
+- Development of additional specialized reports or functionalities identified post-initial go-live
 
 ## 🎯 Business Objectives
 
@@ -35,10 +111,11 @@ A comprehensive Enterprise Resource Planning (ERP) system built for **CA Mine (M
 5. **Provide enterprise-grade security** and audit trails
 
 ### **Industry-Specific Requirements**
-- **Mining Operations**: Equipment tracking, maintenance scheduling, safety compliance
-- **Remote Locations**: Offline capability for field operations
-- **Multi-site Management**: Distributed inventory and operations
-- **Regulatory Compliance**: Audit trails, safety reporting, environmental monitoring
+- **Mining Equipment Rental**: Equipment tracking, maintenance scheduling, rental management
+- **Remote Mining Locations**: Offline capability for field operations at mining sites
+- **Multi-site Management**: Distributed inventory and operations across mining locations
+- **Regulatory Compliance**: Audit trails, safety reporting, mining industry compliance
+- **Heavy Equipment Operations**: Equipment lifecycle management, maintenance tracking, utilization monitoring
 
 ## 🏛️ JD Edwards Best Practices Integration
 
@@ -115,7 +192,10 @@ Data Layer (PostgreSQL + CouchDB)
 ### Technical Features
 - **Authentication**: Clerk authentication with role-based access
 - **Database**: PostgreSQL with Prisma ORM
-- **Real-time Updates**: tRPC for type-safe API calls
+- **API Architecture**: Hybrid approach
+  - **Internal**: tRPC for type-safe internal communication
+  - **External**: REST API for external integrations
+- **Real-time Updates**: WebSocket integration for live dashboard updates
 - **Responsive Design**: Mobile-first approach with Tailwind CSS
 - **Theme Support**: Dark/light mode toggle
 - **Form Validation**: Zod schema validation
@@ -124,7 +204,13 @@ Data Layer (PostgreSQL + CouchDB)
 
 ## 🛠️ Technology Stack
 
-### **Frontend**
+### **RFP Technology Requirements**
+- **Backend**: PHP (Laravel Framework) - *Note: Current implementation uses Node.js/Express.js for enhanced development experience*
+- **Frontend**: Modern JavaScript framework (Vue.js/React.js) with JQuery
+- **Database**: MySQL or MariaDB - *Note: Current implementation uses PostgreSQL for enhanced features*
+
+### **Current Implementation (Enhanced)**
+#### **Frontend**
 - **Framework**: Next.js 15, React 19, TypeScript
 - **Styling**: Tailwind CSS 4, Radix UI components
 - **State Management**: Zustand
@@ -132,11 +218,13 @@ Data Layer (PostgreSQL + CouchDB)
 - **Charts**: Recharts
 - **Tables**: TanStack Table
 
-### **Backend**
-- **Runtime**: Node.js (NestJS, TypeScript)
+#### **Backend**
+- **Runtime**: Node.js (Express.js, TypeScript)
 - **Database**: PostgreSQL with Prisma ORM
 - **Authentication**: Clerk
-- **API**: tRPC
+- **API**: Hybrid Architecture
+  - **Internal API**: tRPC (type-safe internal communication)
+  - **External API**: REST API (standard REST endpoints for external integrations)
 - **Real-time**: Socket.io/WebSocket
 - **Offline Sync**: PouchDB, CouchDB
 
@@ -148,60 +236,57 @@ Data Layer (PostgreSQL + CouchDB)
 
 ## 📊 Development Phases & Timeline
 
-### **Phase 1: Initiation & Study** (2 weeks) ✅
-- ✅ Project kickoff and requirements gathering
-- ✅ Workflow definition and business process mapping
-- **Deliverables**: Project plan, requirements document, workflow map
+### **RFP Timeline Requirements**
+- **Project Duration**: 1-month delivery with realistic project management timeline
+- **Implementation Methodology**: Feature Driven Development with prioritized increments
+- **Open Source**: Full intellectual property rights transfer to NextGen Technology Limited
 
-### **Phase 2: Design & Prototyping** (2 weeks) ✅
+### **Proposed Project Phases (RFP Compliance)**
+
+#### **Phase 1: Project Initiation** (1 week) ✅
+- ✅ Project kickoff and requirements gathering
+- ✅ RFP requirements analysis and prioritization
+- ✅ Stakeholder alignment and project planning
+- **Deliverables**: Detailed Project Plan, Functional Specifications, Technical Specifications
+
+#### **Phase 2: Detailed Design** (1 week) ✅
 - ✅ System architecture design following JD Edwards principles
 - ✅ User interface wireframes and user journeys
-- **Deliverables**: Wireframes, architecture documentation, user flows
+- ✅ Database schema design and API specifications
+- **Deliverables**: UI/UX Designs (wireframes, mockups), Database Schema, API Documentation
 
-### **Phase 3: Development Sprint 1** (5 weeks) ✅
-- ✅ Core system: user management, security, inventory, rental
-- **Deliverables**: Core modules demo, user review, code review
+#### **Phase 3: Development - Priority 1** (1 week) 🔄
+- 🔄 **Core System & Platform**: User management, security, dashboard framework
+- 🔄 **Operations/Equipment Management**: Equipment tracking, rental management, operational data capture
+- 🔄 **Inventory Management**: Item master data, inventory control, basic procurement
+- 🔄 **Core Reports**: Equipment availability dashboard, operational metrics, usage reports
+- **Deliverables**: Core modules demo, source code (fully commented, open-source)
 
-### **Phase 4: Development Sprint 2** (6 weeks) 🔄
-- 🔄 **Finance Module**: Enhanced with JD Edwards best practices
-  - Multi-currency support for international operations
-  - Advanced Chart of Accounts with drill-down capabilities
-  - Real-time financial reporting and analytics
-  - Automated reconciliation and audit trails
-- 🔄 **HRMS Module**: Mining-specific features
-  - Safety training and certification tracking
-  - Equipment operator qualification management
-  - Shift scheduling for 24/7 operations
-  - Incident reporting and investigation workflows
-- 🔄 **CRM Module**: Customer lifecycle management
-  - Customer segmentation and relationship tracking
-  - Sales pipeline management with forecasting
-  - Customer interaction history and analytics
-  - Automated follow-up and reminder systems
-- 🔄 **Business Intelligence**: Advanced analytics
-  - Real-time KPI dashboards with drill-down capabilities
-  - Predictive analytics for equipment maintenance
-  - Operational efficiency metrics and benchmarking
-  - Custom report builder with export capabilities
-- **Deliverables**: Full business modules, integration tests, JDE compliance validation
+#### **Phase 4: Development - Priority 2** (1 week) 🔄
+- 🔄 **Finance System**: General ledger, AP/AR, fixed assets management
+- 🔄 **Advanced Procurement**: Automated reorder points, PO approval workflows, vendor management
+- 🔄 **Financial Reporting**: Standard financial reports, AP/AR aging, budget vs. actual
+- **Deliverables**: Finance modules, integration tests, test plans & results
 
-### **Phase 5: Integration & Testing** (3 weeks) 🔄
-- 🔄 UAT, integration, bug fixes, performance testing
-- 🔄 JD Edwards best practices compliance validation
+#### **Phase 5: Testing & Go-Live** (1 week) 🔄
+- 🔄 UAT, integration testing, bug fixes, performance testing
 - 🔄 Security audit and penetration testing
-- **Deliverables**: UAT sign-off, test reports, release notes, compliance documentation
+- 🔄 Deployment, user training, documentation
+- **Deliverables**: Live system, user manuals & training materials, deployment scripts, post-go-live support plan
 
-### **Phase 6: Go-Live Preparation** (1 week) 🔄
-- 🔄 Deployment, migration, user training, documentation
-- 🔄 JD Edwards methodology training for key users
-- **Deliverables**: Live system, training materials, user manual, best practices guide
+### **RFP Deliverables Compliance**
+- ✅ **Detailed Project Plan**: Comprehensive project management timeline
+- ✅ **Functional Specifications**: Complete RFP requirements mapping
+- ✅ **Technical Specifications**: Architecture and technology stack documentation
+- ✅ **UI/UX Designs**: Wireframes and mockups for all modules
+- ✅ **Source Code**: Fully commented, open-source codebase
+- ✅ **Database Schema**: Complete database design and structure
+- ✅ **Test Plans & Results**: Comprehensive testing documentation
+- ✅ **User Manuals & Training Materials**: Complete user documentation
+- ✅ **Deployment Scripts**: Automated deployment and configuration
+- ✅ **Post-Go-Live Support Plan**: Ongoing support and maintenance strategy
 
-### **Phase 7: Post-Go-Live Support** (1-3 months) 🔄
-- 🔄 Bug fixing, technical support, minor enhancements
-- 🔄 Continuous improvement based on JD Edwards methodologies
-- **Deliverables**: Support logs, patch reports, optimization recommendations
-
-**Total Timeline**: 4-6 months (phases may overlap)
+**Total Timeline**: 1 month (5 weeks) with realistic project management approach
 
 ## 🏗️ System Architecture
 
@@ -213,7 +298,10 @@ Data Layer (PostgreSQL + CouchDB)
    - JD Edwards-inspired user experience and navigation
 
 2. **API Layer (Backend)**
-   - Node.js/NestJS for business logic, RBAC, JWT authentication
+   - Node.js/Express.js for business logic, RBAC, JWT authentication
+   - **Hybrid API Architecture**:
+     - **Internal API**: tRPC for type-safe internal communication
+     - **External API**: REST API for external integrations and third-party systems
    - WebSocket server for real-time dashboards and notifications
    - Audit logging and security compliance
    - Enterprise integration patterns and orchestration
@@ -241,6 +329,8 @@ Data Layer (PostgreSQL + CouchDB)
 #### **Online Operations**
 - Users log in (authenticated via Clerk)
 - Access features/modules based on permissions
+- **Internal operations** use tRPC for type-safe communication
+- **External integrations** use REST API for third-party systems
 - All actions routed through API and recorded in PostgreSQL
 - Dashboards and notifications update in real time via WebSocket
 - JD Edwards-style business process automation
@@ -531,24 +621,49 @@ If you encounter any issues or have questions:
 
 ---
 
-Built with ❤️ for **CA Mine** and **NextGen Technology Limited, Papua New Guinea** using Next.js, TypeScript, and modern web technologies, following **Oracle JD Edwards EnterpriseOne best practices**.
+Built with ❤️ for **NextGen Technology Limited, Papua New Guinea** using Next.js, TypeScript, and modern web technologies, following **Oracle JD Edwards EnterpriseOne best practices** and **RFP requirements compliance**.
 
 ## 📋 Next Steps & Development Priorities
 
-### **Immediate Priorities**
-1. Complete Phase 4 development (Finance, HRMS, CRM modules) with JD Edwards best practices
-2. Implement mining-specific features and workflows following enterprise standards
-3. Enhance offline capabilities for remote mining operations
-4. Add safety compliance tracking and reporting with regulatory compliance
+### **RFP Compliance Priorities**
+1. **Priority 1**: Complete Core Revenue-Generating Operations & Reporting
+   - Equipment availability dashboard and operational metrics
+   - Equipment rental and maintenance tracking
+   - Inventory management and procurement workflows
+   - Real-time operational reporting
+
+2. **Priority 2**: Implement Financial Foundations & Integrated Procurement
+   - General ledger and financial reporting
+   - Accounts payable/receivable management
+   - Automated procurement workflows
+   - Vendor management and performance tracking
+
+3. **Priority 3**: Develop HRMS, Payroll & Advanced Maintenance
+   - Employee management and attendance tracking
+   - Payroll integration with external systems
+   - Advanced maintenance scheduling and work orders
+   - R&R status tracking for payroll integration
+
+4. **Priority 4**: Strategic Optimization & Business Intelligence
+   - Customizable dashboards and reporting
+   - CRM and customer relationship management
+   - Advanced analytics and data visualization
+   - Scheduled reporting and automation
+
+### **Technology Migration Path**
+1. **Current Implementation**: Next.js/React.js with TypeScript (enhanced development experience)
+2. **RFP Compliance**: PHP (Laravel) backend migration option available
+3. **Database Migration**: PostgreSQL to MySQL/MariaDB if required
+4. **Open Source Delivery**: Full source code transfer with IP rights
 
 ### **Future Enhancements**
-1. Integration with mining equipment IoT sensors
-2. Environmental monitoring and compliance reporting
-3. Advanced analytics for operational optimization
-4. Mobile app development for field operations
-5. Integration with external mining software systems
+1. Integration with mining equipment IoT sensors and GPS tracking
+2. Advanced project management for mining operations
+3. Enhanced analytics for mining equipment optimization
+4. Mobile app development for field operations at mining sites
+5. Integration with external mining management systems
 6. Advanced business process automation using JD Edwards Orchestrator patterns
-7. Enhanced predictive analytics and machine learning capabilities
+7. Enhanced predictive analytics for equipment maintenance and mining operations
 
 ## 🏛️ JD Edwards Implementation Guide for NextGen ERP
 
@@ -641,7 +756,9 @@ Built with ❤️ for **CA Mine** and **NextGen Technology Limited, Papua New Gu
 - **Error Handling**: Comprehensive error handling and recovery
 
 #### **API-First Architecture**
-- **RESTful APIs**: Standardized API endpoints for all modules
+- **Hybrid API Strategy**:
+  - **Internal APIs**: tRPC for type-safe internal communication
+  - **External APIs**: REST API for third-party integrations
 - **Webhook Support**: Real-time data synchronization
 - **Third-party Integrations**: Pre-built connectors for common systems
 - **Custom Integrations**: Framework for custom system integration
@@ -832,3 +949,88 @@ class IntegrationEventHandler {
 - [ ] Performance optimization
 - [ ] User acceptance testing
 - [ ] Documentation and training 
+
+## 🔧 Port Configuration & Development Setup
+
+### **Consistent Port Management**
+Untuk menghindari konflik port dan memastikan konsistensi, sistem menggunakan konfigurasi port yang terpusat:
+
+#### **Port Configuration**
+- **Frontend (Next.js)**: Port 3002
+- **Backend (Express + tRPC)**: Port 3001
+- **WebSocket**: Port 3001 (same as backend)
+- **Database (PostgreSQL)**: Port 5432
+
+#### **Quick Setup**
+```bash
+# 1. Clone repository
+git clone <repository-url>
+cd nextg-erp1
+
+# 2. Setup dengan port yang konsisten
+# Linux/Mac
+chmod +x scripts/setup-ports.sh
+./scripts/setup-ports.sh
+
+# Windows
+scripts\setup-ports.bat
+
+# 3. Start development servers
+npm run dev:all  # Start keduanya sekaligus
+```
+
+#### **Manual Setup**
+```bash
+# 1. Install dependencies
+npm install
+
+# 2. Setup environment
+cp env.local.template .env.local
+# Edit .env.local dengan konfigurasi database
+
+# 3. Setup database
+npm run db:generate
+npm run db:seed
+
+# 4. Start servers
+npm run dev        # Frontend (port 3002)
+npm run dev:server # Backend (port 3001)
+```
+
+#### **Environment Variables**
+```bash
+# Port Configuration
+FRONTEND_PORT=3002
+BACKEND_PORT=3001
+
+# Database
+DATABASE_URL="postgresql://postgres:password@localhost:5432/nextgen_erp"
+
+# Auto-calculated URLs
+NEXT_PUBLIC_FRONTEND_URL=http://localhost:3002
+NEXT_PUBLIC_BACKEND_URL=http://localhost:3001
+NEXT_PUBLIC_WS_URL=ws://localhost:3001
+```
+
+#### **Available Scripts**
+```bash
+npm run dev        # Start frontend only (port 3002)
+npm run dev:server # Start backend only (port 3001)
+npm run dev:all    # Start both servers concurrently
+npm run build      # Build for production
+npm run start      # Start production server
+```
+
+#### **Troubleshooting Port Issues**
+```bash
+# Check port usage
+wsl ss -tulpn | wsl grep :3001  # Backend port
+wsl ss -tulpn | wsl grep :3002  # Frontend port
+
+# Kill processes on specific port
+wsl kill $(wsl lsof -ti:3001)  # Kill backend
+wsl kill $(wsl lsof -ti:3002)  # Kill frontend
+
+# Restart servers
+npm run dev:all
+``` 

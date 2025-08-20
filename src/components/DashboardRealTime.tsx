@@ -8,6 +8,7 @@ import {
   DollarSign, 
   WifiOff
 } from 'lucide-react';
+import { api } from '@/utils/api';
 
 interface DashboardMetrics {
   totalProducts: number;
@@ -19,13 +20,24 @@ interface DashboardMetrics {
 }
 
 export const DashboardRealTime: React.FC = () => {
+  // Fetch procurement data
+  const { data: procurementData, isLoading: procurementLoading } = api.procurement.getDashboardData.useQuery(undefined, {
+    refetchOnWindowFocus: true,
+    refetchOnMount: true,
+    refetchInterval: 5000, // Auto-refresh every 5 seconds
+    staleTime: 0,
+  });
+
+  // Fetch inventory data for products
+  const { data: inventoryData, isLoading: inventoryLoading } = api.inventory.getProducts.useQuery({ page: 1, limit: 100 });
+
   const metrics: DashboardMetrics = {
-    totalProducts: 1250,
-    lowStockItems: 23,
-    activeOrders: 45,
-    totalRevenue: 125000,
-    activeEquipment: 12,
-    pendingApprovals: 8,
+    totalProducts: inventoryData?.pagination?.total || 0,
+    lowStockItems: 0, // TODO: Calculate from inventory data
+    activeOrders: procurementData?.stats?.purchaseOrders || 0,
+    totalRevenue: procurementData?.stats?.totalSpend || 0,
+    activeEquipment: 0, // TODO: Calculate from rental/maintenance data
+    pendingApprovals: procurementData?.stats?.pendingApprovals || 0,
   };
 
   return (
@@ -73,10 +85,19 @@ export const DashboardRealTime: React.FC = () => {
             <Package className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.totalProducts.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              {metrics.lowStockItems} items low on stock
-            </p>
+            {inventoryLoading ? (
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+                <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{metrics.totalProducts.toLocaleString()}</div>
+                <p className="text-xs text-muted-foreground">
+                  {metrics.lowStockItems} items low on stock
+                </p>
+              </>
+            )}
           </CardContent>
         </Card>
 
@@ -86,25 +107,110 @@ export const DashboardRealTime: React.FC = () => {
             <Truck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metrics.activeOrders}</div>
-            <p className="text-xs text-muted-foreground">
-              {metrics.pendingApprovals} pending approval
-            </p>
+            {procurementLoading ? (
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+                <div className="space-y-1">
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">{metrics.activeOrders}</div>
+                                 <div className="text-xs text-muted-foreground space-y-1">
+                   <div className="flex justify-between">
+                     <span>Total Pending:</span>
+                     <span className="font-medium">{metrics.pendingApprovals}</span>
+                   </div>
+                   {procurementData?.stats?.pendingPRApprovals !== undefined && (
+                     <div className={`flex justify-between transition-all duration-300 ${
+                       procurementData.stats.pendingPRApprovals > 0 
+                         ? 'bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 px-2 py-1 rounded-md border border-orange-200 dark:border-orange-700 animate-pulse' 
+                         : ''
+                     }`}>
+                       <span className={`transition-colors duration-300 ${
+                         procurementData.stats.pendingPRApprovals > 0 
+                           ? 'text-orange-700 dark:text-orange-300 font-semibold' 
+                           : ''
+                       }`}>
+                         PR Approval:
+                       </span>
+                       <span className={`font-medium transition-all duration-300 ${
+                         procurementData.stats.pendingPRApprovals > 0 
+                           ? 'text-orange-600 dark:text-orange-400 animate-bounce shadow-lg bg-orange-600/10 px-2 py-0.5 rounded-full' 
+                           : ''
+                       }`}>
+                         {procurementData.stats.pendingPRApprovals}
+                       </span>
+                     </div>
+                   )}
+                   {procurementData?.stats?.pendingPOApprovals !== undefined && (
+                     <div className={`flex justify-between transition-all duration-300 ${
+                       procurementData.stats.pendingPOApprovals > 0 
+                         ? 'bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 px-2 py-1 rounded-md border border-blue-200 dark:border-blue-700 animate-pulse' 
+                         : ''
+                     }`}>
+                       <span className={`transition-colors duration-300 ${
+                         procurementData.stats.pendingPOApprovals > 0 
+                           ? 'text-blue-700 dark:text-blue-300 font-semibold' 
+                           : ''
+                       }`}>
+                         PO Approval:
+                       </span>
+                       <span className={`font-medium transition-all duration-300 ${
+                         procurementData.stats.pendingPOApprovals > 0 
+                           ? 'text-blue-600 dark:text-blue-400 animate-bounce shadow-lg bg-blue-600/10 px-2 py-0.5 rounded-full' 
+                           : ''
+                       }`}>
+                         {procurementData.stats.pendingPOApprovals}
+                       </span>
+                     </div>
+                   )}
+                   {procurementData?.stats?.rejectedPOs !== undefined && procurementData.stats.rejectedPOs > 0 && (
+                     <div className="flex justify-between text-red-600">
+                       <span>Rejected:</span>
+                       <span className="font-medium">{procurementData.stats.rejectedPOs}</span>
+                     </div>
+                   )}
+                 </div>
+              </>
+            )}
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Spend</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              ${metrics.totalRevenue.toLocaleString()}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              This month
-            </p>
+            {procurementLoading ? (
+              <div className="animate-pulse">
+                <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded mb-2"></div>
+                <div className="space-y-1">
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                  <div className="h-3 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">
+                  ${metrics.totalRevenue.toLocaleString()}
+                </div>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <div>Procurement Spend</div>
+                  {procurementData?.stats?.spendChangePercent !== undefined && (
+                    <div className="flex justify-between">
+                      <span>Change:</span>
+                      <span className={`font-medium ${procurementData.stats.spendChangePercent >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                        {procurementData.stats.spendChangePercent > 0 ? '+' : ''}{procurementData.stats.spendChangePercent}%
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </>
+            )}
           </CardContent>
         </Card>
 

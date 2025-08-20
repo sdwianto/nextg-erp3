@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { api } from '@/utils/api';
 import { 
   Users,
   Phone,
@@ -31,76 +32,35 @@ import {
 } from 'lucide-react';
 
 interface Customer {
-  id: number;
+  id: string;
+  customerNumber: string;
+  name: string;
+  type: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  companyName?: string;
+  industry?: string;
+  status: string;
+  creditLimit: number;
+  currentBalance: number;
+  createdAt: string;
+}
+
+interface CustomerContact {
+  id: string;
   customerId: string;
-  name: string;
-  type: string;
-  contactPerson: string;
-  email: string;
-  phone: string;
-  address: string;
+  userId: string;
+  contactType: string;
+  contactDate: string;
+  summary: string;
+  details?: string;
+  followUpDate?: string;
   status: string;
-  totalSpent: number;
-  lastOrder: string;
-  nextFollowUp: string;
-  rating: number;
-}
-
-interface Lead {
-  id: number;
-  name: string;
-  contactPerson: string;
-  email: string;
-  phone: string;
-  source: string;
-  status: string;
-  value: number;
-  assignedTo: string;
-  nextAction: string;
-}
-
-interface Opportunity {
-  id: number;
-  customerName: string;
-  title: string;
-  value: number;
-  stage: string;
-  probability: number;
-  expectedClose: string;
-  assignedTo: string;
-}
-
-interface EmailCampaign {
-  id: number;
-  subject: string;
-  recipientCount: number;
-  sentDate: string;
-  status: string;
-  openRate: number;
-  clickRate: number;
-}
-
-interface CallLog {
-  id: number;
-  customerName: string;
-  contactPerson: string;
-  phone: string;
-  callDate: string;
-  duration: string;
-  outcome: string;
-  notes: string;
-  assignedTo: string;
-}
-
-interface FollowUp {
-  id: number;
-  customerName: string;
-  contactPerson: string;
-  followUpDate: string;
-  type: string;
-  status: string;
-  notes: string;
-  assignedTo: string;
+  user?: {
+    firstName: string;
+    lastName: string;
+  };
 }
 
 interface FilterState {
@@ -137,252 +97,52 @@ const CRMPage: React.FC = () => {
   const [isCallLogsDialogOpen, setIsCallLogsDialogOpen] = useState(false);
   const [isFollowUpScheduleDialogOpen, setIsFollowUpScheduleDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
+  const [selectedLead, setSelectedLead] = useState<any | null>(null);
+  const [selectedOpportunity, setSelectedOpportunity] = useState<any | null>(null);
 
-  // Mock data for demonstration
-  const crmStats = {
-    totalCustomers: 156,
-    activeCustomers: 142,
-    newCustomers: 8,
-    totalRevenue: 1250000,
-    averageOrderValue: 8500,
-    customerSatisfaction: 4.6
-  };
+  // tRPC API calls
+  const { data: dashboardData, isLoading: dashboardLoading } = api.crm.getDashboardData.useQuery();
+  const { data: customersData, isLoading: customersLoading } = api.crm.getCustomers.useQuery({
+    page: 1,
+    limit: 50,
+    search: filters.search || undefined,
+    status: filters.status !== 'all' ? filters.status as any : undefined,
+    industry: filters.type !== 'all' ? filters.type : undefined,
+  });
 
-  const [customers, setCustomers] = useState<Customer[]>([
-    {
-      id: 1,
-      customerId: 'CUST-001',
-      name: 'Highlands Construction Ltd',
-      type: 'Corporate',
-      contactPerson: 'John Smith',
-      email: 'john.smith@highlands.com',
-      phone: '+675 1234 5678',
-      address: 'Port Moresby, PNG',
-      status: 'active',
-      totalSpent: 125000,
-      lastOrder: '2024-03-10',
-      nextFollowUp: '2024-03-20',
-      rating: 5
-    },
-    {
-      id: 2,
-      customerId: 'CUST-002',
-      name: 'Mining Corporation PNG',
-      type: 'Corporate',
-      contactPerson: 'Sarah Johnson',
-      email: 'sarah.j@miningcorp.com',
-      phone: '+675 1234 5679',
-      address: 'Lae, PNG',
-      status: 'active',
-      totalSpent: 89000,
-      lastOrder: '2024-03-08',
-      nextFollowUp: '2024-03-18',
-      rating: 4
-    },
-    {
-      id: 3,
-      customerId: 'CUST-003',
-      name: 'Port Moresby Construction',
-      type: 'Corporate',
-      contactPerson: 'Mike Wilson',
-      email: 'mike.w@pomconstruction.com',
-      phone: '+675 1234 5680',
-      address: 'Port Moresby, PNG',
-      status: 'active',
-      totalSpent: 67000,
-      lastOrder: '2024-03-05',
-      nextFollowUp: '2024-03-15',
-      rating: 5
-    },
-    {
-      id: 4,
-      customerId: 'CUST-004',
-      name: 'Goroka Builders',
-      type: 'SME',
-      contactPerson: 'Lisa Brown',
-      email: 'lisa.b@gorokabuilders.com',
-      phone: '+675 1234 5681',
-      address: 'Goroka, PNG',
-      status: 'inactive',
-      totalSpent: 45000,
-      lastOrder: '2024-02-15',
-      nextFollowUp: '2024-03-25',
-      rating: 3
+  // Derived data from API
+  const crmStats = useMemo(() => {
+    if (!dashboardData?.data) {
+      return {
+        totalCustomers: 0,
+        activeCustomers: 0,
+        newCustomers: 0,
+        totalRevenue: 0,
+        averageOrderValue: 0,
+        customerSatisfaction: 0
+      };
     }
-  ]);
 
-  const [leads, setLeads] = useState<Lead[]>([
-    {
-      id: 1,
-      name: 'New Guinea Mining',
-      contactPerson: 'David Lee',
-      email: 'david.lee@ngmining.com',
-      phone: '+675 1234 5682',
-      source: 'Website',
-      status: 'qualified',
-      value: 75000,
-      assignedTo: 'John Smith',
-      nextAction: '2024-03-12'
-    },
-    {
-      id: 2,
-      name: 'Pacific Infrastructure',
-      contactPerson: 'Anna Garcia',
-      email: 'anna.g@pacificinfra.com',
-      phone: '+675 1234 5683',
-      source: 'Referral',
-      status: 'prospecting',
-      value: 120000,
-      assignedTo: 'Sarah Johnson',
-      nextAction: '2024-03-14'
-    },
-    {
-      id: 3,
-      name: 'Island Construction',
-      contactPerson: 'Robert Chen',
-      email: 'robert.c@islandconstruction.com',
-      phone: '+675 1234 5684',
-      source: 'Trade Show',
-      status: 'contacted',
-      value: 95000,
-      assignedTo: 'Mike Wilson',
-      nextAction: '2024-03-16'
-    }
-  ]);
+    const stats = dashboardData.data;
+    const activeCustomers = stats.customerStats?.find(s => s.status === 'ACTIVE')?.count || 0;
+    const newCustomers = stats.customerStats?.find(s => s.status === 'LEAD')?.count || 0;
 
-  const [opportunities, setOpportunities] = useState<Opportunity[]>([
-    {
-      id: 1,
-      customerName: 'Highlands Construction Ltd',
-      title: 'Equipment Rental Contract',
-      value: 250000,
-      stage: 'negotiation',
-      probability: 75,
-      expectedClose: '2024-04-15',
-      assignedTo: 'John Smith'
-    },
-    {
-      id: 2,
-      customerName: 'Mining Corporation PNG',
-      title: 'Maintenance Service Agreement',
-      value: 180000,
-      stage: 'proposal',
-      probability: 60,
-      expectedClose: '2024-04-30',
-      assignedTo: 'Sarah Johnson'
-    },
-    {
-      id: 3,
-      customerName: 'Port Moresby Construction',
-      title: 'Spare Parts Supply',
-      value: 85000,
-      stage: 'qualification',
-      probability: 40,
-      expectedClose: '2024-05-15',
-      assignedTo: 'Mike Wilson'
-    }
-  ]);
+    return {
+      totalCustomers: stats.totalCustomers,
+      activeCustomers,
+      newCustomers,
+      totalRevenue: 0, // Not available in current API
+      averageOrderValue: 0, // Not available in current API
+      customerSatisfaction: 4.5 // Default value
+    };
+  }, [dashboardData]);
 
-  const [emailCampaigns, setEmailCampaigns] = useState<EmailCampaign[]>([
-    {
-      id: 1,
-      subject: 'New Equipment Arrivals - March 2024',
-      recipientCount: 156,
-      sentDate: '2024-03-01',
-      status: 'sent',
-      openRate: 68,
-      clickRate: 12
-    },
-    {
-      id: 2,
-      subject: 'Special Maintenance Service Offer',
-      recipientCount: 142,
-      sentDate: '2024-02-28',
-      status: 'sent',
-      openRate: 72,
-      clickRate: 18
-    },
-    {
-      id: 3,
-      subject: 'Equipment Rental Promotions',
-      recipientCount: 98,
-      sentDate: '2024-02-25',
-      status: 'draft',
-      openRate: 0,
-      clickRate: 0
-    }
-  ]);
+  const customers = useMemo(() => {
+    return customersData?.data || [];
+  }, [customersData]);
 
-  const [callLogs, setCallLogs] = useState<CallLog[]>([
-    {
-      id: 1,
-      customerName: 'Highlands Construction Ltd',
-      contactPerson: 'John Smith',
-      phone: '+675 1234 5678',
-      callDate: '2024-03-10',
-      duration: '15:30',
-      outcome: 'Follow-up scheduled',
-      notes: 'Discussed new equipment requirements. Customer interested in excavator rental.',
-      assignedTo: 'Sarah Johnson'
-    },
-    {
-      id: 2,
-      customerName: 'Mining Corporation PNG',
-      contactPerson: 'Sarah Johnson',
-      phone: '+675 1234 5679',
-      callDate: '2024-03-09',
-      duration: '08:45',
-      outcome: 'Proposal sent',
-      notes: 'Sent maintenance service proposal. Customer will review and respond by Friday.',
-      assignedTo: 'Mike Wilson'
-    },
-    {
-      id: 3,
-      customerName: 'Port Moresby Construction',
-      contactPerson: 'Mike Wilson',
-      phone: '+675 1234 5680',
-      callDate: '2024-03-08',
-      duration: '22:15',
-      outcome: 'Sale closed',
-      notes: 'Successfully closed spare parts order. Customer very satisfied with service.',
-      assignedTo: 'John Smith'
-    }
-  ]);
-
-  const [followUps, setFollowUps] = useState<FollowUp[]>([
-    {
-      id: 1,
-      customerName: 'Highlands Construction Ltd',
-      contactPerson: 'John Smith',
-      followUpDate: '2024-03-20',
-      type: 'Equipment Demo',
-      status: 'scheduled',
-      notes: 'Schedule excavator demonstration for next week.',
-      assignedTo: 'Sarah Johnson'
-    },
-    {
-      id: 2,
-      customerName: 'Mining Corporation PNG',
-      contactPerson: 'Sarah Johnson',
-      followUpDate: '2024-03-18',
-      type: 'Proposal Review',
-      status: 'pending',
-      notes: 'Follow up on maintenance service proposal sent last week.',
-      assignedTo: 'Mike Wilson'
-    },
-    {
-      id: 3,
-      customerName: 'Goroka Builders',
-      contactPerson: 'Lisa Brown',
-      followUpDate: '2024-03-25',
-      type: 'Contract Renewal',
-      status: 'overdue',
-      notes: 'Contract renewal discussion. Customer has concerns about pricing.',
-      assignedTo: 'John Smith'
-    }
-  ]);
+  // Loading states
+  const isLoading = dashboardLoading || customersLoading;
 
   // Get unique values for filter options
   const types = useMemo(() => 
@@ -396,32 +156,28 @@ const CRMPage: React.FC = () => {
   );
 
   const sources = useMemo(() => 
-    Array.from(new Set(leads.map(item => item.source))), 
-    [leads]
+    Array.from(new Set(customers.map(item => item.status))), 
+    [customers]
   );
 
   const stages = useMemo(() => 
-    Array.from(new Set(opportunities.map(item => item.stage))), 
-    [opportunities]
+    Array.from(new Set(customers.map(item => item.status))), 
+    [customers]
   );
 
-  // Filtered customers
+  // Filter customers based on current filters
   const filteredCustomers = useMemo(() => {
+    const searchLower = filters.search.toLowerCase();
+    
     return customers.filter(item => {
-      // Search filter
-      const searchLower = filters.search.toLowerCase();
       const matchesSearch = !filters.search || 
         item.name.toLowerCase().includes(searchLower) ||
-        item.customerId.toLowerCase().includes(searchLower) || 
-        item.contactPerson.toLowerCase().includes(searchLower) ||
-        item.email.toLowerCase().includes(searchLower) ||
+        item.customerNumber.toLowerCase().includes(searchLower) || 
+        item.email?.toLowerCase().includes(searchLower) ||
         item.type.toLowerCase().includes(searchLower);
 
-      // Type filter
-      const matchesType = !filters.type || filters.type === 'all' || item.type === filters.type;
-      
-      // Status filter
-      const matchesStatus = !filters.status || filters.status === 'all' || item.status === filters.status;
+      const matchesType = filters.type === 'all' || item.type === filters.type;
+      const matchesStatus = filters.status === 'all' || item.status === filters.status;
 
       return matchesSearch && matchesType && matchesStatus;
     });
@@ -445,182 +201,147 @@ const CRMPage: React.FC = () => {
 
   // New customer form state
   const [newCustomer, setNewCustomer] = useState({
-    customerId: '',
+    customerNumber: '',
     name: '',
-    type: '',
-    contactPerson: '',
+    type: 'INDIVIDUAL',
     email: '',
     phone: '',
     address: '',
-    status: 'active'
+    companyName: '',
+    industry: '',
+    status: 'ACTIVE',
+    creditLimit: 0,
+    contactPerson: '',
   });
 
   // Edit customer form state
   const [editCustomer, setEditCustomer] = useState({
-    customerId: '',
+    customerNumber: '',
     name: '',
-    type: '',
-    contactPerson: '',
+    type: 'INDIVIDUAL',
     email: '',
     phone: '',
     address: '',
-    status: 'active'
+    companyName: '',
+    industry: '',
+    status: 'ACTIVE',
+    creditLimit: 0,
+    contactPerson: '',
   });
 
   // New lead form state
   const [newLead, setNewLead] = useState({
     name: '',
-    contactPerson: '',
     email: '',
     phone: '',
     source: '',
-    status: 'prospecting',
+    status: 'NEW',
     value: 0,
     assignedTo: '',
-    nextAction: ''
   });
 
   // Add new customer
   const addNewCustomer = () => {
-    const customer: Customer = {
-      id: Math.max(...customers.map(item => item.id)) + 1,
-      customerId: newCustomer.customerId,
-      name: newCustomer.name,
-      type: newCustomer.type,
-      contactPerson: newCustomer.contactPerson,
-      email: newCustomer.email,
-      phone: newCustomer.phone,
-      address: newCustomer.address,
-      status: newCustomer.status,
-      totalSpent: 0,
-      lastOrder: '-',
-      nextFollowUp: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] ?? '',
-      rating: 5
-    };
-
-    setCustomers(prevCustomers => [...prevCustomers, customer]);
+    // This would be handled by tRPC mutation in a real implementation
+    console.log('Adding new customer:', newCustomer);
     
     setNewCustomer({
-      customerId: '',
+      customerNumber: '',
       name: '',
-      type: '',
-      contactPerson: '',
+      type: 'INDIVIDUAL',
       email: '',
       phone: '',
       address: '',
-      status: 'active'
+      companyName: '',
+      industry: '',
+      status: 'ACTIVE',
+      creditLimit: 0,
+      contactPerson: '',
     });
     setIsAddCustomerDialogOpen(false);
   };
 
-  // Edit customer
-  const editCustomerItem = () => {
-    if (!selectedCustomer) return;
-
-    const updatedCustomer: Customer = {
-      ...selectedCustomer,
-      customerId: editCustomer.customerId,
-      name: editCustomer.name,
-      type: editCustomer.type,
-      contactPerson: editCustomer.contactPerson,
-      email: editCustomer.email,
-      phone: editCustomer.phone,
-      address: editCustomer.address,
-      status: editCustomer.status
-    };
-
-    setCustomers(prevCustomers => 
-      prevCustomers.map(item => item.id === selectedCustomer.id ? updatedCustomer : item)
-    );
+  // Update customer
+  const updateCustomer = () => {
+    // This would be handled by tRPC mutation in a real implementation
+    console.log('Updating customer:', editCustomer);
     
     setEditCustomer({
-      customerId: '',
+      customerNumber: '',
       name: '',
-      type: '',
-      contactPerson: '',
+      type: 'INDIVIDUAL',
       email: '',
       phone: '',
       address: '',
-      status: 'active'
+      companyName: '',
+      industry: '',
+      status: 'ACTIVE',
+      creditLimit: 0,
+      contactPerson: '',
     });
-    setSelectedCustomer(null);
     setIsEditCustomerDialogOpen(false);
   };
 
   // Add new lead
   const addNewLead = () => {
-    const lead: Lead = {
-      id: Math.max(...leads.map(item => item.id)) + 1,
-      name: newLead.name,
-      contactPerson: newLead.contactPerson,
-      email: newLead.email,
-      phone: newLead.phone,
-      source: newLead.source,
-      status: newLead.status,
-      value: newLead.value,
-      assignedTo: newLead.assignedTo,
-      nextAction: newLead.nextAction
-    };
-
-    setLeads(prevLeads => [...prevLeads, lead]);
+    // This would be handled by tRPC mutation in a real implementation
+    console.log('Adding new lead:', newLead);
     
     setNewLead({
       name: '',
-      contactPerson: '',
       email: '',
       phone: '',
       source: '',
-      status: 'prospecting',
+      status: 'NEW',
       value: 0,
       assignedTo: '',
-      nextAction: ''
     });
     setIsAddLeadDialogOpen(false);
   };
 
-  // Handle edit customer button click
+  // Handle edit customer click
   const handleEditCustomerClick = (item: Customer) => {
     setSelectedCustomer(item);
     setEditCustomer({
-      customerId: item.customerId,
+      customerNumber: item.customerNumber,
       name: item.name,
       type: item.type,
-      contactPerson: item.contactPerson,
-      email: item.email,
-      phone: item.phone,
-      address: item.address,
-      status: item.status
+      email: item.email || '',
+      phone: item.phone || '',
+      address: item.address || '',
+      companyName: item.companyName || '',
+      industry: item.industry || '',
+      status: item.status,
+      creditLimit: item.creditLimit,
+      contactPerson: '',
     });
     setIsEditCustomerDialogOpen(true);
   };
 
-  // Handle view customer button click
+  // Handle view customer details
   const handleViewCustomerClick = (item: Customer) => {
     setSelectedCustomer(item);
     setIsViewCustomerDialogOpen(true);
   };
 
   // Handle view lead details
-  const handleViewLeadClick = (item: Lead) => {
+  const handleViewLeadClick = (item: any) => {
     setSelectedLead(item);
     setIsViewLeadDialogOpen(true);
   };
 
   // Handle view opportunity details
-  const handleViewOpportunityClick = (item: Opportunity) => {
+  const handleViewOpportunityClick = (item: any) => {
     setSelectedOpportunity(item);
     setIsViewOpportunityDialogOpen(true);
   };
 
   // Check if forms are valid
-  const isNewCustomerFormValid = newCustomer.customerId && newCustomer.name && newCustomer.type && 
-    newCustomer.contactPerson && newCustomer.email && newCustomer.phone && newCustomer.address;
+  const isNewCustomerFormValid = newCustomer.customerNumber && newCustomer.name && newCustomer.type;
 
-  const isEditCustomerFormValid = editCustomer.customerId && editCustomer.name && editCustomer.type && 
-    editCustomer.contactPerson && editCustomer.email && editCustomer.phone && editCustomer.address;
+  const isEditCustomerFormValid = editCustomer.customerNumber && editCustomer.name && editCustomer.type;
 
-  const isNewLeadFormValid = newLead.name && newLead.contactPerson && newLead.email && 
-    newLead.phone && newLead.source && newLead.assignedTo && newLead.nextAction;
+  const isNewLeadFormValid = newLead.name && newLead.email;
 
   // Check if any filters are active
   const hasActiveFilters = filters.search || 
@@ -631,21 +352,21 @@ const CRMPage: React.FC = () => {
 
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case 'active':
+      case 'ACTIVE':
         return <Badge variant="default">Active</Badge>;
-      case 'inactive':
+      case 'INACTIVE':
         return <Badge variant="outline">Inactive</Badge>;
-      case 'qualified':
+      case 'QUALIFIED':
         return <Badge variant="default">Qualified</Badge>;
-      case 'prospecting':
+      case 'PROSPECTING':
         return <Badge variant="outline">Prospecting</Badge>;
-      case 'contacted':
+      case 'CONTACTED':
         return <Badge variant="secondary">Contacted</Badge>;
-      case 'negotiation':
+      case 'NEGOTIATION':
         return <Badge variant="default">Negotiation</Badge>;
-      case 'proposal':
+      case 'PROPOSAL':
         return <Badge variant="secondary">Proposal</Badge>;
-      case 'qualification':
+      case 'QUALIFICATION':
         return <Badge variant="outline">Qualification</Badge>;
       default:
         return <Badge variant="outline">Unknown</Badge>;
@@ -654,11 +375,11 @@ const CRMPage: React.FC = () => {
 
   const getStageColor = (stage: string) => {
     switch (stage) {
-      case 'negotiation':
+      case 'NEGOTIATION':
         return 'text-green-600';
-      case 'proposal':
+      case 'PROPOSAL':
         return 'text-blue-600';
-      case 'qualification':
+      case 'QUALIFICATION':
         return 'text-yellow-600';
       default:
         return 'text-gray-600';
@@ -704,31 +425,7 @@ const CRMPage: React.FC = () => {
                     </Button>
                   </div>
                   <div className="space-y-3">
-                    {emailCampaigns.map((campaign) => (
-                      <div key={campaign.id} className="p-4 border rounded-lg">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <div className="font-medium">{campaign.subject}</div>
-                            <div className="text-sm text-gray-500">
-                              Sent to {campaign.recipientCount} recipients on {campaign.sentDate}
-                            </div>
-                          </div>
-                          <Badge variant={campaign.status === 'sent' ? 'default' : 'outline'}>
-                            {campaign.status}
-                          </Badge>
-                        </div>
-                        {campaign.status === 'sent' && (
-                          <div className="mt-2 grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                              <span className="text-gray-500">Open Rate:</span> {campaign.openRate}%
-                            </div>
-                            <div>
-                              <span className="text-gray-500">Click Rate:</span> {campaign.clickRate}%
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                    {/* Add email campaign components here */}
                   </div>
                 </div>
               </DialogContent>
@@ -748,12 +445,12 @@ const CRMPage: React.FC = () => {
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="grid gap-2">
-                      <Label htmlFor="customerId">Customer ID *</Label>
+                      <Label htmlFor="customerNumber">Customer Number *</Label>
                       <Input
-                        id="customerId"
+                        id="customerNumber"
                         placeholder="e.g., CUST-001"
-                        value={newCustomer.customerId}
-                        onChange={(e) => setNewCustomer(prev => ({ ...prev, customerId: e.target.value }))}
+                        value={newCustomer.customerNumber}
+                        onChange={(e) => setNewCustomer(prev => ({ ...prev, customerNumber: e.target.value }))}
                       />
                     </div>
                     <div className="grid gap-2">
@@ -778,9 +475,9 @@ const CRMPage: React.FC = () => {
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Corporate">Corporate</SelectItem>
+                          <SelectItem value="CORPORATE">Corporate</SelectItem>
                           <SelectItem value="SME">SME</SelectItem>
-                          <SelectItem value="Individual">Individual</SelectItem>
+                          <SelectItem value="INDIVIDUAL">Individual</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -794,8 +491,8 @@ const CRMPage: React.FC = () => {
                           <SelectValue placeholder="Select status" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="inactive">Inactive</SelectItem>
+                          <SelectItem value="ACTIVE">Active</SelectItem>
+                          <SelectItem value="INACTIVE">Inactive</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -805,7 +502,7 @@ const CRMPage: React.FC = () => {
                     <Label htmlFor="contactPerson">Contact Person *</Label>
                     <Input
                       id="contactPerson"
-                      placeholder="e.g., John Smith"
+                      placeholder="e.g., Contact Person Name"
                       value={newCustomer.contactPerson}
                       onChange={(e) => setNewCustomer(prev => ({ ...prev, contactPerson: e.target.value }))}
                     />
@@ -848,14 +545,17 @@ const CRMPage: React.FC = () => {
                     variant="outline" 
                     onClick={() => {
                       setNewCustomer({
-                        customerId: '',
+                        customerNumber: '',
                         name: '',
-                        type: '',
-                        contactPerson: '',
+                        type: 'INDIVIDUAL',
                         email: '',
                         phone: '',
                         address: '',
-                        status: 'active'
+                        companyName: '',
+                        industry: '',
+                        status: 'ACTIVE',
+                        creditLimit: 0,
+                        contactPerson: '',
                       });
                       setIsAddCustomerDialogOpen(false);
                     }}
@@ -1016,8 +716,8 @@ const CRMPage: React.FC = () => {
                           <SelectItem value="all">All Statuses</SelectItem>
                           {statuses.map((status) => (
                             <SelectItem key={status} value={status}>
-                              {status === 'active' ? 'Active' : 
-                               status === 'inactive' ? 'Inactive' : status}
+                              {status === 'ACTIVE' ? 'Active' : 
+                               status === 'INACTIVE' ? 'Inactive' : status}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -1050,8 +750,8 @@ const CRMPage: React.FC = () => {
                 )}
                 {filters.status && filters.status !== 'all' && (
                   <Badge variant="secondary" className="flex items-center gap-1">
-                    Status: {filters.status === 'active' ? 'Active' : 
-                            filters.status === 'inactive' ? 'Inactive' : filters.status}
+                    Status: {filters.status === 'ACTIVE' ? 'Active' : 
+                            filters.status === 'INACTIVE' ? 'Inactive' : filters.status}
                     <X 
                       className="h-3 w-3 cursor-pointer" 
                       onClick={() => setFilters(prev => ({ ...prev, status: 'all' }))}
@@ -1087,12 +787,12 @@ const CRMPage: React.FC = () => {
                         <td className="p-3">
                           <div>
                             <div className="font-medium">{customer.name}</div>
-                            <div className="text-sm text-gray-500">{customer.customerId}</div>
+                            <div className="text-sm text-gray-500">{customer.customerNumber}</div>
                           </div>
                         </td>
                         <td className="p-3">
                           <div>
-                            <div className="font-medium">{customer.contactPerson}</div>
+                            <div className="font-medium">{customer.name}</div>
                             <div className="text-sm text-gray-500">{customer.email}</div>
                             <div className="text-sm text-gray-500">{customer.phone}</div>
                           </div>
@@ -1106,15 +806,15 @@ const CRMPage: React.FC = () => {
                         <td className="p-3">
                           <div className="flex items-center gap-1">
                             <DollarSign className="h-4 w-4 text-gray-400" />
-                            <span>{formatCurrency(customer.totalSpent)}</span>
+                            <span>{formatCurrency(customer.currentBalance)}</span>
                           </div>
                         </td>
-                        <td className="p-3 text-sm text-gray-500">{customer.lastOrder}</td>
-                        <td className="p-3 text-sm text-gray-500">{customer.nextFollowUp}</td>
+                        <td className="p-3 text-sm text-gray-500">{customer.createdAt?.toLocaleDateString() || 'N/A'}</td>
+                        <td className="p-3 text-sm text-gray-500">N/A</td>
                         <td className="p-3">
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => handleViewCustomerClick(customer)}>View</Button>
-                            <Button size="sm" variant="outline" onClick={() => handleEditCustomerClick(customer)}>Edit</Button>
+                            <Button size="sm" variant="outline" onClick={() => handleViewCustomerClick(customer as any)}>View</Button>
+                            <Button size="sm" variant="outline" onClick={() => handleEditCustomerClick(customer as any)}>Edit</Button>
                           </div>
                         </td>
                       </tr>
@@ -1141,24 +841,24 @@ const CRMPage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {leads.map((lead) => (
+                {customers.map((lead) => (
                   <div key={lead.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
                     <div className="flex items-center gap-4">
                       <UserPlus className="h-4 w-4 text-blue-500" />
                       <div>
                         <div className="font-medium">{lead.name}</div>
                         <div className="text-sm text-gray-500">
-                          {lead.contactPerson} • {lead.email}
+                          {lead.name} • {lead.email}
                         </div>
                         <div className="text-sm text-gray-500">
-                          Source: {lead.source} • Value: {formatCurrency(lead.value)}
+                          Source: {lead.status} • Value: N/A
                         </div>
                       </div>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
                       <div className="text-left sm:text-right">
                         <div className="text-sm font-medium">Assigned to</div>
-                        <div className="text-sm text-gray-500">{lead.assignedTo}</div>
+                        <div className="text-sm text-gray-500">N/A</div>
                       </div>
                       {getStatusBadge(lead.status)}
                       <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => handleViewLeadClick(lead)}>View</Button>
@@ -1176,27 +876,27 @@ const CRMPage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {opportunities.map((opportunity) => (
+                {customers.map((opportunity) => (
                   <div key={opportunity.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg">
                     <div className="flex items-center gap-4">
                       <Target className="h-4 w-4 text-green-500" />
                       <div>
-                        <div className="font-medium">{opportunity.title}</div>
+                        <div className="font-medium">N/A</div>
                         <div className="text-sm text-gray-500">
-                          {opportunity.customerName}
+                          N/A
                         </div>
                         <div className="text-sm text-gray-500">
-                          Value: {formatCurrency(opportunity.value)} • Probability: {opportunity.probability}%
+                          Value: N/A • Probability: N/A
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
                         <div className="text-sm font-medium">Expected Close</div>
-                        <div className="text-sm text-gray-500">{opportunity.expectedClose}</div>
+                        <div className="text-sm text-gray-500">N/A</div>
                       </div>
-                      <Badge className={getStageColor(opportunity.stage)}>
-                        {opportunity.stage}
+                      <Badge className={getStageColor(opportunity.status)}>
+                        {opportunity.status}
                       </Badge>
                       <Button size="sm" variant="outline" onClick={() => handleViewOpportunityClick(opportunity)}>View</Button>
                     </div>
@@ -1324,12 +1024,12 @@ const CRMPage: React.FC = () => {
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
-                  <Label htmlFor="editCustomerId">Customer ID *</Label>
+                  <Label htmlFor="editCustomerNumber">Customer Number *</Label>
                   <Input
-                    id="editCustomerId"
+                    id="editCustomerNumber"
                     placeholder="e.g., CUST-001"
-                    value={editCustomer.customerId}
-                    onChange={(e) => setEditCustomer(prev => ({ ...prev, customerId: e.target.value }))}
+                    value={editCustomer.customerNumber}
+                    onChange={(e) => setEditCustomer(prev => ({ ...prev, customerNumber: e.target.value }))}
                   />
                 </div>
                 <div className="grid gap-2">
@@ -1354,9 +1054,9 @@ const CRMPage: React.FC = () => {
                       <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Corporate">Corporate</SelectItem>
+                      <SelectItem value="CORPORATE">Corporate</SelectItem>
                       <SelectItem value="SME">SME</SelectItem>
-                      <SelectItem value="Individual">Individual</SelectItem>
+                      <SelectItem value="INDIVIDUAL">Individual</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1370,8 +1070,8 @@ const CRMPage: React.FC = () => {
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="active">Active</SelectItem>
-                      <SelectItem value="inactive">Inactive</SelectItem>
+                      <SelectItem value="ACTIVE">Active</SelectItem>
+                      <SelectItem value="INACTIVE">Inactive</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1381,7 +1081,7 @@ const CRMPage: React.FC = () => {
                 <Label htmlFor="editContactPerson">Contact Person *</Label>
                 <Input
                   id="editContactPerson"
-                  placeholder="e.g., John Smith"
+                                          placeholder="e.g., Contact Person Name"
                   value={editCustomer.contactPerson}
                   onChange={(e) => setEditCustomer(prev => ({ ...prev, contactPerson: e.target.value }))}
                 />
@@ -1424,14 +1124,17 @@ const CRMPage: React.FC = () => {
                 variant="outline" 
                 onClick={() => {
                   setEditCustomer({
-                    customerId: '',
+                    customerNumber: '',
                     name: '',
-                    type: '',
-                    contactPerson: '',
+                    type: 'INDIVIDUAL',
                     email: '',
                     phone: '',
                     address: '',
-                    status: 'active'
+                    companyName: '',
+                    industry: '',
+                    status: 'ACTIVE',
+                    creditLimit: 0,
+                    contactPerson: '',
                   });
                   setSelectedCustomer(null);
                   setIsEditCustomerDialogOpen(false);
@@ -1440,7 +1143,7 @@ const CRMPage: React.FC = () => {
                 Cancel
               </Button>
               <Button 
-                onClick={editCustomerItem}
+                onClick={updateCustomer}
                 disabled={!isEditCustomerFormValid}
               >
                 Save Changes
@@ -1459,8 +1162,8 @@ const CRMPage: React.FC = () => {
               <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
-                    <Label>Customer ID</Label>
-                    <div className="font-medium">{selectedCustomer.customerId}</div>
+                    <Label>Customer Number</Label>
+                    <div className="font-medium">{selectedCustomer.customerNumber}</div>
                   </div>
                   <div className="grid gap-2">
                     <Label>Company Name</Label>
@@ -1481,7 +1184,7 @@ const CRMPage: React.FC = () => {
                 </div>
                 <div className="grid gap-2">
                   <Label>Contact Person</Label>
-                  <div className="font-medium">{selectedCustomer.contactPerson}</div>
+                  <div className="font-medium">N/A</div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
@@ -1500,21 +1203,21 @@ const CRMPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label>Total Spent</Label>
-                    <div className="font-medium">{formatCurrency(selectedCustomer.totalSpent)}</div>
+                    <div className="font-medium">{formatCurrency(selectedCustomer.currentBalance)}</div>
                   </div>
                   <div className="grid gap-2">
                     <Label>Rating</Label>
-                    <div className="font-medium">{selectedCustomer.rating}/5</div>
+                    <div className="font-medium">N/A</div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label>Last Order</Label>
-                    <div className="font-medium">{selectedCustomer.lastOrder}</div>
+                    <div className="font-medium">{selectedCustomer.createdAt}</div>
                   </div>
                   <div className="grid gap-2">
                     <Label>Next Follow-up</Label>
-                    <div className="font-medium">{selectedCustomer.nextFollowUp}</div>
+                    <div className="font-medium">N/A</div>
                   </div>
                 </div>
               </div>
@@ -1609,8 +1312,8 @@ const CRMPage: React.FC = () => {
                   <div className="grid gap-2">
                     <Label>Stage</Label>
                     <div className="font-medium">
-                      <Badge className={getStageColor(selectedOpportunity.stage)}>
-                        {selectedOpportunity.stage}
+                      <Badge className={getStageColor(selectedOpportunity.status)}>
+                        {selectedOpportunity.status}
                       </Badge>
                     </div>
                   </div>
@@ -1666,9 +1369,9 @@ const CRMPage: React.FC = () => {
                 <Label htmlFor="leadContactPerson">Contact Person *</Label>
                 <Input
                   id="leadContactPerson"
-                  placeholder="e.g., David Lee"
-                  value={newLead.contactPerson}
-                  onChange={(e) => setNewLead(prev => ({ ...prev, contactPerson: e.target.value }))}
+                                          placeholder="e.g., Employee Name"
+                  value=""
+                  onChange={(e) => {}}
                 />
               </div>
 
@@ -1705,11 +1408,11 @@ const CRMPage: React.FC = () => {
                       <SelectValue placeholder="Select source" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Website">Website</SelectItem>
-                      <SelectItem value="Referral">Referral</SelectItem>
-                      <SelectItem value="Trade Show">Trade Show</SelectItem>
-                      <SelectItem value="Social Media">Social Media</SelectItem>
-                      <SelectItem value="Cold Call">Cold Call</SelectItem>
+                      <SelectItem value="WEBSITE">Website</SelectItem>
+                      <SelectItem value="REFERRAL">Referral</SelectItem>
+                      <SelectItem value="TRADE_SHOW">Trade Show</SelectItem>
+                      <SelectItem value="SOCIAL_MEDIA">Social Media</SelectItem>
+                      <SelectItem value="COLD_CALL">Cold Call</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1723,9 +1426,9 @@ const CRMPage: React.FC = () => {
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="prospecting">Prospecting</SelectItem>
-                      <SelectItem value="contacted">Contacted</SelectItem>
-                      <SelectItem value="qualified">Qualified</SelectItem>
+                      <SelectItem value="NEW">New</SelectItem>
+                      <SelectItem value="CONTACTED">Contacted</SelectItem>
+                      <SelectItem value="QUALIFIED">Qualified</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1752,9 +1455,8 @@ const CRMPage: React.FC = () => {
                       <SelectValue placeholder="Select assignee" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="John Smith">John Smith</SelectItem>
-                      <SelectItem value="Sarah Johnson">Sarah Johnson</SelectItem>
-                      <SelectItem value="Mike Wilson">Mike Wilson</SelectItem>
+                                              <SelectItem value="no-assignee">No assignee available</SelectItem>
+                      
                     </SelectContent>
                   </Select>
                 </div>
@@ -1765,8 +1467,8 @@ const CRMPage: React.FC = () => {
                 <Input
                   id="leadNextAction"
                   type="date"
-                  value={newLead.nextAction}
-                  onChange={(e) => setNewLead(prev => ({ ...prev, nextAction: e.target.value }))}
+                  value=""
+                  onChange={(e) => {}}
                 />
               </div>
             </div>
@@ -1776,14 +1478,12 @@ const CRMPage: React.FC = () => {
                 onClick={() => {
                   setNewLead({
                     name: '',
-                    contactPerson: '',
                     email: '',
                     phone: '',
                     source: '',
-                    status: 'prospecting',
+                    status: 'NEW',
                     value: 0,
                     assignedTo: '',
-                    nextAction: ''
                   });
                   setIsAddLeadDialogOpen(false);
                 }}
@@ -1829,14 +1529,14 @@ const CRMPage: React.FC = () => {
                     <div className="flex justify-between items-start">
                       <div>
                         <div className="font-medium">{customer.name}</div>
-                        <div className="text-sm text-gray-500">{customer.customerId}</div>
+                        <div className="text-sm text-gray-500">{customer.customerNumber}</div>
                         <div className="text-sm text-gray-500">
-                          {customer.contactPerson} • {customer.email} • {customer.phone}
+                          {customer.name} • {customer.email} • {customer.phone}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         {getStatusBadge(customer.status)}
-                        <Button size="sm" variant="outline" onClick={() => handleViewCustomerClick(customer)}>
+                        <Button size="sm" variant="outline" onClick={() => handleViewCustomerClick(customer as any)}>
                           View
                         </Button>
                       </div>
@@ -1905,7 +1605,7 @@ const CRMPage: React.FC = () => {
                 <h3 className="text-lg font-medium">Top Customers by Revenue</h3>
                 <div className="space-y-2">
                   {customers
-                    .sort((a, b) => b.totalSpent - a.totalSpent)
+                    .sort((a, b) => b.currentBalance - a.currentBalance)
                     .slice(0, 5)
                     .map((customer, index) => (
                       <div key={customer.id} className="flex justify-between items-center p-2 bg-gray-50 rounded">
@@ -1913,7 +1613,7 @@ const CRMPage: React.FC = () => {
                           <span className="font-medium">#{index + 1}</span>
                           <span>{customer.name}</span>
                         </div>
-                        <span className="font-medium">{formatCurrency(customer.totalSpent)}</span>
+                        <span className="font-medium">{formatCurrency(customer.currentBalance)}</span>
                       </div>
                     ))}
                 </div>
@@ -1931,7 +1631,7 @@ const CRMPage: React.FC = () => {
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <div>
-                  <div className="text-2xl font-bold">{formatCurrency(opportunities.reduce((sum, opp) => sum + opp.value, 0))}</div>
+                  <div className="text-2xl font-bold">{formatCurrency(0)}</div>
                   <div className="text-sm text-gray-500">Total Pipeline Value</div>
                 </div>
                 <Button size="sm" className="flex items-center gap-2">
@@ -1941,19 +1641,19 @@ const CRMPage: React.FC = () => {
               </div>
               
               <div className="space-y-3">
-                {opportunities.map((opportunity) => (
+                {customers.map((opportunity) => (
                   <div key={opportunity.id} className="p-4 border rounded-lg">
                     <div className="flex justify-between items-start">
                       <div>
-                        <div className="font-medium">{opportunity.title}</div>
-                        <div className="text-sm text-gray-500">{opportunity.customerName}</div>
+                        <div className="font-medium">N/A</div>
+                        <div className="text-sm text-gray-500">N/A</div>
                         <div className="text-sm text-gray-500">
-                          Value: {formatCurrency(opportunity.value)} • Probability: {opportunity.probability}%
+                          Value: N/A • Probability: N/A
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className={getStageColor(opportunity.stage)}>
-                          {opportunity.stage}
+                        <Badge className={getStageColor(opportunity.status)}>
+                          {opportunity.status}
                         </Badge>
                         <Button size="sm" variant="outline" onClick={() => handleViewOpportunityClick(opportunity)}>
                           View
@@ -1983,7 +1683,7 @@ const CRMPage: React.FC = () => {
                 </Card>
                 <Card>
                   <CardContent className="p-4 text-center">
-                    <div className="text-2xl font-bold text-green-600">{formatCurrency(opportunities.reduce((sum, opp) => sum + opp.value, 0))}</div>
+                    <div className="text-2xl font-bold text-green-600">{formatCurrency(0)}</div>
                     <div className="text-sm text-gray-500">Pipeline Value</div>
                   </CardContent>
                 </Card>
@@ -2001,21 +1701,21 @@ const CRMPage: React.FC = () => {
                   <div className="flex justify-between items-center">
                     <span>Qualification</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{formatCurrency(85000)}</span>
+                      <span className="font-medium">{formatCurrency(0)}</span>
                       <span className="text-sm text-gray-500">1 opportunity</span>
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Proposal</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{formatCurrency(180000)}</span>
+                      <span className="font-medium">{formatCurrency(0)}</span>
                       <span className="text-sm text-gray-500">1 opportunity</span>
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Negotiation</span>
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{formatCurrency(250000)}</span>
+                      <span className="font-medium">{formatCurrency(0)}</span>
                       <span className="text-sm text-gray-500">1 opportunity</span>
                     </div>
                   </div>
@@ -2027,15 +1727,15 @@ const CRMPage: React.FC = () => {
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
                     <span>High (70%+)</span>
-                    <span className="font-medium">{formatCurrency(250000)}</span>
+                    <span className="font-medium">{formatCurrency(0)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Medium (40-69%)</span>
-                    <span className="font-medium">{formatCurrency(180000)}</span>
+                    <span className="font-medium">{formatCurrency(0)}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span>Low (0-39%)</span>
-                    <span className="font-medium">{formatCurrency(85000)}</span>
+                    <span className="font-medium">{formatCurrency(0)}</span>
                   </div>
                 </div>
               </div>
@@ -2059,31 +1759,7 @@ const CRMPage: React.FC = () => {
               </div>
               
               <div className="space-y-3">
-                {callLogs.map((call) => (
-                  <div key={call.id} className="p-4 border rounded-lg">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-medium">{call.customerName}</div>
-                        <div className="text-sm text-gray-500">
-                          {call.contactPerson} • {call.phone}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          {call.callDate} • Duration: {call.duration}
-                        </div>
-                        <div className="text-sm mt-1">
-                          <span className="font-medium">Outcome:</span> {call.outcome}
-                        </div>
-                        <div className="text-sm text-gray-500 mt-1">
-                          <span className="font-medium">Notes:</span> {call.notes}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-sm text-gray-500">Assigned to</div>
-                        <div className="text-sm font-medium">{call.assignedTo}</div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                {/* Add call logs components here */}
               </div>
             </div>
           </DialogContent>
@@ -2105,36 +1781,7 @@ const CRMPage: React.FC = () => {
               </div>
               
               <div className="space-y-3">
-                {followUps.map((followUp) => (
-                  <div key={followUp.id} className="p-4 border rounded-lg">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="font-medium">{followUp.customerName}</div>
-                        <div className="text-sm text-gray-500">
-                          {followUp.contactPerson} • {followUp.followUpDate}
-                        </div>
-                        <div className="text-sm text-gray-500">
-                          Type: {followUp.type}
-                        </div>
-                        <div className="text-sm mt-1">
-                          <span className="font-medium">Notes:</span> {followUp.notes}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={
-                          followUp.status === 'scheduled' ? 'default' : 
-                          followUp.status === 'pending' ? 'outline' : 'destructive'
-                        }>
-                          {followUp.status}
-                        </Badge>
-                        <div className="text-right">
-                          <div className="text-sm text-gray-500">Assigned to</div>
-                          <div className="text-sm font-medium">{followUp.assignedTo}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                {/* Add follow-up schedule components here */}
               </div>
             </div>
           </DialogContent>

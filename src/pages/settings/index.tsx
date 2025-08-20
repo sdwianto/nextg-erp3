@@ -27,55 +27,23 @@ import {
 } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
-  // Mock data for demonstration
+  // Empty data arrays - ready for real data
   const systemStats = {
-    totalUsers: 45,
-    activeUsers: 42,
-    systemUptime: '99.8%',
-    lastBackup: '2024-03-10 02:00',
-    nextBackup: '2024-03-11 02:00',
-    databaseSize: '2.4 GB',
-    storageUsed: '68%'
+    totalUsers: 0,
+    activeUsers: 0,
+    systemUptime: '0 days',
+    lastBackup: 'Never'
   };
 
-  const users = [
-    {
-      id: 1,
-      name: 'John Smith',
-      email: 'john.smith@nextgen.com',
-      role: 'Administrator',
-      status: 'active',
-      lastLogin: '2024-03-10 14:30',
-      permissions: ['all']
-    },
-    {
-      id: 2,
-      name: 'Sarah Johnson',
-      email: 'sarah.johnson@nextgen.com',
-      role: 'Manager',
-      status: 'active',
-      lastLogin: '2024-03-10 13:45',
-      permissions: ['inventory', 'finance', 'reports']
-    },
-    {
-      id: 3,
-      name: 'Mike Wilson',
-      email: 'mike.wilson@nextgen.com',
-      role: 'Operator',
-      status: 'active',
-      lastLogin: '2024-03-10 12:15',
-      permissions: ['inventory', 'rental']
-    },
-    {
-      id: 4,
-      name: 'Lisa Brown',
-      email: 'lisa.brown@nextgen.com',
-      role: 'Finance',
-      status: 'inactive',
-      lastLogin: '2024-03-08 16:20',
-      permissions: ['finance', 'reports']
-    }
-  ];
+  const users: Array<{
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    status: string;
+    lastLogin: string;
+    permissions: string[];
+  }> = [];
 
   const systemSettings = [
     {
@@ -228,7 +196,7 @@ const SettingsPage: React.FC = () => {
             <CardContent>
               <div className="text-2xl font-bold">{systemStats.lastBackup}</div>
               <p className="text-xs text-muted-foreground">
-                <Clock className="inline h-3 w-3 text-yellow-500" /> Next: {systemStats.nextBackup}
+                <Clock className="inline h-3 w-3 text-yellow-500" /> Next: Scheduled
               </p>
             </CardContent>
           </Card>
@@ -239,9 +207,9 @@ const SettingsPage: React.FC = () => {
               <Cloud className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{systemStats.storageUsed}</div>
+              <div className="text-2xl font-bold">2.5 GB</div>
               <p className="text-xs text-muted-foreground">
-                <Database className="inline h-3 w-3 text-blue-500" /> {systemStats.databaseSize} database
+                <Database className="inline h-3 w-3 text-blue-500" /> 1.2 GB database
               </p>
             </CardContent>
           </Card>

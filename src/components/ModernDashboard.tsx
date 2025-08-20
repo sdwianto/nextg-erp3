@@ -45,55 +45,13 @@ import {
   Filter
 } from 'lucide-react';
 
-// Mock data for charts
-const monthlyRevenueData = [
-  { month: 'Jan', revenue: 45000, expenses: 32000, profit: 13000 },
-  { month: 'Feb', revenue: 52000, expenses: 35000, profit: 17000 },
-  { month: 'Mar', revenue: 48000, expenses: 38000, profit: 10000 },
-  { month: 'Apr', revenue: 61000, expenses: 42000, profit: 19000 },
-  { month: 'May', revenue: 55000, expenses: 40000, profit: 15000 },
-  { month: 'Jun', revenue: 67000, expenses: 45000, profit: 22000 },
-];
-
-const equipmentUtilizationData = [
-  { equipment: 'Excavator', utilization: 85, maintenance: 15 },
-  { equipment: 'Bulldozer', utilization: 72, maintenance: 28 },
-  { equipment: 'Crane', utilization: 91, maintenance: 9 },
-  { equipment: 'Loader', utilization: 68, maintenance: 32 },
-  { equipment: 'Truck', utilization: 78, maintenance: 22 },
-];
-
-const inventoryData = [
-  { category: 'Heavy Equipment', stock: 15, low: 3, out: 1 },
-  { category: 'Hydraulic Systems', stock: 8, low: 2, out: 0 },
-  { category: 'Engine Parts', stock: 25, low: 5, out: 2 },
-  { category: 'Tires & Wheels', stock: 12, low: 1, out: 0 },
-  { category: 'Brake Systems', stock: 18, low: 4, out: 1 },
-];
-
-const workOrderData = [
-  { status: 'Completed', count: 32, percentage: 71 },
-  { status: 'In Progress', count: 8, percentage: 18 },
-  { status: 'Pending', count: 3, percentage: 7 },
-  { status: 'Cancelled', count: 2, percentage: 4 },
-];
-
-const performanceMetrics = [
-  { metric: 'MTTR', value: 4.2, target: 3.0, unit: 'hours' },
-  { metric: 'MTBS', value: 168.5, target: 200, unit: 'hours' },
-  { metric: 'Equipment Utilization', value: 87.3, target: 90, unit: '%' },
-  { metric: 'Work Order Completion', value: 71, target: 85, unit: '%' },
-  { metric: 'Inventory Turnover', value: 6.2, target: 8, unit: 'times' },
-];
-
-const radarData = [
-  { metric: 'Financial Performance', value: 85, fullMark: 100 },
-  { metric: 'Operational Efficiency', value: 78, fullMark: 100 },
-  { metric: 'Equipment Reliability', value: 92, fullMark: 100 },
-  { metric: 'Inventory Management', value: 73, fullMark: 100 },
-  { metric: 'Customer Satisfaction', value: 88, fullMark: 100 },
-  { metric: 'Safety Compliance', value: 95, fullMark: 100 },
-];
+// Empty data arrays - ready for real data
+const monthlyRevenueData: any[] = [];
+const equipmentUtilizationData: any[] = [];
+const inventoryData: any[] = [];
+const workOrderData: any[] = [];
+const performanceMetrics: any[] = [];
+const radarData: any[] = [];
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -151,9 +109,9 @@ const ModernDashboard: React.FC = () => {
             <DollarSign className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(328000)}</div>
+                         <div className="text-2xl font-bold">{formatCurrency(0)}</div>
             <p className="text-xs text-muted-foreground">
-              <TrendingUp className="inline h-3 w-3 text-green-500" /> +12.5% from last month
+              <TrendingUp className="inline h-3 w-3 text-green-500" /> +0% from last month
             </p>
           </CardContent>
         </Card>
@@ -164,9 +122,9 @@ const ModernDashboard: React.FC = () => {
             <Activity className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">87.3%</div>
+                         <div className="text-2xl font-bold">0%</div>
             <p className="text-xs text-muted-foreground">
-              <TrendingUp className="inline h-3 w-3 text-green-500" /> +5.2% from last month
+              <TrendingUp className="inline h-3 w-3 text-green-500" /> +0% from last month
             </p>
           </CardContent>
         </Card>
@@ -177,7 +135,7 @@ const ModernDashboard: React.FC = () => {
             <Wrench className="h-4 w-4 text-orange-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">45</div>
+                         <div className="text-2xl font-bold">0</div>
             <p className="text-xs text-muted-foreground">
               <TrendingDown className="inline h-3 w-3 text-red-500" /> -3 from last week
             </p>
@@ -190,7 +148,7 @@ const ModernDashboard: React.FC = () => {
             <Package className="h-4 w-4 text-purple-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">1,247</div>
+                         <div className="text-2xl font-bold">0</div>
             <p className="text-xs text-muted-foreground">
               <TrendingUp className="inline h-3 w-3 text-green-500" /> +18 new items
             </p>
@@ -362,9 +320,9 @@ const ModernDashboard: React.FC = () => {
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <RadialBarChart cx="50%" cy="50%" innerRadius="20%" outerRadius="80%" barSize={10} data={[
-                    { name: 'Revenue', value: 328000, fill: '#8884d8' },
-                    { name: 'Expenses', value: 232000, fill: '#82ca9d' },
-                    { name: 'Profit', value: 96000, fill: '#ffc658' },
+                    { name: 'Revenue', value: 0, fill: '#8884d8' },
+                    { name: 'Expenses', value: 0, fill: '#82ca9d' },
+                    { name: 'Profit', value: 0, fill: '#ffc658' },
                   ]}>
                     <RadialBar dataKey="value" label={{ fill: '#666', position: 'insideStart' }} background />
                     <Legend iconSize={10} layout="vertical" verticalAlign="middle" align="right" />
@@ -476,9 +434,9 @@ const ModernDashboard: React.FC = () => {
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={[
                     ...monthlyRevenueData,
-                    { month: 'Jul', revenue: 72000, expenses: 48000, profit: 24000 },
-                    { month: 'Aug', revenue: 68000, expenses: 46000, profit: 22000 },
-                    { month: 'Sep', revenue: 75000, expenses: 50000, profit: 25000 },
+                    { month: 'Jul', revenue: 0, expenses: 0, profit: 0 },
+                    { month: 'Aug', revenue: 0, expenses: 0, profit: 0 },
+                    { month: 'Sep', revenue: 0, expenses: 0, profit: 0 },
                   ]}>
                     <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="month" />
@@ -504,12 +462,12 @@ const ModernDashboard: React.FC = () => {
               <CardContent>
                 <ResponsiveContainer width="100%" height={300}>
                   <RadarChart cx="50%" cy="50%" outerRadius="80%" data={[
-                    { metric: 'Equipment Failure Risk', value: 25, fullMark: 100 },
-                    { metric: 'Financial Risk', value: 35, fullMark: 100 },
-                    { metric: 'Operational Risk', value: 45, fullMark: 100 },
-                    { metric: 'Compliance Risk', value: 15, fullMark: 100 },
-                    { metric: 'Market Risk', value: 55, fullMark: 100 },
-                    { metric: 'Technology Risk', value: 30, fullMark: 100 },
+                    { metric: 'Equipment Failure Risk', value: 0, fullMark: 100 },
+                    { metric: 'Financial Risk', value: 0, fullMark: 100 },
+                    { metric: 'Operational Risk', value: 0, fullMark: 100 },
+                    { metric: 'Compliance Risk', value: 0, fullMark: 100 },
+                    { metric: 'Market Risk', value: 0, fullMark: 100 },
+                    { metric: 'Technology Risk', value: 0, fullMark: 100 },
                   ]}>
                     <PolarGrid />
                     <PolarAngleAxis dataKey="metric" />
@@ -546,7 +504,7 @@ const ModernDashboard: React.FC = () => {
                     <Activity className="h-4 w-4 text-blue-500" />
                     <span className="font-medium">Active Users</span>
                   </div>
-                  <div className="text-2xl font-bold text-blue-600">24</div>
+                  <div className="text-2xl font-bold text-blue-600">0</div>
                   <div className="text-sm text-blue-600">Currently online</div>
                 </div>
 
@@ -555,7 +513,7 @@ const ModernDashboard: React.FC = () => {
                     <Clock className="h-4 w-4 text-orange-500" />
                     <span className="font-medium">Uptime</span>
                   </div>
-                  <div className="text-2xl font-bold text-orange-600">99.8%</div>
+                  <div className="text-2xl font-bold text-orange-600">0%</div>
                   <div className="text-sm text-orange-600">Last 30 days</div>
                 </div>
 
@@ -564,7 +522,7 @@ const ModernDashboard: React.FC = () => {
                     <Zap className="h-4 w-4 text-purple-500" />
                     <span className="font-medium">Performance</span>
                   </div>
-                  <div className="text-2xl font-bold text-purple-600">98.5%</div>
+                  <div className="text-2xl font-bold text-purple-600">0%</div>
                   <div className="text-sm text-purple-600">Average response time</div>
                 </div>
               </div>

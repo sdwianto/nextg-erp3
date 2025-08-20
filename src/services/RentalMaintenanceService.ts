@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unsafe-assignment */
-/* eslint-disable @typescript-eslint/no-unsafe-return */
+ 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // src/services/RentalMaintenanceService.ts
@@ -69,51 +69,11 @@ export interface RentalOrderItem {
 
 export class RentalMaintenanceService {
   
-  // Equipment Management
+  // Equipment Management - Now using API data
   async getAllEquipment(): Promise<EquipmentWithMaintenance[]> {
-    // Mock data
-    return [
-      {
-        id: '1',
-        name: 'Excavator CAT 320',
-        code: 'EXC-001',
-        status: 'AVAILABLE',
-        location: 'Warehouse A',
-        lastMaintenanceDate: new Date('2024-01-15'),
-        nextMaintenanceDate: new Date('2024-04-15'),
-        totalOperatingHours: 2500,
-        maintenanceRecords: [],
-        asset: {
-          id: 'asset-1',
-          name: 'Excavator CAT 320',
-          code: 'EXC-001',
-          type: 'Heavy Equipment',
-          value: 150000,
-          purchaseDate: new Date('2022-01-01'),
-          status: 'ACTIVE'
-        }
-      },
-      {
-        id: '2',
-        name: 'Bulldozer D6T',
-        code: 'BUL-001',
-        status: 'IN_USE',
-        location: 'Site B',
-        lastMaintenanceDate: new Date('2024-02-01'),
-        nextMaintenanceDate: new Date('2024-05-01'),
-        totalOperatingHours: 1800,
-        maintenanceRecords: [],
-        asset: {
-          id: 'asset-2',
-          name: 'Bulldozer D6T',
-          code: 'BUL-001',
-          type: 'Heavy Equipment',
-          value: 200000,
-          purchaseDate: new Date('2021-06-01'),
-          status: 'ACTIVE'
-        }
-      }
-    ];
+    // This service is now deprecated - use tRPC API instead
+    // api.rentalMaintenance.getEquipment.useQuery()
+    throw new Error('Use tRPC API instead: api.rentalMaintenance.getEquipment.useQuery()');
   }
 
   async getEquipmentById(id: string): Promise<EquipmentWithMaintenance | null> {
@@ -146,7 +106,7 @@ export class RentalMaintenanceService {
     return { ...equipment, ...data };
   }
 
-  async deleteEquipment(id: string): Promise<boolean> {
+  async deleteEquipment(_id: string): Promise<boolean> {
     // Mock implementation
     return true;
   }
@@ -199,7 +159,7 @@ export class RentalMaintenanceService {
     return { ...record, ...data };
   }
 
-  async deleteMaintenanceRecord(id: string): Promise<boolean> {
+  async deleteMaintenanceRecord(_id: string): Promise<boolean> {
     // Mock implementation
     return true;
   }
@@ -235,7 +195,7 @@ export class RentalMaintenanceService {
     };
   }
 
-  async getRentalOrderById(id: string): Promise<RentalOrder | null> {
+  async getRentalOrderById(_id: string): Promise<RentalOrder | null> {
     // Mock implementation
     return {
       id,
@@ -264,7 +224,7 @@ export class RentalMaintenanceService {
     return { ...order, ...data };
   }
 
-  async deleteRentalOrder(id: string): Promise<boolean> {
+  async deleteRentalOrder(_id: string): Promise<boolean> {
     // Mock implementation
     return true;
   }

@@ -24,126 +24,63 @@ import {
 const DataManagementPage: React.FC = () => {
   // Mock data for data management
   const dataStats = {
-    totalRecords: 125000,
-    activeRecords: 118000,
-    archivedRecords: 7000,
-    backupSize: '2.5 GB',
-    lastBackup: '2024-01-15 02:00',
-    syncStatus: 'Up to date'
+    totalRecords: 0,
+    processedRecords: 0,
+    pendingRecords: 0,
+    errorRecords: 0,
+    activeRecords: 0,
+    backupSize: '0 MB',
+    syncStatus: 'Inactive',
+    lastUpdated: 'Never',
+    lastBackup: 'Never'
   };
 
   const dataCategories = [
     {
       name: 'Customer Data',
-      records: 25000,
-      size: '500 MB',
-      lastUpdated: '2024-01-15 10:30',
-      status: 'Active',
+      records: 0,
+      size: '0 MB',
+      lastUpdated: 'Never',
+      status: 'Inactive',
       type: 'Primary'
     },
     {
       name: 'Inventory Data',
-      records: 45000,
-      size: '800 MB',
-      lastUpdated: '2024-01-15 09:15',
-      status: 'Active',
+      records: 0,
+      size: '0 MB',
+      lastUpdated: 'Never',
+      status: 'Inactive',
       type: 'Primary'
     },
     {
       name: 'Financial Data',
-      records: 35000,
-      size: '600 MB',
-      lastUpdated: '2024-01-15 08:45',
-      status: 'Active',
+      records: 0,
+      size: '0 MB',
+      lastUpdated: 'Never',
+      status: 'Inactive',
       type: 'Primary'
     },
     {
       name: 'Employee Data',
-      records: 15000,
-      size: '300 MB',
-      lastUpdated: '2024-01-15 07:30',
-      status: 'Active',
+      records: 0,
+      size: '0 MB',
+      lastUpdated: 'Never',
+      status: 'Inactive',
       type: 'Primary'
     },
     {
       name: 'Equipment Data',
-      records: 5000,
-      size: '200 MB',
-      lastUpdated: '2024-01-14 16:20',
-      status: 'Active',
+      records: 0,
+      size: '0 MB',
+      lastUpdated: 'Never',
+      status: 'Inactive',
       type: 'Secondary'
     }
   ];
 
-  const backupHistory = [
-    {
-      id: 1,
-      type: 'Full Backup',
-      size: '2.5 GB',
-      date: '2024-01-15 02:00',
-      status: 'Completed',
-      duration: '45 minutes'
-    },
-    {
-      id: 2,
-      type: 'Incremental Backup',
-      size: '150 MB',
-      date: '2024-01-14 02:00',
-      status: 'Completed',
-      duration: '5 minutes'
-    },
-    {
-      id: 3,
-      type: 'Full Backup',
-      size: '2.4 GB',
-      date: '2024-01-13 02:00',
-      status: 'Completed',
-      duration: '42 minutes'
-    },
-    {
-      id: 4,
-      type: 'Incremental Backup',
-      size: '180 MB',
-      date: '2024-01-12 02:00',
-      status: 'Failed',
-      duration: 'N/A'
-    }
-  ];
+  const backupHistory: any[] = [];
 
-  const syncLogs = [
-    {
-      id: 1,
-      operation: 'Data Sync',
-      status: 'Success',
-      timestamp: '2024-01-15 10:30',
-      details: 'Synced 1,250 records from remote locations',
-      duration: '2 minutes'
-    },
-    {
-      id: 2,
-      operation: 'Backup Sync',
-      status: 'Success',
-      timestamp: '2024-01-15 02:00',
-      details: 'Backup completed and synced to cloud storage',
-      duration: '45 minutes'
-    },
-    {
-      id: 3,
-      operation: 'Conflict Resolution',
-      status: 'Warning',
-      timestamp: '2024-01-14 15:45',
-      details: 'Resolved 3 data conflicts automatically',
-      duration: '30 seconds'
-    },
-    {
-      id: 4,
-      operation: 'Data Validation',
-      status: 'Success',
-      timestamp: '2024-01-14 12:00',
-      details: 'Validated 125,000 records for integrity',
-      duration: '15 minutes'
-    }
-  ];
+  const syncLogs: any[] = [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -219,7 +156,7 @@ const DataManagementPage: React.FC = () => {
               <Database className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dataStats.totalRecords.toLocaleString()}</div>
+              <div className="text-2xl font-bold">{(dataStats.totalRecords || 0).toLocaleString()}</div>
               <p className="text-xs text-muted-foreground">Across all categories</p>
             </CardContent>
           </Card>
@@ -230,7 +167,7 @@ const DataManagementPage: React.FC = () => {
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{dataStats.activeRecords.toLocaleString()}</div>
+              <div className="text-2xl font-bold">{(dataStats.activeRecords || 0).toLocaleString()}</div>
               <p className="text-xs text-muted-foreground">Currently in use</p>
             </CardContent>
           </Card>
@@ -287,7 +224,7 @@ const DataManagementPage: React.FC = () => {
                         <div className="font-medium">{category.name}</div>
                       </td>
                       <td className="py-3 px-4">
-                        {category.records.toLocaleString()}
+                        {(category.records || 0).toLocaleString()}
                       </td>
                       <td className="py-3 px-4">
                         {category.size}

@@ -121,12 +121,9 @@ export const WorkOrderModal: React.FC<WorkOrderModalProps> = ({ isOpen, onClose 
                 <SelectTrigger>
                   <SelectValue placeholder="Select equipment" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="EX-001">Excavator EX-001</SelectItem>
-                  <SelectItem value="BD-003">Bulldozer BD-003</SelectItem>
-                  <SelectItem value="CR-002">Crane CR-002</SelectItem>
-                  <SelectItem value="LD-005">Loader LD-005</SelectItem>
-                </SelectContent>
+                                 <SelectContent>
+                   <SelectItem value="no-equipment">No equipment available</SelectItem>
+                 </SelectContent>
               </Select>
             </div>
             <div>
@@ -165,10 +162,7 @@ export const WorkOrderModal: React.FC<WorkOrderModalProps> = ({ isOpen, onClose 
                   <SelectValue placeholder="Select technician" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="john-smith">John Smith</SelectItem>
-                  <SelectItem value="mike-johnson">Mike Johnson</SelectItem>
-                  <SelectItem value="sarah-wilson">Sarah Wilson</SelectItem>
-                  <SelectItem value="david-brown">David Brown</SelectItem>
+                                          <SelectItem value="no-technicians">No technicians available</SelectItem>
                 </SelectContent>
               </Select>
             </div>

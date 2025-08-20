@@ -5,10 +5,14 @@ import { MaintenanceCard } from '@/components/MaintenanceCard';
 import { MaintenanceAlerts } from '@/components/MaintenanceAlerts';
 import { RentalMaintenanceDashboard } from '@/components/RentalMaintenanceDashboard';
 import { AssetLifecycleDashboard } from '@/components/AssetLifecycleDashboard';
+import { EquipmentGPSMap } from '@/components/EquipmentGPSMap';
+import { SafetyCompliance } from '@/components/SafetyCompliance';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/router';
+import { api } from '@/utils/api';
+import { useRealtime } from '@/hooks/use-realtime';
 import { 
   Package, 
   Truck, 
@@ -27,92 +31,115 @@ import {
 
 const DashboardPage: React.FC = () => {
   const router = useRouter();
-  // Mock data for demonstration
-  const stats = {
+  const [stats, setStats] = React.useState({
     inventory: {
-      totalItems: 1247,
-      lowStock: 23,
-      outOfStock: 5,
-      value: 1250000
+      totalItems: 0,
+      lowStock: 0,
+      outOfStock: 0,
+      value: 0
     },
     rental: {
-      activeRentals: 18,
-      pendingReturns: 3,
-      maintenanceDue: 7,
-      revenue: 450000
+      activeRentals: 0,
+      pendingReturns: 0,
+      maintenanceDue: 0,
+      revenue: 0
     },
     finance: {
-      monthlyRevenue: 850000,
-      pendingPayments: 125000,
-      expenses: 320000,
-      profit: 530000
+      monthlyRevenue: 0,
+      pendingPayments: 0,
+      expenses: 0,
+      profit: 0
     },
     hr: {
-      totalEmployees: 45,
-      onLeave: 3,
-      newHires: 2,
-      attendance: 98.5
+      totalEmployees: 0,
+      onLeave: 0,
+      newHires: 0,
+      attendance: 0
     },
     maintenance: {
-      totalEquipment: 45,
-      scheduledMaintenance: 12,
-      overdueMaintenance: 3,
-      inProgress: 5,
-      completedThisMonth: 28,
-      totalCost: 125000
+      totalEquipment: 0,
+      scheduledMaintenance: 0,
+      overdueMaintenance: 0,
+      inProgress: 0,
+      completedThisMonth: 0,
+      totalCost: 0
     }
-  };
+  });
+  const [loading, setLoading] = React.useState(true);
 
-  const maintenanceAlerts = [
-    {
-      id: 1,
-      equipmentName: 'Loader LD-005',
-      equipmentCode: 'LD-005',
-      alertType: 'EMERGENCY' as const,
-      message: 'Engine failure - immediate repair required',
-      priority: 'CRITICAL' as const,
-      scheduledDate: '2024-01-08'
-    },
-    {
-      id: 2,
-      equipmentName: 'Bulldozer BD-003',
-      equipmentCode: 'BD-003',
-      alertType: 'OVERDUE' as const,
-      message: 'Hydraulic system maintenance overdue',
-      priority: 'HIGH' as const,
-      daysOverdue: 5,
-      scheduledDate: '2024-01-10'
-    },
-    {
-      id: 3,
-      equipmentName: 'Crane CR-002',
-      equipmentCode: 'CR-002',
-      alertType: 'INSPECTION' as const,
-      message: 'Annual safety inspection due',
-      priority: 'HIGH' as const,
-      scheduledDate: '2024-01-20'
-    },
-    {
-      id: 4,
-      equipmentName: 'Excavator EX-001',
-      equipmentCode: 'EX-001',
-      alertType: 'SCHEDULED' as const,
-      message: 'Regular engine oil change scheduled',
-      priority: 'MEDIUM' as const,
-      scheduledDate: '2024-01-15'
+  // Use tRPC queries
+  const rentalData = api.rentalMaintenance.getDashboardData.useQuery();
+  const operationsData = api.production.getDashboardData.useQuery();
+  const inventoryData = api.inventory.getProducts.useQuery({ page: 1, limit: 100 }); // Get more data for calculations
+  const financeData = api.finance.getDashboardData.useQuery();
+  const hrData = api.hrms.getDashboardData.useQuery();
+
+  // Real-time data hook
+  const { data: realtimeData, isConnected } = useRealtime();
+
+  // Update stats when data is available
+  React.useEffect(() => {
+    if (rentalData.data && operationsData.data && inventoryData.data && financeData.data && hrData.data) {
+      // Calculate real metrics from actual data
+      const inventoryTotal = inventoryData.data.pagination?.total || 0;
+      const inventoryProducts = inventoryData.data || [];
+      const lowStockCount = 0;
+      const outOfStockCount = 0;
+      const inventoryValue = 0;
+
+      const rentalRevenue = 0;
+      const financeRevenue = 0;
+      const totalRevenue = rentalRevenue + financeRevenue;
+
+      // Use real-time data if available, otherwise use calculated data
+      const finalStats = realtimeData ? {
+        inventory: realtimeData.inventory,
+        rental: realtimeData.rental,
+        finance: realtimeData.finance,
+        hr: realtimeData.hr,
+        maintenance: realtimeData.maintenance
+      } : {
+        inventory: {
+          totalItems: inventoryTotal,
+          lowStock: lowStockCount,
+          outOfStock: outOfStockCount,
+          value: inventoryValue
+        },
+        rental: {
+          activeRentals: rentalData.data?.summary?.inUseEquipment || 0,
+          pendingReturns: rentalData.data?.summary?.pendingMaintenanceRecords || 0,
+          maintenanceDue: rentalData.data?.summary?.pendingMaintenanceRecords || 0,
+          revenue: rentalRevenue
+        },
+        finance: {
+          monthlyRevenue: totalRevenue,
+          pendingPayments: 0,
+          expenses: 0,
+          profit: totalRevenue
+        },
+        hr: {
+          totalEmployees: hrData.data?.data?.totalEmployees || 0,
+          onLeave: hrData.data?.data?.onLeaveEmployees || 0,
+          newHires: hrData.data?.data?.recentHires?.length || 0,
+          attendance: 0
+        },
+        maintenance: {
+          totalEquipment: rentalData.data?.summary?.totalEquipment || 0,
+          scheduledMaintenance: rentalData.data?.summary?.pendingMaintenanceRecords || 0,
+          overdueMaintenance: 0, // TODO: Implement overdue maintenance
+          inProgress: rentalData.data?.summary?.maintenanceEquipment || 0,
+          completedThisMonth: rentalData.data?.summary?.completedMaintenanceRecords || 0,
+          totalCost: 0 // TODO: Implement total cost
+        }
+      };
+
+      setStats(finalStats);
+      setLoading(false);
     }
-  ];
+  }, [rentalData.data, operationsData.data, inventoryData.data, financeData.data, hrData.data]);
 
-  const recentActivities = [
-    { id: 1, type: 'maintenance', message: 'Emergency maintenance started: Loader LD-005 engine failure', time: '5 min ago', status: 'warning' },
-    { id: 2, type: 'maintenance', message: 'Preventive maintenance completed: Excavator EX-001', time: '30 min ago', status: 'success' },
-    { id: 3, type: 'maintenance', message: 'Overdue maintenance alert: Bulldozer BD-003', time: '1 hour ago', status: 'warning' },
-    { id: 4, type: 'inventory', message: 'Low stock alert: Excavator spare parts', time: '2 hours ago', status: 'warning' },
-    { id: 5, type: 'rental', message: 'Equipment rental completed: Bulldozer #BD-001', time: '3 hours ago', status: 'success' },
-    { id: 6, type: 'maintenance', message: 'Scheduled maintenance: Crane #CR-003', time: '4 hours ago', status: 'info' },
-    { id: 7, type: 'finance', message: 'Payment received: Invoice #INV-2024-001', time: '5 hours ago', status: 'success' },
-    { id: 8, type: 'hr', message: 'New employee onboarded: John Smith', time: '6 hours ago', status: 'info' }
-  ];
+  const maintenanceAlerts: any[] = [];
+  const recentActivities: any[] = [];
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -131,6 +158,26 @@ const DashboardPage: React.FC = () => {
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200';
     }
   };
+
+  if (loading) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">NextGen ERP Dashboard v1.1</h1>
+              <p className="text-gray-600 dark:text-gray-400">Loading real-time data...</p>
+            </div>
+          </div>
+          <div className="grid gap-6">
+            <div className="animate-pulse">
+              <div className="h-32 bg-gray-200 rounded-lg"></div>
+            </div>
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
@@ -263,7 +310,7 @@ const DashboardPage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="h-20 flex flex-col items-center justify-center gap-2"
-                onClick={() => router.push('/operations')}
+                onClick={() => router.push('/rental')}
               >
                 <Wrench className="h-6 w-6" />
                 <span className="text-sm">Operations</span>
@@ -341,6 +388,12 @@ const DashboardPage: React.FC = () => {
           </CardContent>
         </Card>
 
+        {/* Mining-Specific Features */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <EquipmentGPSMap />
+          <SafetyCompliance />
+        </div>
+
         {/* Maintenance Overview Card */}
         <MaintenanceCard
           stats={stats.maintenance}
@@ -361,7 +414,12 @@ const DashboardPage: React.FC = () => {
         {/* Recent Activities */}
         <Card>
           <CardHeader>
-            <CardTitle>Recent Activities</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              Recent Activities
+              <Badge variant={isConnected ? "default" : "destructive"}>
+                {isConnected ? "Live" : "Offline"}
+              </Badge>
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

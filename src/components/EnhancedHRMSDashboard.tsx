@@ -1,471 +1,406 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
-import { Button } from './ui/button';
-import { Badge } from './ui/badge';
-import { Progress } from './ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { 
-  Users, 
-  Clock, 
-  Calendar,
-  Shield,
-  CheckCircle,
-  TrendingUp,
+  TrendingUp, 
   TrendingDown,
-  Award,
+  Users,
+  UserPlus,
+  UserCheck,
+  Calendar,
+  Eye,
+  Download,
+  Plus,
+  AlertTriangle,
+  CheckCircle,
+  Clock,
   Target,
+  Zap,
+  FileText,
+  Building,
+  DollarSign,
   BarChart3,
-  Activity,
-  Phone,
-  Mail,
-  UserPlus
+  LineChart,
+  PieChart,
+  GraduationCap,
+  Heart,
+  Activity
 } from 'lucide-react';
 
-interface Employee {
-  id: string;
-  name: string;
-  position: string;
-  department: string;
-  status: 'active' | 'inactive' | 'on_leave';
-  shift: 'day' | 'night' | 'rotating';
-  location: string;
-  phone: string;
-  email: string;
-  hireDate: string;
-  certifications: Certification[];
-  safetyTraining: SafetyTraining[];
-  performance: PerformanceMetrics;
-}
-
-interface Certification {
-  id: string;
-  name: string;
-  type: 'equipment' | 'safety' | 'professional';
-  issueDate: string;
-  expiryDate: string;
-  status: 'valid' | 'expired' | 'expiring_soon';
-  equipment?: string;
-}
-
-interface SafetyTraining {
-  id: string;
-  name: string;
-  type: 'mandatory' | 'refresher' | 'specialized';
-  completedDate: string;
-  nextDueDate: string;
-  status: 'completed' | 'overdue' | 'upcoming';
-  score?: number;
-}
-
-interface PerformanceMetrics {
-  attendance: number;
-  safetyIncidents: number;
-  productivity: number;
-  trainingCompletion: number;
-  overallRating: number;
-}
-
-interface ShiftSchedule {
-  id: string;
-  shiftType: 'day' | 'night' | 'rotating';
-  startTime: string;
-  endTime: string;
-  employeeCount: number;
-  department: string;
-  location: string;
-}
-
 const EnhancedHRMSDashboard: React.FC = () => {
+  const [activeTab, setActiveTab] = useState('overview');
   const [selectedDepartment, setSelectedDepartment] = useState('all');
-  const [selectedShift, setSelectedShift] = useState('all');
-  const employees: Employee[] = [
-    {
-      id: '1',
-      name: 'John Smith',
-      position: 'Excavator Operator',
-      department: 'Operations',
-      status: 'active',
-      shift: 'day',
-      location: 'Mine Site A',
-      phone: '+675 7123 4567',
-      email: 'john.smith@camine.com',
-      hireDate: '2022-03-15',
-      certifications: [
-        {
-          id: '1',
-          name: 'Heavy Equipment Operator',
-          type: 'equipment',
-          issueDate: '2022-04-01',
-          expiryDate: '2025-04-01',
-          status: 'valid',
-          equipment: 'Excavator PC200'
-        },
-        {
-          id: '2',
-          name: 'Safety First Aid',
-          type: 'safety',
-          issueDate: '2023-01-15',
-          expiryDate: '2024-01-15',
-          status: 'expired'
-        }
-      ],
-      safetyTraining: [
-        {
-          id: '1',
-          name: 'Mine Safety Awareness',
-          type: 'mandatory',
-          completedDate: '2023-12-01',
-          nextDueDate: '2024-12-01',
-          status: 'completed',
-          score: 95
-        },
-        {
-          id: '2',
-          name: 'Emergency Response',
-          type: 'refresher',
-          completedDate: '2023-06-15',
-          nextDueDate: '2024-06-15',
-          status: 'completed',
-          score: 88
-        }
-      ],
-      performance: {
-        attendance: 98,
-        safetyIncidents: 0,
-        productivity: 92,
-        trainingCompletion: 100,
-        overallRating: 95
-      }
-    },
-    {
-      id: '2',
-      name: 'Sarah Johnson',
-      position: 'Safety Officer',
-      department: 'Safety',
-      status: 'active',
-      shift: 'day',
-      location: 'Mine Site A',
-      phone: '+675 7123 4568',
-      email: 'sarah.johnson@camine.com',
-      hireDate: '2021-08-20',
-      certifications: [
-        {
-          id: '3',
-          name: 'Safety Management',
-          type: 'professional',
-          issueDate: '2021-09-01',
-          expiryDate: '2026-09-01',
-          status: 'valid'
-        }
-      ],
-      safetyTraining: [
-        {
-          id: '3',
-          name: 'Advanced Safety Management',
-          type: 'specialized',
-          completedDate: '2023-11-15',
-          nextDueDate: '2024-11-15',
-          status: 'completed',
-          score: 98
-        }
-      ],
-      performance: {
-        attendance: 100,
-        safetyIncidents: 0,
-        productivity: 95,
-        trainingCompletion: 100,
-        overallRating: 98
-      }
-    },
-    {
-      id: '3',
-      name: 'Mike Wilson',
-      position: 'Maintenance Technician',
-      department: 'Maintenance',
-      status: 'active',
-      shift: 'night',
-      location: 'Mine Site B',
-      phone: '+675 7123 4569',
-      email: 'mike.wilson@camine.com',
-      hireDate: '2023-01-10',
-      certifications: [
-        {
-          id: '4',
-          name: 'Equipment Maintenance',
-          type: 'equipment',
-          issueDate: '2023-02-01',
-          expiryDate: '2026-02-01',
-          status: 'valid',
-          equipment: 'Heavy Equipment'
-        }
-      ],
-      safetyTraining: [
-        {
-          id: '4',
-          name: 'Mine Safety Awareness',
-          type: 'mandatory',
-          completedDate: '2023-01-20',
-          nextDueDate: '2024-01-20',
-          status: 'completed',
-          score: 92
-        },
-        {
-          id: '5',
-          name: 'Hazardous Materials',
-          type: 'refresher',
-          completedDate: '2023-07-10',
-          nextDueDate: '2024-07-10',
-          status: 'upcoming'
-        }
-      ],
-      performance: {
-        attendance: 96,
-        safetyIncidents: 1,
-        productivity: 88,
-        trainingCompletion: 85,
-        overallRating: 87
-      }
-    }
-  ];
 
-  const shiftSchedules: ShiftSchedule[] = [
-    {
-      id: '1',
-      shiftType: 'day',
-      startTime: '06:00',
-      endTime: '18:00',
-      employeeCount: 45,
-      department: 'Operations',
-      location: 'Mine Site A'
+  // Mock data for JDE HRMS Dashboard
+  const mockHRMSData = {
+    overview: {
+      totalEmployees: 245,
+      activeEmployees: 238,
+      newHires: 12,
+      terminations: 3,
+      onLeave: 8,
+      remoteWorkers: 45,
+      totalDepartments: 8,
+      avgTenure: 3.2,
     },
-    {
-      id: '2',
-      shiftType: 'night',
-      startTime: '18:00',
-      endTime: '06:00',
-      employeeCount: 38,
-      department: 'Operations',
-      location: 'Mine Site A'
+    departments: [
+      {
+        id: 'dept-1',
+        name: 'Operations',
+        employees: 45,
+        headcount: 45,
+        budget: 2800000,
+        avgSalary: 62000,
+        turnover: 8.5,
+        satisfaction: 4.2,
+        productivity: 87.3,
+      },
+      {
+        id: 'dept-2',
+        name: 'Sales',
+        employees: 38,
+        headcount: 38,
+        budget: 2200000,
+        avgSalary: 58000,
+        turnover: 12.1,
+        satisfaction: 3.8,
+        productivity: 92.1,
+      },
+      {
+        id: 'dept-3',
+        name: 'IT',
+        employees: 32,
+        headcount: 32,
+        budget: 1800000,
+        avgSalary: 75000,
+        turnover: 6.2,
+        satisfaction: 4.5,
+        productivity: 89.7,
+      },
+      {
+        id: 'dept-4',
+        name: 'Marketing',
+        employees: 25,
+        headcount: 25,
+        budget: 1200000,
+        avgSalary: 55000,
+        turnover: 15.2,
+        satisfaction: 3.9,
+        productivity: 85.4,
+      },
+    ],
+    employees: [
+      {
+        id: 'emp-1',
+        name: 'John Smith',
+        department: 'Operations',
+        position: 'Senior Manager',
+        hireDate: '2021-03-15',
+        salary: 75000,
+        performance: 4.2,
+        status: 'active',
+        lastReview: '2024-01-10',
+        nextReview: '2024-04-10',
+      },
+      {
+        id: 'emp-2',
+        name: 'Sarah Johnson',
+        department: 'Sales',
+        position: 'Account Executive',
+        hireDate: '2022-08-22',
+        salary: 65000,
+        performance: 4.5,
+        status: 'active',
+        lastReview: '2024-01-15',
+        nextReview: '2024-04-15',
+      },
+      {
+        id: 'emp-3',
+        name: 'Michael Chen',
+        department: 'IT',
+        position: 'Software Engineer',
+        hireDate: '2023-01-10',
+        salary: 85000,
+        performance: 4.1,
+        status: 'active',
+        lastReview: '2024-01-20',
+        nextReview: '2024-04-20',
+      },
+    ],
+    trends: {
+      headcount: [220, 225, 235, 245],
+      turnover: [12.5, 11.8, 10.2, 8.5],
+      satisfaction: [3.8, 3.9, 4.1, 4.2],
+      productivity: [82.5, 84.1, 86.3, 87.3],
+      months: ['Oct', 'Nov', 'Dec', 'Jan'],
     },
-    {
-      id: '3',
-      shiftType: 'day',
-      startTime: '07:00',
-      endTime: '19:00',
-      employeeCount: 22,
-      department: 'Maintenance',
-      location: 'Mine Site B'
-    }
-  ];
+    kpis: {
+      employeeSatisfaction: 4.2,
+      turnoverRate: 8.5,
+      productivity: 87.3,
+      trainingCompletion: 94.1,
+      absenteeism: 3.2,
+      timeToHire: 18.5,
+      costPerHire: 8500,
+      retentionRate: 91.5,
+    },
+    alerts: [
+      { type: 'warning', message: '5 employees due for performance review', value: 5 },
+      { type: 'success', message: 'Employee satisfaction above target', value: 4.2 },
+      { type: 'info', message: '12 new hires this month', value: 12 },
+    ],
+    workflows: [
+      {
+        id: 'workflow-1',
+        name: 'Automated Onboarding',
+        status: 'active',
+        efficiency: 95.2,
+        avgTime: '3.2 days',
+        description: 'Streamlined employee onboarding process',
+        icon: <UserPlus className="h-4 w-4" />,
+      },
+      {
+        id: 'workflow-2',
+        name: 'Performance Management',
+        status: 'active',
+        efficiency: 88.7,
+        avgTime: 'Real-time',
+        description: 'Continuous performance tracking and feedback',
+        icon: <Target className="h-4 w-4" />,
+      },
+      {
+        id: 'workflow-3',
+        name: 'Leave Management',
+        status: 'active',
+        efficiency: 92.1,
+        avgTime: '1.5 days',
+        description: 'Automated leave request and approval system',
+        icon: <Calendar className="h-4 w-4" />,
+      },
+      {
+        id: 'workflow-4',
+        name: 'Training & Development',
+        status: 'pending',
+        efficiency: 0,
+        avgTime: 'Pending',
+        description: 'Learning management system integration',
+        icon: <GraduationCap className="h-4 w-4" />,
+      },
+    ],
+  };
 
-  const hrMetrics = [
-    {
-      label: 'Total Employees',
-      value: '156',
-      change: 8.5,
-      trend: 'up' as const,
-      icon: <Users className="h-4 w-4 text-blue-600" />
-    },
-    {
-      label: 'Active Certifications',
-      value: '89%',
-      change: 2.1,
-      trend: 'up' as const,
-      icon: <Award className="h-4 w-4 text-green-600" />
-    },
-    {
-      label: 'Safety Training',
-      value: '94%',
-      change: -1.2,
-      trend: 'down' as const,
-      icon: <Shield className="h-4 w-4 text-orange-600" />
-    },
-    {
-      label: 'Shift Coverage',
-      value: '98%',
-      change: 0.5,
-      trend: 'up' as const,
-      icon: <Clock className="h-4 w-4 text-purple-600" />
-    }
-  ];
+  const data = mockHRMSData;
 
-  const getTrendColor = (trend: 'up' | 'down' | 'neutral') => {
-    switch (trend) {
-      case 'up': return 'text-green-600';
-      case 'down': return 'text-red-600';
-      default: return 'text-gray-600';
+  const formatCurrency = (amount: number) => {
+    return `$${amount.toLocaleString()}`;
+  };
+
+  const getTrendIcon = (value: number) => {
+    return value >= 0 ? (
+      <TrendingUp className="h-4 w-4 text-green-600" />
+    ) : (
+      <TrendingDown className="h-4 w-4 text-red-600" />
+    );
+  };
+
+  const getAlertIcon = (type: string) => {
+    switch (type) {
+      case 'warning': return <AlertTriangle className="h-4 w-4 text-yellow-600" />;
+      case 'success': return <CheckCircle className="h-4 w-4 text-green-600" />;
+      case 'info': return <Clock className="h-4 w-4 text-blue-600" />;
+      default: return <AlertTriangle className="h-4 w-4 text-gray-600" />;
     }
   };
 
-  const getTrendIcon = (trend: 'up' | 'down' | 'neutral') => {
-    switch (trend) {
-      case 'up': return <TrendingUp className="h-4 w-4" />;
-      case 'down': return <TrendingDown className="h-4 w-4" />;
-      default: return <BarChart3 className="h-4 w-4" />;
-    }
+  const getPerformanceColor = (score: number) => {
+    if (score >= 4.0) return 'text-green-600';
+    if (score >= 3.0) return 'text-yellow-600';
+    return 'text-red-600';
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <Badge className="bg-green-100 text-green-800">Active</Badge>;
-      case 'inactive':
-        return <Badge variant="secondary">Inactive</Badge>;
-      case 'on_leave':
-        return <Badge className="bg-yellow-100 text-yellow-800">On Leave</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
+  const getPerformanceBadge = (score: number) => {
+    if (score >= 4.0) return <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">Excellent</Badge>;
+    if (score >= 3.0) return <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">Good</Badge>;
+    return <Badge className="bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Needs Improvement</Badge>;
   };
-
-  const getCertificationStatusBadge = (status: string) => {
-    switch (status) {
-      case 'valid':
-        return <Badge className="bg-green-100 text-green-800">Valid</Badge>;
-      case 'expired':
-        return <Badge className="bg-red-100 text-red-800">Expired</Badge>;
-      case 'expiring_soon':
-        return <Badge className="bg-yellow-100 text-yellow-800">Expiring Soon</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
-
-  const getTrainingStatusBadge = (status: string) => {
-    switch (status) {
-      case 'completed':
-        return <Badge className="bg-green-100 text-green-800">Completed</Badge>;
-      case 'overdue':
-        return <Badge className="bg-red-100 text-red-800">Overdue</Badge>;
-      case 'upcoming':
-        return <Badge className="bg-blue-100 text-blue-800">Upcoming</Badge>;
-      default:
-        return <Badge variant="outline">Unknown</Badge>;
-    }
-  };
-
-  const filteredEmployees = employees.filter(employee => {
-    const departmentMatch = selectedDepartment === 'all' || employee.department === selectedDepartment;
-    const shiftMatch = selectedShift === 'all' || employee.shift === selectedShift;
-    return departmentMatch && shiftMatch;
-  });
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Enhanced HRMS Dashboard</h1>
-          <p className="text-gray-600">Mining-specific HR management with safety & certification tracking</p>
+          <h1 className="text-3xl font-bold tracking-tight">JDE HRMS Analytics</h1>
+          <p className="text-muted-foreground">
+            Comprehensive human resource management with Oracle JD Edwards standards
+          </p>
         </div>
-        <div className="flex items-center space-x-2">
-          <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-            <CheckCircle className="h-3 w-3 mr-1" />
-            All Systems Operational
-          </Badge>
-          <Button variant="outline" size="sm">
-            <UserPlus className="h-4 w-4 mr-2" />
-            Add Employee
+        <div className="flex gap-2">
+          <Button variant="outline">
+            <Download className="h-4 w-4 mr-2" />
+            Export Report
+          </Button>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            New Employee
           </Button>
         </div>
       </div>
 
       {/* Key Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {hrMetrics.map((metric, index) => (
-          <Card key={index} className="hover:shadow-lg transition-shadow">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600">
-                {metric.label}
-              </CardTitle>
-              {metric.icon}
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{metric.value}</div>
-              <div className={`flex items-center text-sm ${getTrendColor(metric.trend)}`}>
-                {getTrendIcon(metric.trend)}
-                <span className="ml-1">
-                  {metric.change > 0 ? '+' : ''}{metric.change}% from last month
-                </span>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Employees</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.overview.totalEmployees}</div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              {getTrendIcon(12)}
+              <span>+12 this month</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Employee Satisfaction</CardTitle>
+            <Heart className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.kpis.employeeSatisfaction}/5</div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <span>Above target (4.0)</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Turnover Rate</CardTitle>
+            <Target className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.kpis.turnoverRate}%</div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <span>Below industry avg (12%)</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Productivity</CardTitle>
+            <Activity className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{data.kpis.productivity}%</div>
+            <div className="flex items-center gap-1 text-xs text-muted-foreground">
+              <TrendingUp className="h-4 w-4 text-green-600" />
+              <span>+2.1% from last month</span>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      {/* Main Content Tabs */}
-      <Tabs defaultValue="overview" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6">
+      {/* Main Content */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="departments">Departments</TabsTrigger>
           <TabsTrigger value="employees">Employees</TabsTrigger>
-          <TabsTrigger value="certifications">Certifications</TabsTrigger>
-          <TabsTrigger value="safety">Safety Training</TabsTrigger>
-          <TabsTrigger value="shifts">Shift Management</TabsTrigger>
+          <TabsTrigger value="workflows">Workflows</TabsTrigger>
           <TabsTrigger value="analytics">Analytics</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
-        <TabsContent value="overview" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Workforce Health Score */}
-            <Card>
+        <TabsContent value="overview" className="space-y-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* HR Summary */}
+            <Card className="lg:col-span-2">
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Target className="h-5 w-5 mr-2" />
-                  Workforce Health Score
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5" />
+                  HR Summary
                 </CardTitle>
-                <CardDescription>Overall workforce performance indicator</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-center">
-                  <div className="text-4xl font-bold text-green-600 mb-2">92/100</div>
-                  <Progress value={92} className="mb-4" />
-                  <div className="grid grid-cols-3 gap-4 text-sm">
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <div className="font-semibold text-green-600">Excellent</div>
-                      <div className="text-gray-500">Safety Record</div>
+                      <div className="text-sm font-medium mb-2">Employee Status</div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Active Employees</span>
+                          <span className="font-medium text-green-600">{data.overview.activeEmployees}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>On Leave</span>
+                          <span className="font-medium text-yellow-600">{data.overview.onLeave}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Remote Workers</span>
+                          <span className="font-medium text-blue-600">{data.overview.remoteWorkers}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>New Hires</span>
+                          <span className="font-medium text-purple-600">{data.overview.newHires}</span>
+                        </div>
+                      </div>
                     </div>
+                    
                     <div>
-                      <div className="font-semibold text-blue-600">Good</div>
-                      <div className="text-gray-500">Certifications</div>
-                    </div>
-                    <div>
-                      <div className="font-semibold text-orange-600">Fair</div>
-                      <div className="text-gray-500">Training</div>
+                      <div className="text-sm font-medium mb-2">Key Metrics</div>
+                      <div className="space-y-2">
+                        <div className="flex justify-between text-sm">
+                          <span>Average Tenure</span>
+                          <span className="font-medium">{data.overview.avgTenure} years</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Training Completion</span>
+                          <span className="font-medium">{data.kpis.trainingCompletion}%</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Absenteeism Rate</span>
+                          <span className="font-medium">{data.kpis.absenteeism}%</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span>Retention Rate</span>
+                          <span className="font-medium">{data.kpis.retentionRate}%</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Recent Activities */}
+            {/* Alerts */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Activity className="h-5 w-5 mr-2" />
-                  Recent HR Activities
+                <CardTitle className="flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5" />
+                  HR Alerts
                 </CardTitle>
-                <CardDescription>Latest workforce activities and updates</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {[
-                    { type: 'Certification', action: 'Renewed', employee: 'John Smith', time: '2 hours ago' },
-                    { type: 'Safety Training', action: 'Completed', employee: 'Sarah Johnson', time: '4 hours ago' },
-                    { type: 'Shift Change', action: 'Scheduled', employee: 'Mike Wilson', time: '6 hours ago' },
-                    { type: 'Performance Review', action: 'Completed', employee: 'Lisa Brown', time: '8 hours ago' },
-                  ].map((activity, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-2 h-2 rounded-full bg-blue-500" />
-                        <div>
-                          <div className="font-medium">{activity.type}: {activity.action}</div>
-                          <div className="text-sm text-gray-500">{activity.employee} • {activity.time}</div>
+                <div className="space-y-3">
+                  {data.alerts.map((alert, index) => (
+                    <div key={index} className="flex items-start gap-3 p-3 border border-border rounded-lg">
+                      {getAlertIcon(alert.type)}
+                      <div className="flex-1">
+                        <div className="text-sm font-medium">{alert.message}</div>
+                        <div className="text-xs text-muted-foreground">
+                          Value: {alert.value}
                         </div>
                       </div>
-                      <Badge variant="outline">HR</Badge>
                     </div>
                   ))}
                 </div>
@@ -474,220 +409,159 @@ const EnhancedHRMSDashboard: React.FC = () => {
           </div>
         </TabsContent>
 
-        {/* Employees Tab */}
-        <TabsContent value="employees" className="space-y-6">
+        {/* Departments Tab */}
+        <TabsContent value="departments" className="space-y-4">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center">
-                <Users className="h-5 w-5 mr-2" />
-                Employee Management
+              <CardTitle className="flex items-center gap-2">
+                <Building className="h-5 w-5" />
+                Department Performance
               </CardTitle>
-              <CardDescription>Comprehensive employee information and performance tracking</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-6">
-                {/* Filters */}
-                <div className="flex space-x-4">
-                  <div className="flex-1">
-                    <label className="text-sm font-medium">Department</label>
-                    <select 
-                      className="w-full mt-1 p-2 border rounded-md"
-                      value={selectedDepartment}
-                      onChange={(e) => setSelectedDepartment(e.target.value)}
-                    >
-                      <option value="all">All Departments</option>
-                      <option value="Operations">Operations</option>
-                      <option value="Maintenance">Maintenance</option>
-                      <option value="Safety">Safety</option>
-                      <option value="Administration">Administration</option>
-                    </select>
-                  </div>
-                  <div className="flex-1">
-                    <label className="text-sm font-medium">Shift</label>
-                    <select 
-                      className="w-full mt-1 p-2 border rounded-md"
-                      value={selectedShift}
-                      onChange={(e) => setSelectedShift(e.target.value)}
-                    >
-                      <option value="all">All Shifts</option>
-                      <option value="day">Day Shift</option>
-                      <option value="night">Night Shift</option>
-                      <option value="rotating">Rotating</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Employee List */}
-                <div className="space-y-4">
-                  {filteredEmployees.map((employee) => (
-                    <div key={employee.id} className="border rounded-lg p-4 space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-4">
-                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <Users className="h-6 w-6 text-blue-600" />
-                          </div>
-                          <div>
-                            <div className="font-semibold text-lg">{employee.name}</div>
-                            <div className="text-sm text-gray-600">{employee.position} • {employee.department}</div>
-                            <div className="text-sm text-gray-500">{employee.location}</div>
-                          </div>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          {getStatusBadge(employee.status)}
-                          <Badge variant="outline" className="capitalize">{employee.shift} Shift</Badge>
-                        </div>
-                      </div>
-
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="text-center p-3 bg-gray-50 rounded">
-                          <div className="text-lg font-bold text-blue-600">{employee.performance.attendance}%</div>
-                          <div className="text-sm text-gray-600">Attendance</div>
-                        </div>
-                        <div className="text-center p-3 bg-gray-50 rounded">
-                          <div className="text-lg font-bold text-green-600">{employee.performance.safetyIncidents}</div>
-                          <div className="text-sm text-gray-600">Safety Incidents</div>
-                        </div>
-                        <div className="text-center p-3 bg-gray-50 rounded">
-                          <div className="text-lg font-bold text-purple-600">{employee.performance.productivity}%</div>
-                          <div className="text-sm text-gray-600">Productivity</div>
-                        </div>
-                        <div className="text-center p-3 bg-gray-50 rounded">
-                          <div className="text-lg font-bold text-orange-600">{employee.performance.overallRating}%</div>
-                          <div className="text-sm text-gray-600">Overall Rating</div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center space-x-4 text-sm text-gray-600">
-                        <div className="flex items-center">
-                          <Phone className="h-4 w-4 mr-1" />
-                          {employee.phone}
-                        </div>
-                        <div className="flex items-center">
-                          <Mail className="h-4 w-4 mr-1" />
-                          {employee.email}
-                        </div>
-                        <div className="flex items-center">
-                          <Calendar className="h-4 w-4 mr-1" />
-                          Hired: {new Date(employee.hireDate).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Certifications Tab */}
-        <TabsContent value="certifications" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Award className="h-5 w-5 mr-2" />
-                Equipment & Safety Certifications
-              </CardTitle>
-              <CardDescription>Track employee certifications and equipment qualifications</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {employees.map((employee) => (
-                  <div key={employee.id} className="border rounded-lg p-4">
-                    <div className="font-semibold mb-3">{employee.name} - {employee.position}</div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {employee.certifications.map((cert) => (
-                        <div key={cert.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                          <div>
-                            <div className="font-medium">{cert.name}</div>
-                            <div className="text-sm text-gray-600">
-                              {cert.type === 'equipment' && cert.equipment ? `Equipment: ${cert.equipment}` : cert.type}
-                            </div>
-                            <div className="text-sm text-gray-500">
-                              Expires: {new Date(cert.expiryDate).toLocaleDateString()}
-                            </div>
-                          </div>
-                          {getCertificationStatusBadge(cert.status)}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Safety Training Tab */}
-        <TabsContent value="safety" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Shield className="h-5 w-5 mr-2" />
-                Safety Training & Compliance
-              </CardTitle>
-              <CardDescription>Monitor safety training completion and compliance status</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {employees.map((employee) => (
-                  <div key={employee.id} className="border rounded-lg p-4">
-                    <div className="font-semibold mb-3">{employee.name} - {employee.position}</div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {employee.safetyTraining.map((training) => (
-                        <div key={training.id} className="flex items-center justify-between p-3 bg-gray-50 rounded">
-                          <div>
-                            <div className="font-medium">{training.name}</div>
-                            <div className="text-sm text-gray-600 capitalize">{training.type} Training</div>
-                            <div className="text-sm text-gray-500">
-                              Next Due: {new Date(training.nextDueDate).toLocaleDateString()}
-                            </div>
-                            {training.score && (
-                              <div className="text-sm text-gray-500">Score: {training.score}%</div>
-                            )}
-                          </div>
-                          {getTrainingStatusBadge(training.status)}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        {/* Shift Management Tab */}
-        <TabsContent value="shifts" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Clock className="h-5 w-5 mr-2" />
-                24/7 Shift Management
-              </CardTitle>
-              <CardDescription>Manage round-the-clock mining operations</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {shiftSchedules.map((shift) => (
-                  <div key={shift.id} className="border rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center space-x-3">
-                        <div className={`w-3 h-3 rounded-full ${
-                          shift.shiftType === 'day' ? 'bg-yellow-500' : 'bg-blue-500'
-                        }`} />
+                {data.departments.map((dept) => (
+                  <div key={dept.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:shadow-md transition-shadow">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="font-medium">{dept.name}</h4>
+                        <Badge variant="outline" className="text-xs">{dept.employees} employees</Badge>
+                        {getPerformanceBadge(dept.satisfaction)}
+                      </div>
+                      
+                      <div className="grid grid-cols-4 gap-4 text-sm">
                         <div>
-                          <div className="font-semibold capitalize">{shift.shiftType} Shift</div>
-                          <div className="text-sm text-gray-600">{shift.department} • {shift.location}</div>
+                          <span className="text-muted-foreground">Budget:</span>
+                          <span className="ml-2 font-medium">{formatCurrency(dept.budget)}</span>
                         </div>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-semibold">{shift.employeeCount} Employees</div>
-                        <div className="text-sm text-gray-600">
-                          {shift.startTime} - {shift.endTime}
+                        <div>
+                          <span className="text-muted-foreground">Avg Salary:</span>
+                          <span className="ml-2 font-medium">{formatCurrency(dept.avgSalary)}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Turnover:</span>
+                          <span className={`ml-2 font-medium ${dept.turnover > 10 ? 'text-red-600' : 'text-green-600'}`}>
+                            {dept.turnover}%
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Productivity:</span>
+                          <span className="ml-2 font-medium">{dept.productivity}%</span>
                         </div>
                       </div>
                     </div>
-                    <Progress value={(shift.employeeCount / 50) * 100} className="h-2" />
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        <Download className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Employees Tab */}
+        <TabsContent value="employees" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Users className="h-5 w-5" />
+                Employee Directory
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {data.employees.map((employee) => (
+                  <div key={employee.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:shadow-md transition-shadow">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="font-medium">{employee.name}</h4>
+                        <Badge variant="outline" className="text-xs">{employee.department}</Badge>
+                        <Badge variant="outline" className="text-xs">{employee.position}</Badge>
+                        {getPerformanceBadge(employee.performance)}
+                      </div>
+                      
+                      <div className="grid grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <span className="text-muted-foreground">Hire Date:</span>
+                          <span className="ml-2 font-medium">{employee.hireDate}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Salary:</span>
+                          <span className="ml-2 font-medium">{formatCurrency(employee.salary)}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Performance:</span>
+                          <span className={`ml-2 font-medium ${getPerformanceColor(employee.performance)}`}>
+                            {employee.performance}/5
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Next Review:</span>
+                          <span className="ml-2 font-medium">{employee.nextReview}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button size="sm" variant="outline">
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button size="sm" variant="outline">
+                        <FileText className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Workflows Tab */}
+        <TabsContent value="workflows" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5" />
+                HR Workflows
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {data.workflows.map((workflow) => (
+                  <div key={workflow.id} className="p-4 border border-border rounded-lg hover:shadow-md transition-shadow">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded">
+                        {workflow.icon}
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-medium">{workflow.name}</h4>
+                          <Badge variant={workflow.status === 'active' ? 'default' : 'secondary'} className="text-xs">
+                            {workflow.status}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-3">{workflow.description}</p>
+                        
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span>Efficiency</span>
+                            <span className="font-medium">{workflow.efficiency}%</span>
+                          </div>
+                          <Progress value={workflow.efficiency} className="h-2" />
+                          
+                          <div className="flex justify-between text-sm">
+                            <span>Average Time</span>
+                            <span className="font-medium">{workflow.avgTime}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -696,66 +570,110 @@ const EnhancedHRMSDashboard: React.FC = () => {
         </TabsContent>
 
         {/* Analytics Tab */}
-        <TabsContent value="analytics" className="space-y-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Workforce Analytics */}
+        <TabsContent value="analytics" className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Employee Satisfaction */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <BarChart3 className="h-5 w-5 mr-2" />
-                  Workforce Analytics
-                </CardTitle>
-                <CardDescription>Employee performance and retention metrics</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Employee Satisfaction</CardTitle>
+                <Heart className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-600 mb-2">156</div>
-                    <div className="text-sm text-gray-600">Total Employees</div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-3 bg-green-50 rounded">
-                      <div className="text-lg font-bold text-green-600">94%</div>
-                      <div className="text-sm text-gray-600">Retention Rate</div>
-                    </div>
-                    <div className="text-center p-3 bg-blue-50 rounded">
-                      <div className="text-lg font-bold text-blue-600">87%</div>
-                      <div className="text-sm text-gray-600">Satisfaction</div>
-                    </div>
-                  </div>
-                </div>
+                <div className="text-2xl font-bold">{data.kpis.employeeSatisfaction}/5</div>
+                <p className="text-xs text-muted-foreground">
+                  vs target (4.0)
+                </p>
               </CardContent>
             </Card>
 
-            {/* Safety Metrics */}
+            {/* Turnover Rate */}
             <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Shield className="h-5 w-5 mr-2" />
-                  Safety Metrics
-                </CardTitle>
-                <CardDescription>Safety performance and incident tracking</CardDescription>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Turnover Rate</CardTitle>
+                <TrendingDown className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-green-600 mb-2">365</div>
-                    <div className="text-sm text-gray-600">Days Without Major Incident</div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="text-center p-3 bg-green-50 rounded">
-                      <div className="text-lg font-bold text-green-600">98%</div>
-                      <div className="text-sm text-gray-600">Safety Compliance</div>
-                    </div>
-                    <div className="text-center p-3 bg-orange-50 rounded">
-                      <div className="text-lg font-bold text-orange-600">3</div>
-                      <div className="text-sm text-gray-600">Minor Incidents</div>
-                    </div>
-                  </div>
-                </div>
+                <div className="text-2xl font-bold">{data.kpis.turnoverRate}%</div>
+                <p className="text-xs text-muted-foreground">
+                  vs industry avg (12%)
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Time to Hire */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Time to Hire</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{data.kpis.timeToHire} days</div>
+                <p className="text-xs text-muted-foreground">
+                  Average hiring time
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Training Completion */}
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Training Completion</CardTitle>
+                <GraduationCap className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{data.kpis.trainingCompletion}%</div>
+                <p className="text-xs text-muted-foreground">
+                  Required training completed
+                </p>
               </CardContent>
             </Card>
           </div>
+
+          {/* Detailed Analytics */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <BarChart3 className="h-5 w-5" />
+                Detailed HR KPIs
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Productivity Score</span>
+                      <span className="font-medium">{data.kpis.productivity}%</span>
+                    </div>
+                    <Progress value={data.kpis.productivity} className="h-2" />
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Retention Rate</span>
+                      <span className="font-medium">{data.kpis.retentionRate}%</span>
+                    </div>
+                    <Progress value={data.kpis.retentionRate} className="h-2" />
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Absenteeism Rate</span>
+                      <span className="font-medium">{data.kpis.absenteeism}%</span>
+                    </div>
+                    <Progress value={data.kpis.absenteeism * 10} className="h-2" />
+                  </div>
+                  <div>
+                    <div className="flex justify-between text-sm mb-1">
+                      <span>Cost per Hire</span>
+                      <span className="font-medium">{formatCurrency(data.kpis.costPerHire)}</span>
+                    </div>
+                    <Progress value={data.kpis.costPerHire / 100} className="h-2" />
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>

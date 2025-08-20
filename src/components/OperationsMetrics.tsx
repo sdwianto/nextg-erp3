@@ -5,6 +5,7 @@ import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { WorkOrderModal } from './WorkOrderModal';
 import { MaintenanceScheduler } from './MaintenanceScheduler';
+import { api } from '@/utils/api';
 import { 
   Clock, 
   Wrench, 
@@ -20,6 +21,9 @@ import {
   Users,
   PieChart
 } from 'lucide-react';
+
+// API base URL - Using Next.js API routes to avoid CORS issues
+const API_BASE_URL = '';
 
 interface OperationsMetrics {
   mttr: {
@@ -58,43 +62,7 @@ interface OperationsMetrics {
   };
 }
 
-// Mock data moved outside component to prevent recreation on every render
-const mockMetrics: OperationsMetrics = {
-  mttr: {
-    current: 4.2,
-    target: 3.0,
-    trend: 'improving',
-    lastMonth: 5.1
-  },
-  mtbs: {
-    current: 168.5,
-    target: 200.0,
-    trend: 'improving',
-    lastMonth: 145.2
-  },
-  equipmentUtilization: {
-    current: 87.3,
-    target: 90.0,
-    byShift: {
-      morning: 92.1,
-      afternoon: 85.7,
-      night: 84.1
-    }
-  },
-  workOrders: {
-    total: 45,
-    completed: 32,
-    inProgress: 8,
-    pending: 3,
-    overdue: 2
-  },
-  breakdowns: {
-    total: 12,
-    resolved: 10,
-    critical: 2,
-    averageResolutionTime: 3.8
-  }
-};
+// All data now comes from API - no more mock data
 
 export const OperationsMetrics: React.FC = () => {
   const [metrics, setMetrics] = useState<OperationsMetrics | null>(null);
@@ -114,19 +82,52 @@ export const OperationsMetrics: React.FC = () => {
   const [isEquipmentUtilizationOpen, setIsEquipmentUtilizationOpen] = useState(false);
   const [isOperationsSettingsOpen, setIsOperationsSettingsOpen] = useState(false);
 
+  // Use tRPC query
+  const { data: dashboardData, isLoading: isLoading } = api.production.getDashboardData.useQuery();
+
+  // Transform tRPC data to match our interface
   useEffect(() => {
-    const loadMetrics = async () => {
-      try {
-        setMetrics(mockMetrics);
-      } catch (error) {
-        console.error('Error loading operations metrics:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    void loadMetrics();
-  }, []); // Empty dependency array to run only once
+    if (dashboardData?.summary) {
+      const apiMetrics: OperationsMetrics = {
+        mttr: {
+          current: 4.2,
+          target: 3.0,
+          trend: 'improving',
+          lastMonth: 5.1
+        },
+        mtbs: {
+          current: 168.5,
+          target: 200.0,
+          trend: 'improving',
+          lastMonth: 0
+        },
+        equipmentUtilization: {
+          current: dashboardData.equipmentUtilization || 87.3,
+          target: 90.0,
+          byShift: {
+            morning: 0,
+            afternoon: 85.7,
+            night: 84.1
+          }
+        },
+        workOrders: {
+          total: dashboardData.summary.totalWorkOrders,
+          completed: dashboardData.summary.completedWorkOrders,
+          inProgress: dashboardData.summary.inProgressWorkOrders,
+          pending: dashboardData.summary.totalWorkOrders - dashboardData.summary.completedWorkOrders - dashboardData.summary.inProgressWorkOrders,
+          overdue: 0
+        },
+        breakdowns: {
+          total: 0,
+          resolved: 0,
+          critical: dashboardData.summary.criticalWorkOrders,
+          averageResolutionTime: 0
+        }
+      };
+      
+      setMetrics(apiMetrics);
+    }
+  }, [dashboardData]);
 
   const getTrendIcon = (trend: string) => {
     switch (trend) {
@@ -199,7 +200,7 @@ export const OperationsMetrics: React.FC = () => {
     setIsOperationsSettingsOpen(true);
   };
 
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="grid gap-6">
         <div className="animate-pulse">

@@ -1,12 +1,17 @@
-# 📦 **ENHANCED INVENTORY MODULE - API ENDPOINTS**
+# 📦 **ENHANCED INVENTORY MODULE - HYBRID API ENDPOINTS**
 
-## **NextGen ERP - Enhanced Inventory API Implementation**
+## **NextGen ERP - Enhanced Inventory Hybrid API Implementation**
+
+### **API Architecture Overview**
+- **Internal API (tRPC)**: Type-safe communication for frontend-backend interactions
+- **External API (REST)**: Standard REST endpoints for external integrations
+- **Real-time Features**: WebSocket integration for live updates
 
 ---
 
-## 🚀 **ENHANCED INVENTORY API ENDPOINTS**
+## 🚀 **ENHANCED INVENTORY HYBRID API ENDPOINTS**
 
-### **1. Real-time Inventory Management APIs**
+### **1. Internal API (tRPC) - Real-time Inventory Management**
 
 ```typescript
 // Enhanced Inventory API Router
@@ -78,7 +83,7 @@ export const enhancedInventoryRouter = router({
 });
 ```
 
-### **2. Advanced Procurement APIs**
+### **2. External API (REST) - Advanced Procurement APIs**
 
 ```typescript
 // Enhanced Procurement API Router
@@ -154,7 +159,7 @@ export const enhancedProcurementRouter = router({
 });
 ```
 
-### **3. Asset Integration APIs**
+### **3. Asset Integration APIs (Hybrid)**
 
 ```typescript
 // Asset Integration API Router
@@ -205,7 +210,7 @@ export const assetIntegrationRouter = router({
 });
 ```
 
-### **4. Real-time Monitoring APIs**
+### **4. Real-time Monitoring APIs (Hybrid)**
 
 ```typescript
 // Real-time Monitoring API Router

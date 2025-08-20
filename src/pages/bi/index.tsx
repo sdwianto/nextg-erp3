@@ -20,54 +20,48 @@ import {
 
 const BusinessIntelligencePage: React.FC = () => {
   // Mock data for BI dashboard
-  const kpiData = {
+  const biData = {
     revenue: {
-      current: 1250000,
-      previous: 980000,
-      change: 27.6,
-      trend: 'up'
+      current: 0,
+      previous: 0,
+      change: 0,
+      trend: 'neutral'
     },
     profit: {
-      current: 320000,
-      previous: 280000,
-      change: 14.3,
-      trend: 'up'
-    },
-    customers: {
-      current: 1250,
-      previous: 1180,
-      change: 5.9,
-      trend: 'up'
+      current: 0,
+      previous: 0,
+      change: 0,
+      trend: 'neutral'
     },
     orders: {
-      current: 456,
-      previous: 420,
-      change: 8.6,
-      trend: 'up'
-    }
-  };
-
-  const chartData = {
-    revenueByMonth: [
-      { month: 'Jan', revenue: 850000, profit: 220000 },
-      { month: 'Feb', revenue: 920000, profit: 240000 },
-      { month: 'Mar', revenue: 980000, profit: 260000 },
-      { month: 'Apr', revenue: 1100000, profit: 290000 },
-      { month: 'May', revenue: 1180000, profit: 310000 },
-      { month: 'Jun', revenue: 1250000, profit: 320000 }
+      current: 0,
+      previous: 0,
+      change: 0,
+      trend: 'neutral'
+    },
+    customers: {
+      current: 0,
+      previous: 0,
+      change: 0,
+      trend: 'neutral'
+    },
+    monthlyData: [
+      { month: 'Jan', revenue: 0, profit: 0 },
+      { month: 'Feb', revenue: 0, profit: 0 },
+      { month: 'Mar', revenue: 0, profit: 0 },
+      { month: 'Apr', revenue: 0, profit: 0 },
+      { month: 'May', revenue: 0, profit: 0 },
+      { month: 'Jun', revenue: 0, profit: 0 }
     ],
     topProducts: [
-      { name: 'Excavator Spare Parts', sales: 125000, units: 45 },
-      { name: 'Bulldozer Components', sales: 98000, units: 32 },
-      { name: 'Crane Equipment', sales: 87000, units: 28 },
-      { name: 'Hydraulic Systems', sales: 76000, units: 25 },
-      { name: 'Electrical Parts', sales: 65000, units: 22 }
+      { name: 'Excavator Spare Parts', sales: 0, units: 0 },
+      { name: 'Hydraulic Systems', sales: 0, units: 0 },
+      { name: 'Electrical Parts', sales: 0, units: 0 }
     ],
     customerSegments: [
-      { segment: 'Mining Companies', value: 45, color: '#3B82F6' },
-      { segment: 'Construction', value: 30, color: '#10B981' },
-      { segment: 'Infrastructure', value: 15, color: '#F59E0B' },
-      { segment: 'Others', value: 10, color: '#EF4444' }
+      { segment: 'Mining Companies', value: 0, color: '#3B82F6' },
+      { segment: 'Construction', value: 0, color: '#10B981' },
+      { segment: 'Manufacturing', value: 0, color: '#F59E0B' }
     ]
   };
 
@@ -129,10 +123,10 @@ const BusinessIntelligencePage: React.FC = () => {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${kpiData.revenue.current.toLocaleString()}</div>
-              <div className={`flex items-center text-sm ${getTrendColor(kpiData.revenue.trend)}`}>
-                {getTrendIcon(kpiData.revenue.trend)}
-                <span className="ml-1">+{kpiData.revenue.change}%</span>
+              <div className="text-2xl font-bold">${(biData.revenue.current || 0).toLocaleString()}</div>
+              <div className={`flex items-center text-sm ${getTrendColor(biData.revenue.trend)}`}>
+                {getTrendIcon(biData.revenue.trend)}
+                <span className="ml-1">+{biData.revenue.change}%</span>
                 <span className="text-muted-foreground ml-1">vs last month</span>
               </div>
             </CardContent>
@@ -144,10 +138,10 @@ const BusinessIntelligencePage: React.FC = () => {
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">${kpiData.profit.current.toLocaleString()}</div>
-              <div className={`flex items-center text-sm ${getTrendColor(kpiData.profit.trend)}`}>
-                {getTrendIcon(kpiData.profit.trend)}
-                <span className="ml-1">+{kpiData.profit.change}%</span>
+              <div className="text-2xl font-bold">${(biData.profit.current || 0).toLocaleString()}</div>
+              <div className={`flex items-center text-sm ${getTrendColor(biData.profit.trend)}`}>
+                {getTrendIcon(biData.profit.trend)}
+                <span className="ml-1">+{biData.profit.change}%</span>
                 <span className="text-muted-foreground ml-1">vs last month</span>
               </div>
             </CardContent>
@@ -159,10 +153,10 @@ const BusinessIntelligencePage: React.FC = () => {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{kpiData.customers.current.toLocaleString()}</div>
-              <div className={`flex items-center text-sm ${getTrendColor(kpiData.customers.trend)}`}>
-                {getTrendIcon(kpiData.customers.trend)}
-                <span className="ml-1">+{kpiData.customers.change}%</span>
+              <div className="text-2xl font-bold">{(biData.customers.current || 0).toLocaleString()}</div>
+              <div className={`flex items-center text-sm ${getTrendColor(biData.customers.trend)}`}>
+                {getTrendIcon(biData.customers.trend)}
+                <span className="ml-1">+{biData.customers.change}%</span>
                 <span className="text-muted-foreground ml-1">vs last month</span>
               </div>
             </CardContent>
@@ -174,10 +168,10 @@ const BusinessIntelligencePage: React.FC = () => {
               <Package className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{kpiData.orders.current.toLocaleString()}</div>
-              <div className={`flex items-center text-sm ${getTrendColor(kpiData.orders.trend)}`}>
-                {getTrendIcon(kpiData.orders.trend)}
-                <span className="ml-1">+{kpiData.orders.change}%</span>
+              <div className="text-2xl font-bold">{(biData.orders.current || 0).toLocaleString()}</div>
+              <div className={`flex items-center text-sm ${getTrendColor(biData.orders.trend)}`}>
+                {getTrendIcon(biData.orders.trend)}
+                <span className="ml-1">+{biData.orders.change}%</span>
                 <span className="text-muted-foreground ml-1">vs last month</span>
               </div>
             </CardContent>
@@ -196,7 +190,7 @@ const BusinessIntelligencePage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {chartData.revenueByMonth.map((item, index) => (
+                {biData.monthlyData.map((item, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <span className="text-sm font-medium">{item.month}</span>
                     <div className="flex items-center gap-4">
@@ -223,7 +217,7 @@ const BusinessIntelligencePage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {chartData.customerSegments.map((segment, index) => (
+                {biData.customerSegments.map((segment, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div 
@@ -260,7 +254,7 @@ const BusinessIntelligencePage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {chartData.topProducts.map((product, index) => (
+                  {biData.topProducts.map((product, index) => (
                     <tr key={index} className="border-b">
                       <td className="py-3 px-4 font-medium">{product.name}</td>
                       <td className="py-3 px-4 text-right">${product.sales.toLocaleString()}</td>

@@ -1,6 +1,39 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* Fix for aria-hidden accessibility warning */
+[data-aria-hidden="true"] {
+  pointer-events: none !important;
+}
+
+[data-aria-hidden="true"] * {
+  pointer-events: none !important;
+}
+
+/* Prevent dialog from disappearing on input focus */
+[role="dialog"] {
+  pointer-events: auto !important;
+}
+
+[role="dialog"] * {
+  pointer-events: auto !important;
+}
+
+/* Fix for dialog focus issues */
+[data-state="open"] {
+  pointer-events: auto !important;
+}
+
+[data-state="open"] * {
+  pointer-events: auto !important;
+}
+
+/* Ensure dialog stays visible when inputs are focused */
+[role="dialog"][data-state="open"] {
+  z-index: 50 !important;
+  position: fixed !important;
+}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme {
@@ -263,3 +296,4 @@
     font-size: 13px; /* extra reduction for very small screens */
   }
 }
+
