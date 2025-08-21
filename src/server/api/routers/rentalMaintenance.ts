@@ -328,8 +328,7 @@ export const rentalMaintenanceRouter = createTRPCRouter({
             equipment: recentEquipment,
           },
         };
-      } catch (error) {
-        console.error('Error in getDashboardData:', error);
+      } catch {
         // Return mock data if database connection fails
         return {
           summary: {

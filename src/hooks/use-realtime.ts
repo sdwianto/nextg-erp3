@@ -50,6 +50,11 @@ export const useRealtime = () => {
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
+    // Skip WebSocket connection in production (Vercel doesn't support WebSocket)
+    if (process.env.NODE_ENV === 'production') {
+      return;
+    }
+
     // Initialize WebSocket connection with consistent port configuration
     const websocketUrl = getWebSocketUrl();
     
@@ -58,15 +63,9 @@ export const useRealtime = () => {
       return;
     }
 
-    // Only attempt connection if websocketUrl is valid and not localhost in production
+    // Only attempt connection if websocketUrl is valid
     if (!websocketUrl || websocketUrl === 'undefined' || websocketUrl === 'null') {
       // WebSocket URL not configured, skipping real-time connection
-      return;
-    }
-
-    // Skip WebSocket connection in production if using localhost
-    if (process.env.NODE_ENV === 'production' && websocketUrl.includes('localhost')) {
-      console.log('Skipping WebSocket connection in production (localhost detected)');
       return;
     }
 
