@@ -29,8 +29,21 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
   const getLayout = Component.getLayout ?? ((page) => page);
   const [mounted, setMounted] = useState(false);
 
-  // tRPC setup
-  const [queryClient] = useState(() => new QueryClient());
+  // tRPC setup dengan optimasi caching
+  const [queryClient] = useState(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        staleTime: 5 * 60 * 1000, // 5 menit
+        gcTime: 10 * 60 * 1000, // 10 menit
+        retry: 1,
+        refetchOnWindowFocus: false,
+        refetchOnMount: false,
+      },
+      mutations: {
+        retry: 1,
+      },
+    },
+  }));
   const [trpcClient] = useState(() =>
     api.createClient({
       links: [

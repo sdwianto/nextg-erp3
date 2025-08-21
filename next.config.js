@@ -17,6 +17,18 @@ const config = {
     locales: ["en"],
     defaultLocale: "en",
   },
+
+  // Optimasi untuk production
+  experimental: {
+    optimizeCss: true,
+    optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'],
+  },
+
+  // Kompresi
+  compress: true,
+
+  // Caching
+  generateEtags: true,
 };
 
 export default config;
