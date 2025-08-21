@@ -276,23 +276,24 @@ export const rentalMaintenanceRouter = createTRPCRouter({
   // Get rental maintenance dashboard data
   getDashboardData: publicProcedure
     .query(async () => {
-      const [
-        totalEquipment,
-        availableEquipment,
-        inUseEquipment,
-        maintenanceEquipment,
-        totalMaintenanceRecords,
-        pendingMaintenanceRecords,
-        completedMaintenanceRecords,
-      ] = await Promise.all([
-        prisma.equipment.count(),
-        prisma.equipment.count({ where: { status: "AVAILABLE" } }),
-        prisma.equipment.count({ where: { status: "IN_USE" } }),
-        prisma.equipment.count({ where: { status: "MAINTENANCE" } }),
-        prisma.maintenanceRecord.count(),
-        prisma.maintenanceRecord.count({ where: { status: { in: ["SCHEDULED", "IN_PROGRESS"] } } }),
-        prisma.maintenanceRecord.count({ where: { status: "COMPLETED" } }),
-      ]);
+      try {
+        const [
+          totalEquipment,
+          availableEquipment,
+          inUseEquipment,
+          maintenanceEquipment,
+          totalMaintenanceRecords,
+          pendingMaintenanceRecords,
+          completedMaintenanceRecords,
+        ] = await Promise.all([
+          prisma.equipment.count(),
+          prisma.equipment.count({ where: { status: "AVAILABLE" } }),
+          prisma.equipment.count({ where: { status: "IN_USE" } }),
+          prisma.equipment.count({ where: { status: "MAINTENANCE" } }),
+          prisma.maintenanceRecord.count(),
+          prisma.maintenanceRecord.count({ where: { status: { in: ["SCHEDULED", "IN_PROGRESS"] } } }),
+          prisma.maintenanceRecord.count({ where: { status: "COMPLETED" } }),
+        ]);
 
       // Get recent activities
       const recentMaintenance = await prisma.maintenanceRecord.findMany({
@@ -312,21 +313,40 @@ export const rentalMaintenanceRouter = createTRPCRouter({
         orderBy: { createdAt: "desc" },
       });
 
-      return {
-        summary: {
-          totalEquipment,
-          availableEquipment,
-          inUseEquipment,
-          maintenanceEquipment,
-          totalMaintenanceRecords,
-          pendingMaintenanceRecords,
-          completedMaintenanceRecords,
-        },
-        recentActivities: {
-          maintenance: recentMaintenance,
-          equipment: recentEquipment,
-        },
-      };
+        return {
+          summary: {
+            totalEquipment,
+            availableEquipment,
+            inUseEquipment,
+            maintenanceEquipment,
+            totalMaintenanceRecords,
+            pendingMaintenanceRecords,
+            completedMaintenanceRecords,
+          },
+          recentActivities: {
+            maintenance: recentMaintenance,
+            equipment: recentEquipment,
+          },
+        };
+      } catch (error) {
+        console.error('Error in getDashboardData:', error);
+        // Return mock data if database connection fails
+        return {
+          summary: {
+            totalEquipment: 0,
+            availableEquipment: 0,
+            inUseEquipment: 0,
+            maintenanceEquipment: 0,
+            totalMaintenanceRecords: 0,
+            pendingMaintenanceRecords: 0,
+            completedMaintenanceRecords: 0,
+          },
+          recentActivities: {
+            maintenance: [],
+            equipment: [],
+          },
+        };
+      }
     }),
 
   // Get predictive maintenance alerts

@@ -58,9 +58,15 @@ export const useRealtime = () => {
       return;
     }
 
-    // Only attempt connection if websocketUrl is valid
+    // Only attempt connection if websocketUrl is valid and not localhost in production
     if (!websocketUrl || websocketUrl === 'undefined' || websocketUrl === 'null') {
       // WebSocket URL not configured, skipping real-time connection
+      return;
+    }
+
+    // Skip WebSocket connection in production if using localhost
+    if (process.env.NODE_ENV === 'production' && websocketUrl.includes('localhost')) {
+      console.log('Skipping WebSocket connection in production (localhost detected)');
       return;
     }
 
