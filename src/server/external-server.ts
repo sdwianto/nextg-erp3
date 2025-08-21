@@ -5,7 +5,7 @@ import morgan from 'morgan';
 import externalAPI from './api/external/index';
 
 const app = express();
-const PORT = process.env.EXTERNAL_API_PORT || 3003;
+const PORT = process.env.EXTERNAL_API_PORT ?? 3003;
 
 // Security middleware
 app.use(helmet());
@@ -49,11 +49,14 @@ app.use('*', (req, res) => {
 });
 
 // Global error handler
-app.use((error: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error('External API Server Error:', error);
+app.use((error: unknown, req: express.Request, res: express.Response) => {
+  // console.error('External API Server Error:', error);
   
-  res.status(error.status || 500).json({
-    error: error.message || 'Internal server error',
+  const statusCode = (error as { status?: number })?.status ?? 500;
+  const errorMessage = error instanceof Error ? error.message : 'Internal server error';
+  
+  res.status(statusCode).json({
+    error: errorMessage,
     timestamp: new Date().toISOString(),
     path: req.originalUrl,
   });
@@ -61,9 +64,9 @@ app.use((error: any, req: express.Request, res: express.Response, _next: express
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`🚀 External API Server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`🔗 API Base URL: http://localhost:${PORT}/api/v1`);
+  // console.log(`🚀 External API Server running on port ${PORT}`);
+  // console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  // console.log(`🔗 API Base URL: http://localhost:${PORT}/api/v1`);
 });
 
 export default app;

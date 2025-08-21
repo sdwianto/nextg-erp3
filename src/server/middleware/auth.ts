@@ -34,7 +34,7 @@ export const authenticateToken = (req: AuthRequest, res: Response, next: NextFun
     };
     
     next();
-  } catch (error) {
+  } catch {
     return res.status(403).json({
       success: false,
       error: "Invalid or expired token",
@@ -72,15 +72,15 @@ export const optionalAuth = (
 
   if (token) {
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET ?? "fallback-secret") as any;
+      const decoded = jwt.verify(token, process.env.JWT_SECRET ?? "fallback-secret") as Record<string, unknown>;
       req.user = {
-        id: decoded.id,
-        email: decoded.email,
-        firstName: decoded.firstName,
-        lastName: decoded.lastName,
-        roleId: decoded.roleId,
+        id: decoded.id as string,
+        email: decoded.email as string,
+        firstName: decoded.firstName as string | undefined,
+        lastName: decoded.lastName as string | undefined,
+        roleId: decoded.roleId as string | undefined,
       };
-    } catch (error) {
+    } catch {
       // Token is invalid, but we continue without user
     }
   }

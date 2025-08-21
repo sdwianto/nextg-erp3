@@ -25,6 +25,7 @@ interface MaintenanceAlert {
 interface MaintenanceAlertsProps {
   alerts: MaintenanceAlert[];
   onViewAll: () => void;
+  // eslint-disable-next-line no-unused-vars
   onViewAlert: (alertId: number) => void;
 }
 

@@ -39,8 +39,8 @@ export const WorkOrderModal: React.FC<WorkOrderModalProps> = ({ isOpen, onClose 
   };
 
   const handleSubmit = () => {
-    console.log('Creating work order:', formData);
     // TODO: API call to create work order
+    // eslint-disable-next-line no-alert
     alert('Work Order created successfully with JDE lifecycle management!');
     onClose();
     setFormData({

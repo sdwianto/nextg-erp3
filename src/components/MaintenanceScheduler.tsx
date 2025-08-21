@@ -43,7 +43,7 @@ export const MaintenanceScheduler: React.FC<MaintenanceSchedulerProps> = ({ isOp
   });
 
   // Empty equipment conditions - ready for real data
-  const equipmentConditions: any[] = [];
+  const equipmentConditions: Record<string, unknown>[] = [];
 
   const handleScheduleInputChange = (field: string, value: string) => {
     setScheduleData(prev => ({ ...prev, [field]: value }));
@@ -54,13 +54,13 @@ export const MaintenanceScheduler: React.FC<MaintenanceSchedulerProps> = ({ isOp
   };
 
   const handleScheduleSubmit = () => {
-    console.log('Scheduling maintenance:', scheduleData);
+    // eslint-disable-next-line no-alert
     alert('Maintenance scheduled successfully!');
     onClose();
   };
 
   const handleConditionSubmit = () => {
-    console.log('Setting condition monitoring:', conditionData);
+    // eslint-disable-next-line no-alert
     alert('Condition-based monitoring configured successfully!');
     onClose();
   };
@@ -372,7 +372,7 @@ export const MaintenanceScheduler: React.FC<MaintenanceSchedulerProps> = ({ isOp
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm font-medium text-muted-foreground mb-1">Critical Alerts</p>
-                        <p className="text-2xl font-bold text-red-600">{equipmentConditions.filter(e => e.alerts > 0).length}</p>
+                        <p className="text-2xl font-bold text-red-600">{equipmentConditions.filter(e => (e.alerts as number) > 0).length}</p>
                       </div>
                       <Bell className="h-8 w-8 text-red-500" />
                     </div>
@@ -384,7 +384,7 @@ export const MaintenanceScheduler: React.FC<MaintenanceSchedulerProps> = ({ isOp
                       <div>
                         <p className="text-sm font-medium text-muted-foreground mb-1">Avg Condition</p>
                         <p className="text-2xl font-bold">
-                          {Math.round(equipmentConditions.reduce((acc, e) => acc + e.condition, 0) / equipmentConditions.length)}%
+                          {Math.round(equipmentConditions.reduce((acc, e) => acc + (e.condition as number), 0) / equipmentConditions.length)}%
                         </p>
                       </div>
                       <Gauge className="h-8 w-8 text-muted-foreground" />
@@ -406,62 +406,65 @@ export const MaintenanceScheduler: React.FC<MaintenanceSchedulerProps> = ({ isOp
 
               {/* Equipment Cards */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {equipmentConditions.map((equipment) => (
-                  <Card key={equipment.id} className="hover:shadow-lg transition-shadow border-l-4" style={{
-                    borderLeftColor: equipment.status === 'critical' ? '#ef4444' : 
-                                    equipment.status === 'warning' ? '#f59e0b' : 
-                                    equipment.status === 'good' ? '#3b82f6' : '#10b981'
-                  }}>
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <CardTitle className="text-sm font-semibold">{equipment.name}</CardTitle>
-                        <Badge className={`${getStatusColor(equipment.status)} text-xs`}>
-                          {equipment.status}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground">{equipment.type} • {equipment.location}</p>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>Condition</span>
-                          <span className={`font-semibold ${getConditionColor(equipment.condition)}`}>
-                            {equipment.condition}%
-                          </span>
+                {equipmentConditions.map((equipment) => {
+                  const eq = equipment as Record<string, unknown>;
+                  return (
+                    <Card key={eq.id as string} className="hover:shadow-lg transition-shadow border-l-4" style={{
+                      borderLeftColor: (eq.status as string) === 'critical' ? '#ef4444' : 
+                                      (eq.status as string) === 'warning' ? '#f59e0b' : 
+                                      (eq.status as string) === 'good' ? '#3b82f6' : '#10b981'
+                    }}>
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <CardTitle className="text-sm font-semibold">{eq.name as string}</CardTitle>
+                          <Badge className={`${getStatusColor(eq.status as string)} text-xs`}>
+                            {eq.status as string}
+                          </Badge>
                         </div>
-                        <Progress value={equipment.condition} className="h-2" />
-                      </div>
-                      
-                      <div className="space-y-1 text-xs text-muted-foreground">
-                        <div className="flex justify-between">
-                          <span>Last Maintenance:</span>
-                          <span className="font-medium">{equipment.lastMaintenance}</span>
+                        <p className="text-xs text-muted-foreground">{eq.type as string} • {eq.location as string}</p>
+                      </CardHeader>
+                      <CardContent className="space-y-3">
+                        <div>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span>Condition</span>
+                            <span className={`font-semibold ${getConditionColor(eq.condition as number)}`}>
+                              {eq.condition as number}%
+                            </span>
+                          </div>
+                          <Progress value={eq.condition as number} className="h-2" />
                         </div>
-                        <div className="flex justify-between">
-                          <span>Next Maintenance:</span>
-                          <span className="font-medium">{equipment.nextMaintenance}</span>
+                        
+                        <div className="space-y-1 text-xs text-muted-foreground">
+                          <div className="flex justify-between">
+                            <span>Last Maintenance:</span>
+                            <span className="font-medium">{eq.lastMaintenance as string}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Next Maintenance:</span>
+                            <span className="font-medium">{eq.nextMaintenance as string}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Active Alerts:</span>
+                            <span className={`font-semibold ${(eq.alerts as number) > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                              {eq.alerts as number}
+                            </span>
+                          </div>
                         </div>
-                        <div className="flex justify-between">
-                          <span>Active Alerts:</span>
-                          <span className={`font-semibold ${equipment.alerts > 0 ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
-                            {equipment.alerts}
-                          </span>
-                        </div>
-                      </div>
 
-                      <div className="flex space-x-2 pt-2">
-                        <Button size="sm" variant="outline" className="flex-1 text-xs">
-                          <Wrench className="h-3 w-3 mr-1" />
-                          Schedule
-                        </Button>
-                        <Button size="sm" variant="outline" className="flex-1 text-xs">
-                          <Activity className="h-3 w-3 mr-1" />
-                          Monitor
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                                             <div className="flex space-x-2 pt-2">
+                         <Button size="sm" variant="outline" className="flex-1 text-xs">
+                           <Wrench className="h-3 w-3 mr-1" />
+                           Schedule
+                         </Button>
+                         <Button size="sm" variant="outline" className="flex-1 text-xs">
+                           <Activity className="h-3 w-3 mr-1" />
+                           Monitor
+                         </Button>
+                       </div>
+                     </CardContent>
+                   </Card>
+                 );
+               })}
               </div>
 
               <div className="flex justify-end pt-4 border-t">

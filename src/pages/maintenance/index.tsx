@@ -8,33 +8,8 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Progress } from '@/components/ui/progress';
-import { 
-  Wrench, 
-  Clock, 
-  AlertTriangle, 
-  CheckCircle, 
-  Plus,
-  Search,
-  Filter,
-  Calendar,
-  Settings,
-  FileText,
-  DollarSign,
-  MapPin,
-  User,
-  HardHat,
-  Shield,
-  TrendingUp,
-  BarChart3,
-  Activity,
-  Download,
-  Database,
-  Gauge,
-  Target,
-  Zap
-} from 'lucide-react';
+
+import { Wrench, Clock, AlertTriangle, CheckCircle, Plus, Search, Filter, Calendar, Settings, FileText, DollarSign, User, Shield, TrendingUp, BarChart3, Activity, Download, Database, Gauge, Target, Zap } from 'lucide-react';
 import { api } from '@/utils/api';
 
 interface MaintenanceRecord {
@@ -59,7 +34,6 @@ interface MaintenanceRecord {
 }
 
 const MaintenancePage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('overview');
   const [isAddMaintenanceOpen, setIsAddMaintenanceOpen] = useState(false);
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isProgressDialogOpen, setIsProgressDialogOpen] = useState(false);
@@ -85,10 +59,9 @@ const MaintenancePage: React.FC = () => {
     page: 1,
     limit: 50
   });
-  const { data: predictiveData } = api.rentalMaintenance.getPredictiveMaintenance.useQuery();
 
   // Mock data for demonstration
-  const maintenanceData = {
+  const _maintenanceData = {
     totalEquipment: dashboardData?.summary?.totalEquipment ?? 0,
     scheduledMaintenance: dashboardData?.summary?.pendingMaintenanceRecords ?? 0,
     completedMaintenance: dashboardData?.summary?.completedMaintenanceRecords ?? 0,
@@ -97,43 +70,29 @@ const MaintenancePage: React.FC = () => {
     inProgress: dashboardData?.summary?.maintenanceEquipment ?? 0
   };
 
-  const [maintenanceRecords, setMaintenanceRecords] = useState<MaintenanceRecord[]>([]);
 
-  const handleRecordClick = (record: MaintenanceRecord) => {
-    setSelectedRecord(record);
-    setIsDetailDialogOpen(true);
+
+  const _handleStartWork = (recordId: number) => {
+    // TODO: Implement API call to update maintenance status
+    // eslint-disable-next-line no-console
+    console.log('Starting work for record:', recordId);
   };
 
-  const handleStartWork = (recordId: number) => {
-    setMaintenanceRecords(prev => prev.map(record => 
-      record.id === recordId 
-        ? { ...record, status: 'IN_PROGRESS' }
-        : record
-    ));
-  };
-
-  const handleUpdateProgress = (record: MaintenanceRecord) => {
+  const _handleUpdateProgress = (record: MaintenanceRecord) => {
     setSelectedRecord(record);
     setProgressDetails(record.progressDetails ?? '');
     setActualCost(record.actualCost?.toString() ?? '');
     setIsProgressDialogOpen(true);
   };
 
-  const handleCompleteMaintenance = (recordId: number) => {
-    setMaintenanceRecords(prev => prev.map(record => 
-      record.id === recordId 
-        ? { 
-            ...record, 
-            status: 'COMPLETED',
-            completionDate: new Date().toISOString().split('T')[0],
-            actualCost: parseFloat(actualCost) || record.estimatedCost
-          }
-        : record
-    ));
+  const _handleCompleteMaintenance = (recordId: number) => {
+    // TODO: Implement API call to complete maintenance
+    // eslint-disable-next-line no-console
+    console.log('Completing maintenance for record:', recordId, 'with cost:', actualCost);
     setIsProgressDialogOpen(false);
   };
 
-  const getStatusColor = (status: string) => {
+  const _getStatusColor = (status: string) => {
     switch (status) {
       case 'SCHEDULED': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
       case 'IN_PROGRESS': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
@@ -143,16 +102,9 @@ const MaintenancePage: React.FC = () => {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'HIGH': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
-      case 'MEDIUM': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
-      case 'LOW': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200';
-    }
-  };
 
-  const formatCurrency = (amount: number) => {
+
+  const _formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', {
       style: 'currency',
       currency: 'IDR',
@@ -218,7 +170,10 @@ const MaintenancePage: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="equipment">Equipment</Label>
-                      <Select>
+                      <Select 
+                        value={newMaintenance.equipment}
+                        onValueChange={(value) => setNewMaintenance(prev => ({ ...prev, equipment: value }))}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select equipment" />
                         </SelectTrigger>
@@ -233,7 +188,10 @@ const MaintenancePage: React.FC = () => {
                     </div>
                     <div>
                       <Label htmlFor="maintenanceType">Maintenance Type</Label>
-                      <Select>
+                      <Select 
+                        value={newMaintenance.maintenanceType}
+                        onValueChange={(value) => setNewMaintenance(prev => ({ ...prev, maintenanceType: value }))}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
@@ -251,6 +209,8 @@ const MaintenancePage: React.FC = () => {
                     <Textarea
                       id="description"
                       placeholder="Enter maintenance description..."
+                      value={newMaintenance.description}
+                      onChange={(e) => setNewMaintenance(prev => ({ ...prev, description: e.target.value }))}
                     />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -259,11 +219,16 @@ const MaintenancePage: React.FC = () => {
                       <Input
                         id="scheduledDate"
                         type="date"
+                        value={newMaintenance.scheduledDate}
+                        onChange={(e) => setNewMaintenance(prev => ({ ...prev, scheduledDate: e.target.value }))}
                       />
                     </div>
                     <div>
                       <Label htmlFor="priority">Priority</Label>
-                      <Select>
+                      <Select 
+                        value={newMaintenance.priority}
+                        onValueChange={(value) => setNewMaintenance(prev => ({ ...prev, priority: value }))}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select priority" />
                         </SelectTrigger>
@@ -278,7 +243,10 @@ const MaintenancePage: React.FC = () => {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <Label htmlFor="assignedTechnician">Assigned Technician</Label>
-                      <Select>
+                      <Select 
+                        value={newMaintenance.assignedTechnician}
+                        onValueChange={(value) => setNewMaintenance(prev => ({ ...prev, assignedTechnician: value }))}
+                      >
                         <SelectTrigger>
                           <SelectValue placeholder="Select technician" />
                         </SelectTrigger>
@@ -295,15 +263,42 @@ const MaintenancePage: React.FC = () => {
                         id="estimatedCost"
                         type="number"
                         placeholder="Enter estimated cost"
+                        value={newMaintenance.estimatedCost}
+                        onChange={(e) => setNewMaintenance(prev => ({ ...prev, estimatedCost: e.target.value }))}
                       />
                     </div>
                   </div>
                 </div>
                 <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={() => setIsAddMaintenanceOpen(false)}>
+                  <Button variant="outline" onClick={() => {
+                    setNewMaintenance({
+                      equipment: '',
+                      maintenanceType: '',
+                      description: '',
+                      scheduledDate: '',
+                      priority: '',
+                      assignedTechnician: '',
+                      estimatedCost: ''
+                    });
+                    setIsAddMaintenanceOpen(false);
+                  }}>
                     Cancel
                   </Button>
-                  <Button variant="default" onClick={() => setIsAddMaintenanceOpen(false)}>
+                  <Button variant="default" onClick={() => {
+                    // TODO: Implement API call to create maintenance record
+                    // eslint-disable-next-line no-console
+                    console.log('Creating maintenance record:', newMaintenance);
+                    setNewMaintenance({
+                      equipment: '',
+                      maintenanceType: '',
+                      description: '',
+                      scheduledDate: '',
+                      priority: '',
+                      assignedTechnician: '',
+                      estimatedCost: ''
+                    });
+                    setIsAddMaintenanceOpen(false);
+                  }}>
                     Schedule Maintenance
                   </Button>
                 </div>
@@ -322,7 +317,7 @@ const MaintenancePage: React.FC = () => {
                 <Wrench className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{maintenanceData.totalEquipment}</div>
+                <div className="text-2xl font-bold">{_maintenanceData.totalEquipment}</div>
                 <p className="text-xs text-muted-foreground">
                   Equipment under maintenance
                 </p>
@@ -334,7 +329,7 @@ const MaintenancePage: React.FC = () => {
                 <Calendar className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{maintenanceData.scheduledMaintenance}</div>
+                <div className="text-2xl font-bold">{_maintenanceData.scheduledMaintenance}</div>
                 <p className="text-xs text-muted-foreground">
                   Upcoming maintenance
                 </p>
@@ -346,7 +341,7 @@ const MaintenancePage: React.FC = () => {
                 <Activity className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{maintenanceData.inProgress}</div>
+                <div className="text-2xl font-bold">{_maintenanceData.inProgress}</div>
                 <p className="text-xs text-muted-foreground">
                   Currently being maintained
                 </p>
@@ -358,7 +353,7 @@ const MaintenancePage: React.FC = () => {
                 <CheckCircle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{maintenanceData.completedMaintenance}</div>
+                <div className="text-2xl font-bold">{_maintenanceData.completedMaintenance}</div>
                 <p className="text-xs text-muted-foreground">
                   This month
                 </p>
@@ -370,7 +365,7 @@ const MaintenancePage: React.FC = () => {
                 <AlertTriangle className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-red-600 dark:text-red-400">{maintenanceData.overdueMaintenance}</div>
+                <div className="text-2xl font-bold text-red-600 dark:text-red-400">{_maintenanceData.overdueMaintenance}</div>
                 <p className="text-xs text-muted-foreground">
                   Requires attention
                 </p>
@@ -382,7 +377,7 @@ const MaintenancePage: React.FC = () => {
                 <DollarSign className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{formatCurrency(maintenanceData.totalCost)}</div>
+                <div className="text-2xl font-bold">{_formatCurrency(_maintenanceData.totalCost)}</div>
                 <p className="text-xs text-muted-foreground">
                   This month
                 </p>
@@ -565,7 +560,7 @@ const MaintenancePage: React.FC = () => {
                 </div>
                 <div>
                   <Label>Status</Label>
-                  <Badge className={getStatusColor(selectedRecord.status)}>
+                  <Badge className={_getStatusColor(selectedRecord.status)}>
                     {selectedRecord.status}
                   </Badge>
                 </div>
@@ -589,12 +584,12 @@ const MaintenancePage: React.FC = () => {
                   Close
                 </Button>
                 {selectedRecord.status === 'SCHEDULED' && (
-                  <Button variant="default" onClick={() => handleStartWork(selectedRecord.id)}>
+                  <Button variant="default" onClick={() => _handleStartWork(selectedRecord.id)}>
                     Start Work
                   </Button>
                 )}
                 {selectedRecord.status === 'IN_PROGRESS' && (
-                  <Button variant="default" onClick={() => handleUpdateProgress(selectedRecord)}>
+                  <Button variant="default" onClick={() => _handleUpdateProgress(selectedRecord)}>
                     Update Progress
                   </Button>
                 )}
@@ -634,7 +629,7 @@ const MaintenancePage: React.FC = () => {
               <Button variant="outline" onClick={() => setIsProgressDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button variant="default" onClick={() => selectedRecord && handleCompleteMaintenance(selectedRecord.id)}>
+              <Button variant="default" onClick={() => selectedRecord && _handleCompleteMaintenance(selectedRecord.id)}>
                 Complete Maintenance
               </Button>
             </div>

@@ -1,35 +1,33 @@
-import { Server as SocketIOServer } from 'socket.io';
-import { Server as HTTPServer } from 'http';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import { Server as SocketIOServer, type ServerOptions } from 'socket.io';
+import type { Server as HTTPServer } from 'http';
+import { prisma } from './db';
 
 import { getWebSocketConfig } from '../env';
 
 export const initializeWebSocket = (httpServer: HTTPServer) => {
   const config = getWebSocketConfig();
-  const io = new SocketIOServer(httpServer, config) 
+  const io = new SocketIOServer(httpServer, config as Partial<ServerOptions>) 
 
   // Handle connections
   io.on('connection', (socket) => {
-    console.log('Client connected:', socket.id);
+    // console.log('Client connected:', socket.id);
 
     // Join dashboard room
     socket.on('join-dashboard', async () => {
       socket.join('dashboard');
-      console.log('Client joined dashboard room');
+      // console.log('Client joined dashboard room');
     });
 
     // Join equipment tracking room
     socket.on('join-equipment-tracking', async (equipmentId: string) => {
       socket.join(`equipment-${equipmentId}`);
-      console.log(`Client joined equipment tracking room: ${equipmentId}`);
+      // console.log(`Client joined equipment tracking room: ${equipmentId}`);
     });
 
     // Join inventory room
     socket.on('join-inventory', async () => {
       socket.join('inventory');
-      console.log('Client joined inventory room');
+      // console.log('Client joined inventory room');
     });
 
     // Handle equipment status updates
@@ -61,8 +59,8 @@ export const initializeWebSocket = (httpServer: HTTPServer) => {
             equipmentId: data.equipmentId
           });
         }
-      } catch (error) {
-        console.error('Error updating equipment status:', error);
+      } catch {
+        // console.error('Error updating equipment status:', error);
       }
     });
 
@@ -92,8 +90,8 @@ export const initializeWebSocket = (httpServer: HTTPServer) => {
             productId: data.productId
           });
         }
-      } catch (error) {
-        console.error('Error updating inventory:', error);
+      } catch {
+        // console.error('Error updating inventory:', error);
       }
     });
 
@@ -123,14 +121,14 @@ export const initializeWebSocket = (httpServer: HTTPServer) => {
 
         // Broadcast location update
         io.to(`equipment-${data.equipmentId}`).emit('gps-update', data);
-      } catch (error) {
-        console.error('Error updating GPS location:', error);
+      } catch {
+        // console.error('Error updating GPS location:', error);
       }
     });
 
     // Handle disconnect
     socket.on('disconnect', () => {
-      console.log('Client disconnected:', socket.id);
+      // console.log('Client disconnected:', socket.id);
     });
   });
 
@@ -142,8 +140,8 @@ export const initializeWebSocket = (httpServer: HTTPServer) => {
       
       // Broadcast to dashboard room
       io.to('dashboard').emit('dashboard-update', dashboardData);
-    } catch (error) {
-      console.error('Error sending dashboard update:', error);
+    } catch {
+      // console.error('Error sending dashboard update:', error);
     }
   }, 30000); // Update every 30 seconds
 
@@ -230,8 +228,8 @@ async function getDashboardData() {
         totalCost: 0 // TODO: Calculate total cost
       }
     };
-  } catch (error) {
-    console.error('Error getting dashboard data:', error);
+  } catch {
+    // console.error('Error getting dashboard data:', error);
     return null;
   }
 }

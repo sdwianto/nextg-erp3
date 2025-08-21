@@ -11,7 +11,6 @@ import {
   TrendingDown,
   Users,
   UserPlus,
-  UserCheck,
   Calendar,
   Eye,
   Download,
@@ -23,10 +22,7 @@ import {
   Zap,
   FileText,
   Building,
-  DollarSign,
   BarChart3,
-  LineChart,
-  PieChart,
   GraduationCap,
   Heart,
   Activity
@@ -34,7 +30,6 @@ import {
 
 const EnhancedHRMSDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedDepartment, setSelectedDepartment] = useState('all');
 
   // Mock data for JDE HRMS Dashboard
   const mockHRMSData = {

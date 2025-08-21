@@ -11,31 +11,15 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient({
       url: process.env.DATABASE_URL,
     },
   },
-  // Add connection pooling configuration
-  __internal: {
-    engine: {
-      connectionLimit: 10, // Limit concurrent connections
-      pool: {
-        min: 2,
-        max: 10,
-        acquireTimeoutMillis: 30000,
-        createTimeoutMillis: 30000,
-        destroyTimeoutMillis: 5000,
-        idleTimeoutMillis: 30000,
-        reapIntervalMillis: 1000,
-        createRetryIntervalMillis: 100,
-      },
-    },
-  },
 });
 
 // Add connection error handling
 prisma.$connect()
   .then(() => {
-    console.log('✅ Database connected successfully');
+    // console.log('✅ Database connected successfully');
   })
-  .catch((error) => {
-    console.error('❌ Database connection failed:', error);
+  .catch(() => {
+    // console.error('❌ Database connection failed:', error);
   });
 
 // Graceful shutdown

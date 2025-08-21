@@ -1,49 +1,33 @@
 import React, { useState, useMemo } from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { api } from '@/utils/api';
+import EnhancedFinanceDashboard from '@/components/EnhancedFinanceDashboard';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
+  Clock, 
+  DollarSign, 
   TrendingUp, 
   TrendingDown,
-  Plus, 
+  AlertTriangle, 
   Search, 
-  Filter,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
+  Filter, 
+  X, 
+  Shield,
+  Plus,
   Receipt,
   CreditCard,
   Banknote,
-  PieChart,
-  DollarSign,
-  X,
-  Shield
+  PieChart
 } from 'lucide-react';
-import EnhancedFinanceDashboard from '@/components/EnhancedFinanceDashboard';
 
-interface Transaction {
-  id: string;
-  transactionNumber: string;
-  transactionType: string;
-  description: string;
-  amount: number;
-  transactionDate: string;
-  currency: string;
-  debitAccount?: string;
-  creditAccount?: string;
-  user?: {
-    firstName: string;
-    lastName: string;
-  };
-}
+
 
 interface Account {
   id: string;
@@ -65,18 +49,6 @@ interface Invoice {
   dueDate: string;
   status: string;
   paidAmount: number;
-}
-
-interface Payment {
-  id: number;
-  paymentNumber: string;
-  invoiceNumber: string;
-  clientName: string;
-  amount: number;
-  date: string;
-  method: string;
-  reference: string;
-  status: string;
 }
 
 interface FilterState {
@@ -101,11 +73,11 @@ const FinancePage: React.FC = () => {
   const [isFilterDialogOpen, setIsFilterDialogOpen] = useState(false);
   const [isNewTransactionDialogOpen, setIsNewTransactionDialogOpen] = useState(false);
   const [isNewInvoiceDialogOpen, setIsNewInvoiceDialogOpen] = useState(false);
-  const [isEditTransactionDialogOpen, setIsEditTransactionDialogOpen] = useState(false);
-  const [isViewTransactionDialogOpen, setIsViewTransactionDialogOpen] = useState(false);
-  const [isEditAccountDialogOpen, setIsEditAccountDialogOpen] = useState(false);
-  const [isViewAccountDialogOpen, setIsViewAccountDialogOpen] = useState(false);
-  const [isNewPaymentDialogOpen, setIsNewPaymentDialogOpen] = useState(false);
+  const [, setIsEditTransactionDialogOpen] = useState(false);
+  const [, setIsViewTransactionDialogOpen] = useState(false);
+  const [, setIsEditAccountDialogOpen] = useState(false);
+  const [, setIsViewAccountDialogOpen] = useState(false);
+  const [, setIsNewPaymentDialogOpen] = useState(false);
 
   // tRPC API calls
   const { data: dashboardData, isLoading: dashboardLoading } = api.finance.getDashboardData.useQuery();
@@ -113,6 +85,7 @@ const FinancePage: React.FC = () => {
     page: 1,
     limit: 50,
     search: filters.search || undefined,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     type: filters.type !== 'all' ? filters.type as any : undefined,
     isActive: true,
   });
@@ -135,7 +108,7 @@ const FinancePage: React.FC = () => {
       };
     }
 
-    const stats = dashboardData.data;
+    const _stats = dashboardData.data;
     return {
       totalRevenue: 0, // Not available in current API
       totalExpenses: 0, // Not available in current API
@@ -143,11 +116,11 @@ const FinancePage: React.FC = () => {
       pendingInvoices: 0, // Not available in current API
       overdueInvoices: 0, // Not available in current API
       cashFlow: 0, // Not available in current API
-      accountBalances: stats.accountBalances || []
+      accountBalances: _stats.accountBalances || []
     };
   }, [dashboardData]);
 
-  const accounts = useMemo(() => {
+  const accounts = useMemo<Account[]>(() => {
     return accountsData?.data || [];
   }, [accountsData]);
 
@@ -155,8 +128,8 @@ const FinancePage: React.FC = () => {
     return transactionsData?.data || [];
   }, [transactionsData]);
 
-  // Loading states
-  const isLoading = dashboardLoading || accountsLoading || transactionsLoading;
+  // Loading states - digunakan untuk conditional rendering dan display
+  const _isLoading = dashboardLoading || accountsLoading || transactionsLoading;
 
   // Get unique values for filter options
   const types = useMemo(() => 
@@ -164,8 +137,8 @@ const FinancePage: React.FC = () => {
     [transactions]
   );
 
-  const statuses = useMemo(() => 
-    Array.from(new Set(transactions.map(item => item.status))), 
+  const statuses = useMemo(() =>
+    Array.from(new Set(transactions.map(t => t.status).filter(Boolean))),
     [transactions]
   );
 
@@ -179,7 +152,7 @@ const FinancePage: React.FC = () => {
     return transactions.filter(item => {
       // Search filter
       const searchLower = filters.search.toLowerCase();
-            const matchesSearch = !filters.search ||
+      const matchesSearch = !filters.search ||
         item.description.toLowerCase().includes(searchLower) ||
         item.transactionType.toLowerCase().includes(searchLower) ||
         (item.referenceId || '').toLowerCase().includes(searchLower);
@@ -226,48 +199,23 @@ const FinancePage: React.FC = () => {
     status: 'completed'
   });
 
-  // Edit transaction form state
-  const [editTransaction, setEditTransaction] = useState({
-    type: 'income',
-    description: '',
-    amount: '',
-    category: '',
-    reference: '',
-    status: 'completed'
-  });
-
-  // Edit account form state
-  const [editAccount, setEditAccount] = useState({
-    name: '',
-    type: '',
-    code: '',
-    balance: ''
-  });
-
   // New invoice form state
-  const [newInvoice, setNewInvoice] = useState({
+  type NewInvoice = Omit<Invoice, 'id' | 'status' | 'paidAmount' | 'amount'> & { amount: string };
+  const [newInvoice, setNewInvoice] = useState<NewInvoice>({
     invoiceNumber: '',
     clientName: '',
     description: '',
     amount: '',
-    date: new Date().toISOString().split('T')[0],
+    date: new Date().toISOString().split('T')[0] || '',
     dueDate: ''
   });
 
-  // New payment form state
-  const [newPayment, setNewPayment] = useState({
-    invoiceNumber: '',
-    clientName: '',
-    amount: '',
-    method: 'Bank Transfer',
-    reference: '',
-    date: new Date().toISOString().split('T')[0]
-  });
+
 
   // Add new transaction
   const addNewTransaction = () => {
     // TODO: Implement API call to create transaction
-    console.log('Creating new transaction:', newTransaction);
+    // // console.log('Creating new transaction:', newTransaction);
     
     setNewTransaction({
       type: 'income',
@@ -280,93 +228,45 @@ const FinancePage: React.FC = () => {
     setIsNewTransactionDialogOpen(false);
   };
 
-  // Edit transaction
-  const editTransactionItem = () => {
-    // TODO: Implement API call to update transaction
-    console.log('Updating transaction:', editTransaction);
-    
-    setEditTransaction({
-      type: 'income',
-      description: '',
-      amount: '',
-      category: '',
-      reference: '',
-      status: 'completed'
-    });
-    setIsEditTransactionDialogOpen(false);
-  };
-
-  // Edit account
-  const editAccountItem = () => {
-    // TODO: Implement API call to update account
-    console.log('Updating account:', editAccount);
-    
-    setEditAccount({
-      name: '',
-      type: '',
-      code: '',
-      balance: ''
-    });
-    setIsEditAccountDialogOpen(false);
-  };
-
-  // Add new invoice
+// Add new invoice
   const addNewInvoice = () => {
     // TODO: Implement API call to create invoice
-    console.log('Creating new invoice:', newInvoice);
+    // // console.log('Creating new invoice:', newInvoice);
     
     setNewInvoice({
       invoiceNumber: '',
       clientName: '',
       description: '',
       amount: '',
-      date: new Date().toISOString().split('T')[0],
+      date: new Date().toISOString().split('T')[0] || '',
       dueDate: ''
     });
     setIsNewInvoiceDialogOpen(false);
   };
 
-  // Add new payment
-  const addNewPayment = () => {
-    // TODO: Implement API call to create payment
-    console.log('Creating new payment:', newPayment);
-    
-    setNewPayment({
-      invoiceNumber: '',
-      clientName: '',
-      amount: '',
-      method: 'Bank Transfer',
-      reference: '',
-      date: new Date().toISOString().split('T')[0]
-    });
-    setIsNewPaymentDialogOpen(false);
-  };
+
 
   // Handle edit transaction button click
-  const handleEditTransactionClick = (item: any) => {
+  const handleEditTransactionClick = () => {
     // TODO: Implement edit transaction functionality
-    console.log('Edit transaction:', item);
     setIsEditTransactionDialogOpen(true);
   };
 
   // Handle view transaction button click
-  const handleViewTransactionClick = (item: any) => {
+  const handleViewTransactionClick = () => {
     // TODO: Implement view transaction functionality
-    console.log('View transaction:', item);
     setIsViewTransactionDialogOpen(true);
   };
 
   // Handle edit account button click
-  const handleEditAccountClick = (item: any) => {
+  const handleEditAccountClick = () => {
     // TODO: Implement edit account functionality
-    console.log('Edit account:', item);
     setIsEditAccountDialogOpen(true);
   };
 
   // Handle view account button click
-  const handleViewAccountClick = (item: any) => {
+  const handleViewAccountClick = () => {
     // TODO: Implement view account functionality
-    console.log('View account:', item);
     setIsViewAccountDialogOpen(true);
   };
 
@@ -374,16 +274,8 @@ const FinancePage: React.FC = () => {
   const isNewTransactionFormValid = newTransaction.description && newTransaction.amount && 
     newTransaction.category && newTransaction.reference;
 
-  const isEditTransactionFormValid = editTransaction.description && editTransaction.amount && 
-    editTransaction.category && editTransaction.reference;
-
-  const isEditAccountFormValid = editAccount.name && editAccount.type && editAccount.code && editAccount.balance;
-
   const isNewInvoiceFormValid = newInvoice.invoiceNumber && newInvoice.clientName && 
     newInvoice.description && newInvoice.amount && newInvoice.dueDate;
-
-  const isNewPaymentFormValid = newPayment.invoiceNumber && newPayment.clientName && 
-    newPayment.amount && newPayment.reference;
 
   // Check if any filters are active
   const hasActiveFilters = filters.search || 
@@ -392,14 +284,16 @@ const FinancePage: React.FC = () => {
     (filters.category && filters.category !== 'all') || 
     filters.amount;
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status?: string) => {
     switch (status) {
-      case 'completed':
+      case 'COMPLETED':
         return <Badge variant="default">Completed</Badge>;
-      case 'pending':
+      case 'PENDING':
         return <Badge variant="outline">Pending</Badge>;
-      case 'overdue':
+      case 'OVERDUE':
         return <Badge variant="destructive">Overdue</Badge>;
+      case 'VOID':
+        return <Badge variant="secondary">Void</Badge>;
       default:
         return <Badge variant="outline">Unknown</Badge>;
     }
@@ -890,7 +784,7 @@ const FinancePage: React.FC = () => {
 
             {/* Results Count */}
             <div className="mb-4 text-sm text-gray-500">
-              Showing {filteredTransactions.length} of {transactions.length} transactions
+              {_isLoading ? 'Loading...' : `Showing ${filteredTransactions.length} of ${transactions.length} transactions`}
             </div>
 
             <div className="space-y-4">
@@ -914,8 +808,8 @@ const FinancePage: React.FC = () => {
                       </div>
                       {getStatusBadge(transaction.status)}
                       <div className="flex gap-2 w-full sm:w-auto">
-                        <Button size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={() => handleViewTransactionClick(transaction)}>View</Button>
-                        <Button size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={() => handleEditTransactionClick(transaction)}>Edit</Button>
+                        <Button size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={handleViewTransactionClick}>View</Button>
+                        <Button size="sm" variant="outline" className="flex-1 sm:flex-none" onClick={handleEditTransactionClick}>Edit</Button>
                       </div>
                     </div>
                   </div>
@@ -963,8 +857,8 @@ const FinancePage: React.FC = () => {
                       </td>
                       <td className="p-3">
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline" onClick={() => handleViewAccountClick(account)}>View</Button>
-                          <Button size="sm" variant="outline" onClick={() => handleEditAccountClick(account)}>Edit</Button>
+                          <Button size="sm" variant="outline" onClick={handleViewAccountClick}>View</Button>
+                          <Button size="sm" variant="outline" onClick={handleEditAccountClick}>Edit</Button>
                         </div>
                       </td>
                     </tr>
@@ -996,7 +890,9 @@ const FinancePage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="w-full justify-start"
-                onClick={() => console.log('View invoices clicked')}
+                onClick={() => {
+                  // console.log('View invoices clicked')
+                }}
               >
                 <Search className="mr-2 h-4 w-4" />
                 View Invoices
@@ -1004,7 +900,9 @@ const FinancePage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="w-full justify-start"
-                onClick={() => console.log('Overdue invoices clicked')}
+                onClick={() => {
+                  // console.log('Overdue invoices clicked')
+                }}
               >
                 <AlertTriangle className="mr-2 h-4 w-4" />
                 Overdue Invoices
@@ -1031,7 +929,9 @@ const FinancePage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="w-full justify-start"
-                onClick={() => console.log('Payment history clicked')}
+                onClick={() => {
+                  // console.log('Payment history clicked')
+                }}
               >
                 <Banknote className="mr-2 h-4 w-4" />
                 Payment History
@@ -1039,7 +939,9 @@ const FinancePage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="w-full justify-start"
-                onClick={() => console.log('Pending payments clicked')}
+                onClick={() => {
+                  // console.log('Pending payments clicked')
+                }}
               >
                 <Clock className="mr-2 h-4 w-4" />
                 Pending Payments
@@ -1058,7 +960,9 @@ const FinancePage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="w-full justify-start"
-                onClick={() => console.log('Profit loss clicked')}
+                onClick={() => {
+                  // console.log('Profit loss clicked')
+                }}
               >
                 <TrendingUp className="mr-2 h-4 w-4" />
                 Profit & Loss
@@ -1066,7 +970,9 @@ const FinancePage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="w-full justify-start"
-                onClick={() => console.log('Balance sheet clicked')}
+                onClick={() => {
+                  // console.log('Balance sheet clicked')
+                }}
               >
                     <Shield className="mr-2 h-4 w-4" />
                 Balance Sheet
@@ -1074,7 +980,9 @@ const FinancePage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="w-full justify-start"
-                onClick={() => console.log('Cash flow clicked')}
+                onClick={() => {
+                  // console.log('Cash flow clicked')
+                }}
               >
                 <DollarSign className="mr-2 h-4 w-4" />
                 Cash Flow

@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { TRPCError } from "@trpc/server";
+import type { AccountData, PaginatedResponse } from "@/types/api";
+import { prisma } from "@/server/db";
 
 // Input validation schemas
 const createAccountSchema = z.object({
@@ -40,43 +40,43 @@ export const financeRouter = createTRPCRouter({
       isActive: z.boolean().optional(),
     }))
     .query(async ({ input }) => {
-      const skip = (input.page - 1) * input.limit;
+      const _skip = (input.page - 1) * input.limit;
 
-      const where = {
-        ...(input.search && {
-          OR: [
-            { accountNumber: { contains: input.search, mode: "insensitive" as const } },
-            { name: { contains: input.search, mode: "insensitive" as const } },
-          ],
-        }),
-        ...(input.type && { type: input.type }),
-        ...(input.isActive !== undefined && { isActive: input.isActive }),
-      };
+        const where = {
+          ...(input.search && {
+            OR: [
+              { accountNumber: { contains: input.search, mode: "insensitive" as const } },
+              { name: { contains: input.search, mode: "insensitive" as const } },
+            ],
+          }),
+          ...(input.type && { type: input.type }),
+          ...(input.isActive !== undefined && { isActive: input.isActive }),
+        };
 
-      const [accounts, total] = await Promise.all([
-        prisma.account.findMany({
-          where,
-          include: {
-            parentAccount: true,
-            childAccounts: true,
+        const [accounts, total] = await Promise.all([
+          prisma.account.findMany({
+            where,
+            include: {
+              parentAccount: true,
+              childAccounts: true,
+            },
+            skip: _skip,
+            take: input.limit,
+            orderBy: { accountNumber: "asc" },
+          }),
+          prisma.account.count({ where }),
+        ]);
+
+        return {
+          success: true,
+          data: accounts,
+          pagination: {
+            page: input.page,
+            limit: input.limit,
+            total,
+            totalPages: Math.ceil(total / input.limit),
           },
-          skip,
-          take: input.limit,
-          orderBy: { accountNumber: "asc" },
-        }),
-        prisma.account.count({ where }),
-      ]);
-
-      return {
-        success: true,
-        data: accounts,
-        pagination: {
-          page: input.page,
-          limit: input.limit,
-          total,
-          totalPages: Math.ceil(total / input.limit),
-        },
-      };
+        } as PaginatedResponse<AccountData>;
     }),
 
   // Get account by ID
@@ -84,18 +84,21 @@ export const financeRouter = createTRPCRouter({
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
       const account = await prisma.account.findUnique({
-        where: { id: input.id },
-        include: {
-          parentAccount: true,
-          childAccounts: true,
-        },
-      });
+          where: { id: input.id },
+          include: {
+            parentAccount: true,
+            childAccounts: true,
+          },
+        });
 
-      if (!account) {
-        throw new Error("Account not found");
-      }
+        if (!account) {
+          throw new TRPCError({
+            code: 'NOT_FOUND',
+            message: 'Account not found',
+          });
+        }
 
-      return { success: true, data: account };
+        return { success: true, data: account as AccountData };
     }),
 
   // Create account
@@ -146,7 +149,7 @@ export const financeRouter = createTRPCRouter({
       endDate: z.string().optional(),
     }))
     .query(async ({ input }) => {
-      const skip = (input.page - 1) * input.limit;
+      const _skip = (input.page - 1) * input.limit;
 
       const where = {
         ...(input.transactionType && { transactionType: input.transactionType }),
@@ -164,7 +167,7 @@ export const financeRouter = createTRPCRouter({
           include: {
             user: { select: { firstName: true, lastName: true } },
           },
-          skip,
+          skip: _skip,
           take: input.limit,
           orderBy: { transactionDate: "desc" },
         }),
@@ -256,13 +259,13 @@ export const financeRouter = createTRPCRouter({
       type: z.enum(["ASSET", "LIABILITY", "EQUITY", "REVENUE", "EXPENSE"]).optional(),
     }))
     .query(async ({ input }) => {
-      const startDate = new Date(input.startDate);
-      const endDate = new Date(input.endDate);
+      const _startDate = new Date(input.startDate);
+      const _endDate = new Date(input.endDate);
 
       const where = {
         transactionDate: {
-          gte: startDate,
-          lte: endDate,
+          gte: _startDate,
+          lte: _endDate,
         },
       };
 
@@ -271,27 +274,32 @@ export const financeRouter = createTRPCRouter({
         orderBy: { transactionDate: "asc" },
       });
 
-             // Group by date and transaction type
-       const dailyData = transactions.reduce((acc: Record<string, Record<string, number>>, transaction) => {
-         const date = transaction.transactionDate.toISOString().split('T')[0];
-         if (date) {
-           acc[date] ??= { 
-             date: 0, 
-             SALE: 0, 
-             PURCHASE: 0, 
-             RENTAL_INCOME: 0, 
-             MAINTENANCE_EXPENSE: 0,
-             SALARY_EXPENSE: 0,
-             UTILITY_EXPENSE: 0,
-             OTHER_INCOME: 0,
-             OTHER_EXPENSE: 0
-           };
-           
-           const amount = transaction.amount / 100; // Convert from cents
-           acc[date][transaction.transactionType] += amount;
-         }
-         return acc;
-       }, {});
+      // Group by date and transaction type
+      const dailyData = transactions.reduce((acc: Record<string, Record<string, number>>, transaction) => {
+        const _date = transaction.transactionDate.toISOString().split('T')[0];
+        if (_date) {
+          acc[_date] ??= { 
+            date: 0, 
+            SALE: 0, 
+            PURCHASE: 0, 
+            RENTAL_INCOME: 0, 
+            MAINTENANCE_EXPENSE: 0,
+            SALARY_EXPENSE: 0,
+            UTILITY_EXPENSE: 0,
+            OTHER_INCOME: 0,
+            OTHER_EXPENSE: 0
+          };
+          
+          const amount = transaction.amount / 100; // Convert from cents
+          if (acc[_date] && transaction.transactionType) {
+            const record = acc[_date];
+            if (record && transaction.transactionType in record) {
+              record[transaction.transactionType as keyof typeof record] = (record[transaction.transactionType as keyof typeof record] ?? 0) + amount;
+            } 
+          }
+        }
+        return acc;
+      }, {});
 
       return {
         success: true,

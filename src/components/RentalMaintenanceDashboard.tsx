@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 
 // API base URL - Using Next.js API routes to avoid CORS issues
-const API_BASE_URL = '';
 
 interface DashboardStats {
   totalEquipment: number;

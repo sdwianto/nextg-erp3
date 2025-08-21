@@ -9,13 +9,13 @@ const { backend: PORT } = getPorts();
 const httpServer = createServer(app);
 
 // Initialize WebSocket
-const _io = initializeWebSocket(httpServer);
+initializeWebSocket(httpServer);
 
 // Start server
 httpServer.listen(PORT, () => {
-  console.log(`🚀 NextGen ERP API Server running on port ${PORT}`);
-  console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  console.log(`📦 Inventory API: http://localhost:${PORT}/api/inventory`);
-  console.log(`🔌 WebSocket Server: ws://localhost:${PORT}`);
-  console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
+  // console.log(`🚀 NextGen ERP API Server running on port ${PORT}`);
+  // console.log(`📊 Health check: http://localhost:${PORT}/health`);
+  // console.log(`📦 Inventory API: http://localhost:${PORT}/api/inventory`);
+  // console.log(`🔌 WebSocket Server: ws://localhost:${PORT}`);
+  // console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
 });

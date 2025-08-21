@@ -1,11 +1,9 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/server/db";
 
 export const salesRouter = createTRPCRouter({
-  // Get all orders with pagination and filtering
+  // Get all orders with pagination and filtering,
   getOrders: publicProcedure
     .input(z.object({
       page: z.number().default(1),
@@ -17,15 +15,15 @@ export const salesRouter = createTRPCRouter({
     }).optional().default({}))
     .query(async ({ input }) => {
       const { page, limit, status, customerId, startDate, endDate } = input;
-      const skip = (page - 1) * limit;
+      const _skip = (page - 1) * limit;
 
-      const where: any = {};
+      const where: Record<string, unknown> = {};
       if (status) where.status = status;
       if (customerId) where.customerId = customerId;
-      if (startDate || endDate) {
+      if (startDate ?? endDate) {
         where.createdAt = {};
-        if (startDate) where.createdAt.gte = new Date(startDate);
-        if (endDate) where.createdAt.lte = new Date(endDate);
+        if (startDate) (where.createdAt as Record<string, unknown>).gte = new Date(startDate);
+        if (endDate) (where.createdAt as Record<string, unknown>).lte = new Date(endDate);
       }
 
       const [orders, total] = await Promise.all([
@@ -40,7 +38,7 @@ export const salesRouter = createTRPCRouter({
             },
           },
           orderBy: { createdAt: "desc" },
-          skip,
+          skip: _skip,
           take: limit,
         }),
         prisma.order.count({ where }),
@@ -55,7 +53,7 @@ export const salesRouter = createTRPCRouter({
       };
     }),
 
-  // Get single order by ID
+  // Get single order by ID,
   getOrderById: publicProcedure
     .input(z.string())
     .query(async ({ input }) => {
@@ -72,7 +70,7 @@ export const salesRouter = createTRPCRouter({
       });
     }),
 
-  // Create new order
+  // Create new order,
   createOrder: protectedProcedure
     .input(z.object({
       customerId: z.string(),
@@ -91,8 +89,8 @@ export const salesRouter = createTRPCRouter({
       const tax = subtotal * 0.1; // 10% tax
       const grandTotal = subtotal + tax;
 
-      // Create order with items
-      const order = await prisma.order.create({
+      // Create order with items,
+  const order = await prisma.order.create({
         data: {
           orderNumber: `ORD-${Date.now()}`,
           customerId,
@@ -122,8 +120,8 @@ export const salesRouter = createTRPCRouter({
         },
       });
 
-      // Update product stock
-      for (const item of orderItems) {
+      // Update product stock,
+  for (const item of orderItems) {
         await prisma.product.update({
           where: { id: item.productId },
           data: {
@@ -137,7 +135,7 @@ export const salesRouter = createTRPCRouter({
       return order;
     }),
 
-  // Update order status
+  // Update order status,
   updateOrderStatus: protectedProcedure
     .input(z.object({
       orderId: z.string(),
@@ -158,7 +156,7 @@ export const salesRouter = createTRPCRouter({
       });
     }),
 
-  // Get sales dashboard data
+  // Get sales dashboard data,
   getDashboardData: publicProcedure
     .query(async () => {
       const [
@@ -166,42 +164,42 @@ export const salesRouter = createTRPCRouter({
         totalRevenue,
         pendingOrders,
         deliveredOrders,
-        _monthlyRevenue,
+        monthlyRevenue,
         topProducts,
         recentOrders,
       ] = await Promise.all([
-        // Total orders
-        prisma.order.count(),
+        // Total orders,
+  prisma.order.count(),
         
-        // Total revenue
-        prisma.order.aggregate({
+        // Total revenue,
+  prisma.order.aggregate({
           where: { status: "DELIVERED" },
           _sum: { grandTotal: true },
         }),
         
-        // Pending orders
-        prisma.order.count({
+        // Pending orders,
+  prisma.order.count({
           where: { status: { in: ["DRAFT", "CONFIRMED", "PROCESSING"] } },
         }),
         
-        // Delivered orders
-        prisma.order.count({
+        // Delivered orders,
+  prisma.order.count({
           where: { status: "DELIVERED" },
         }),
         
-        // Monthly revenue (last 6 months) - simplified for now
-        Promise.resolve([]),
+        // Monthly revenue (last 6 months) - simplified for now,
+  Promise.resolve([]),
         
-        // Top selling products
-        prisma.orderItem.groupBy({
+        // Top selling products,
+  prisma.orderItem.groupBy({
           by: ["productId"],
           _sum: { quantity: true, totalPrice: true },
           orderBy: { _sum: { quantity: "desc" } },
           take: 5,
         }),
         
-        // Recent orders
-        prisma.order.findMany({
+        // Recent orders,
+  prisma.order.findMany({
           take: 5,
           orderBy: { createdAt: "desc" },
           include: {
@@ -215,8 +213,8 @@ export const salesRouter = createTRPCRouter({
         }),
       ]);
 
-      // Get product details for top products
-      const topProductsWithDetails = await Promise.all(
+      // Get product details for top products,
+  const topProductsWithDetails = await Promise.all(
         topProducts.map(async (item) => {
           const product = await prisma.product.findUnique({
             where: { id: item.productId },
@@ -237,13 +235,13 @@ export const salesRouter = createTRPCRouter({
           deliveredOrders,
           conversionRate: totalOrders > 0 ? Math.round((deliveredOrders / totalOrders) * 100) : 0,
         },
-        monthlyRevenue: [],
+        monthlyRevenue: monthlyRevenue,
         topProducts: topProductsWithDetails,
         recentOrders,
       };
     }),
 
-  // Get customers for sales
+  // Get customers for sales,
   getCustomers: publicProcedure
     .input(z.object({
       page: z.number().default(1),
@@ -252,11 +250,11 @@ export const salesRouter = createTRPCRouter({
     }).optional().default({}))
     .query(async ({ input }) => {
       const { page, limit, search } = input;
-      const skip = (page - 1) * limit;
+      const _skip = (page - 1) * limit;
 
-      const where: any = {};
+      const where: Record<string, unknown> = {};
       if (search) {
-        (where).OR = [
+        where.OR = [
           { name: { contains: search, mode: "insensitive" } },
           { email: { contains: search, mode: "insensitive" } },
         ];
@@ -271,7 +269,7 @@ export const salesRouter = createTRPCRouter({
             },
           },
           orderBy: { createdAt: "desc" },
-          skip,
+          skip: _skip,
           take: limit,
         }),
         prisma.customer.count({ where }),
@@ -286,7 +284,7 @@ export const salesRouter = createTRPCRouter({
       };
     }),
 
-  // Get products for sales
+  // Get products for sales,
   getProductsForSales: publicProcedure
     .input(z.object({
       page: z.number().default(1),
@@ -297,11 +295,11 @@ export const salesRouter = createTRPCRouter({
     }).optional().default({}))
     .query(async ({ input }) => {
       const { page, limit, search, categoryId, inStock } = input;
-      const skip = (page - 1) * limit;
+      const _skip = (page - 1) * limit;
 
-      const where: any = {};
+      const where: Record<string, unknown> = {};
       if (search) {
-        (where).OR = [
+        where.OR = [
           { name: { contains: search, mode: "insensitive" } },
           { sku: { contains: search, mode: "insensitive" } },
         ];
@@ -322,7 +320,7 @@ export const salesRouter = createTRPCRouter({
             category: true,
           },
           orderBy: { name: "asc" },
-          skip,
+          skip: _skip,
           take: limit,
         }),
         prisma.product.count({ where }),

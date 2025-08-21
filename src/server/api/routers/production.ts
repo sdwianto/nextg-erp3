@@ -1,11 +1,9 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/server/db";
 
 export const productionRouter = createTRPCRouter({
-  // Get all work orders with pagination and filtering
+  // Get all work orders with pagination and filtering,
   getWorkOrders: publicProcedure
     .input(z.object({
       page: z.number().default(1),
@@ -18,17 +16,17 @@ export const productionRouter = createTRPCRouter({
     }).optional().default({}))
     .query(async ({ input }) => {
       const { page, limit, status, priority, equipmentId, startDate, endDate } = input;
-      const skip = (page - 1) * limit;
+      const _skip = (page - 1) * limit;
 
-      const where: any = {};
+      const where: Record<string, unknown> = {};
       if (status) where.status = status;
       if (priority) where.priority = priority;
-             if (equipmentId) where.maintenanceRecord = { equipmentId: equipmentId };
-             if (startDate || endDate) {
-         where.createdAt = {};
-         if (startDate) where.createdAt.gte = new Date(startDate);
-         if (endDate) where.createdAt.lte = new Date(endDate);
-       }
+      if (equipmentId) where.maintenanceRecord = { equipmentId: equipmentId };
+      if (startDate ?? endDate) {
+        where.createdAt = {};
+        if (startDate) (where.createdAt as Record<string, unknown>).gte = new Date(startDate);
+        if (endDate) (where.createdAt as Record<string, unknown>).lte = new Date(endDate);
+      }
 
       const [workOrders, total] = await Promise.all([
                  prisma.workOrder.findMany({
@@ -45,7 +43,7 @@ export const productionRouter = createTRPCRouter({
              },
            },
            orderBy: { createdAt: "asc" },
-           skip,
+           skip: _skip,
            take: limit,
          }),
         prisma.workOrder.count({ where }),
@@ -60,12 +58,12 @@ export const productionRouter = createTRPCRouter({
       };
     }),
 
-  // Get single work order by ID
+  // Get single work order by ID,
   getWorkOrderById: publicProcedure
     .input(z.string())
     .query(async ({ input }) => {
-             return await prisma.workOrder.findUnique({
-         where: { id: input },
+      return await prisma.workOrder.findUnique({
+        where: { id: input },
          include: {
            maintenanceRecord: {
              include: {
@@ -80,7 +78,7 @@ export const productionRouter = createTRPCRouter({
        });
     }),
 
-  // Create new work order
+  // Create new work order,
   createWorkOrder: protectedProcedure
     .input(z.object({
       title: z.string(),
@@ -98,29 +96,36 @@ export const productionRouter = createTRPCRouter({
       const {
         title,
         description,
-        _equipmentId,
-        _workType,
+        equipmentId,
+        workType,
         priority,
-        _scheduledDate,
-        _estimatedDuration,
-        _estimatedCost,
-        _assignedTechnicianIds,
-        _safetyRequirements,
+        scheduledDate,
+        estimatedDuration,
+        estimatedCost,
+        assignedTechnicianIds,
+        safetyRequirements,
       } = input;
 
-             // For now, return a simplified response since WorkOrder requires maintenanceRecordId
-       return {
-         id: "temp-id",
-         title,
-         description,
-         status: "PENDING",
-         priority,
-         createdAt: new Date(),
-         updatedAt: new Date(),
-       };
+      // For now, return a simplified response since WorkOrder requires maintenanceRecordId
+      return {
+        id: "temp-id",
+        title,
+        description,
+        equipmentId,
+        workType,
+        status: "PENDING",
+        priority,
+        scheduledDate,
+        estimatedDuration,
+        estimatedCost,
+        assignedTechnicianIds,
+        safetyRequirements,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
     }),
 
-  // Update work order status
+  // Update work order status,
   updateWorkOrderStatus: protectedProcedure
     .input(z.object({
       workOrderId: z.string(),
@@ -130,15 +135,17 @@ export const productionRouter = createTRPCRouter({
       completionNotes: z.string().optional(),
     }))
     .mutation(async ({ input }) => {
-      const { workOrderId, status, _actualDuration, _actualCost, completionNotes } = input;
+      const { workOrderId, status, actualDuration, actualCost, completionNotes } = input;
 
-             return await prisma.workOrder.update({
-         where: { id: workOrderId },
-         data: {
-           status,
-           notes: completionNotes,
-           endDate: status === "COMPLETED" ? new Date() : null,
-         },
+                   return await prisma.workOrder.update({
+        where: { id: workOrderId },
+        data: {
+          status,
+          notes: completionNotes,
+          endDate: status === "COMPLETED" ? new Date() : null,
+          ...(actualDuration !== undefined && { actualDuration }),
+          ...(actualCost !== undefined && { actualCost }),
+        },
          include: {
            maintenanceRecord: {
              include: {
@@ -153,7 +160,7 @@ export const productionRouter = createTRPCRouter({
        });
     }),
 
-  // Get production dashboard data
+  // Get production dashboard data,
   getDashboardData: publicProcedure
     .query(async () => {
       const [
@@ -166,31 +173,31 @@ export const productionRouter = createTRPCRouter({
         recentWorkOrders,
         productionEfficiency,
       ] = await Promise.all([
-        // Total work orders
-        prisma.workOrder.count(),
+        // Total work orders,
+  prisma.workOrder.count(),
         
-        // In progress work orders
-        prisma.workOrder.count({
+        // In progress work orders,
+  prisma.workOrder.count({
           where: { status: "IN_PROGRESS" },
         }),
         
-        // Completed work orders
-        prisma.workOrder.count({
+        // Completed work orders,
+  prisma.workOrder.count({
           where: { status: "COMPLETED" },
         }),
         
-        // Critical work orders
-        prisma.workOrder.count({
+        // Critical work orders,
+  prisma.workOrder.count({
           where: { priority: "CRITICAL" },
         }),
         
-        // Equipment utilization - calculate from equipment data
-        prisma.equipment.aggregate({
+        // Equipment utilization - calculate from equipment data,
+  prisma.equipment.aggregate({
           _avg: { totalOperatingHours: true },
         }),
         
-        // Quality metrics - calculate from work orders
-        Promise.all([
+        // Quality metrics - calculate from work orders,
+  Promise.all([
           prisma.workOrder.count({ where: { status: "COMPLETED" } }),
           prisma.workOrder.count(),
         ]).then(([completed, total]) => ({
@@ -199,8 +206,8 @@ export const productionRouter = createTRPCRouter({
           reworkRate: 2.7, // Still mock for now
         })),
         
-                 // Recent work orders
-         prisma.workOrder.findMany({
+                 // Recent work orders,
+  prisma.workOrder.findMany({
            take: 5,
            orderBy: { createdAt: "desc" },
            include: {
@@ -216,8 +223,8 @@ export const productionRouter = createTRPCRouter({
            },
          }),
         
-        // Production efficiency - calculate from real data
-        Promise.all([
+        // Production efficiency - calculate from real data,
+  Promise.all([
           prisma.equipment.count(),
           prisma.equipment.count({ where: { status: "AVAILABLE" } }),
           prisma.equipment.count({ where: { status: "MAINTENANCE" } }),
@@ -243,7 +250,7 @@ export const productionRouter = createTRPCRouter({
       };
     }),
 
-  // Get production schedule
+  // Get production schedule,
   getProductionSchedule: publicProcedure
     .input(z.object({
       startDate: z.string(),
@@ -253,18 +260,18 @@ export const productionRouter = createTRPCRouter({
     .query(async ({ input }) => {
       const { startDate, endDate, equipmentId } = input;
 
-             const where: any = {
-         createdAt: {
-           gte: new Date(startDate),
-           lte: new Date(endDate),
-         },
-       };
+      const where: Record<string, unknown> = {
+        createdAt: {
+          gte: new Date(startDate),
+          lte: new Date(endDate),
+        },
+      };
 
-             if (equipmentId) {
-         where.maintenanceRecord = {
-           equipmentId: equipmentId,
-         };
-       }
+      if (equipmentId) {
+        where.maintenanceRecord = {
+          equipmentId: equipmentId,
+        };
+      }
 
              return await prisma.workOrder.findMany({
          where,
@@ -283,7 +290,7 @@ export const productionRouter = createTRPCRouter({
        });
     }),
 
-  // Get quality control data
+  // Get quality control data,
   getQualityControlData: publicProcedure
     .input(z.object({
       page: z.number().default(1),
@@ -292,13 +299,13 @@ export const productionRouter = createTRPCRouter({
     }).optional().default({}))
     .query(async ({ input }) => {
       const { page, limit, status } = input;
-      const skip = (page - 1) * limit;
+      const _skip = (page - 1) * limit;
 
-      const where: any = {};
+      const where: Record<string, unknown> = {};
       if (status) where.status = status;
 
-      // Get real quality control data from work orders
-      const workOrders = await prisma.workOrder.findMany({
+      // Get real quality control data from work orders,
+  const workOrders = await prisma.workOrder.findMany({
         where,
         include: {
           maintenanceRecord: {
@@ -312,11 +319,11 @@ export const productionRouter = createTRPCRouter({
           },
         },
         orderBy: { createdAt: "desc" },
-        skip,
+        skip: _skip,
         take: limit,
       });
 
-      const qualityChecks = workOrders.map((workOrder, _index) => ({
+      const qualityChecks = workOrders.map((workOrder) => ({
         id: workOrder.id,
         workOrderId: workOrder.id,
         inspectorName: workOrder.assignedTo ?? "System",
@@ -326,22 +333,22 @@ export const productionRouter = createTRPCRouter({
         defects: workOrder.status === "CANCELLED" ? ["Work order cancelled"] : [],
       }));
 
-      const total = await prisma.workOrder.count({ where });
+      const _total = await prisma.workOrder.count({ where });
 
       return {
         qualityChecks,
-        total,
+        total: _total,
         page,
         limit,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(_total / limit),
       };
     }),
 
-  // Get safety compliance data
+  // Get safety compliance data,
   getSafetyComplianceData: publicProcedure
     .query(async () => {
-      // Calculate from real data
-      const [
+      // Calculate from real data,
+  const [
         totalIncidents,
         totalWorkOrders,
         completedWorkOrders,
@@ -375,11 +382,11 @@ export const productionRouter = createTRPCRouter({
       };
     }),
 
-  // Get mining operations data
+  // Get mining operations data,
   getMiningOperationsData: publicProcedure
     .query(async () => {
-      // Calculate from real data
-      const [
+      // Calculate from real data,
+  const [
         totalEquipment,
         availableEquipment,
         maintenanceEquipment,

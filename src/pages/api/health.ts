@@ -16,9 +16,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       await prisma.$queryRaw`SELECT 1`;
       dbLatency = Date.now() - startTime;
       dbStatus = 'connected';
-    } catch (error) {
+    } catch {
       dbStatus = 'disconnected';
-      console.error('Database health check failed:', error);
     }
 
     // System health status
@@ -43,8 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const statusCode = healthStatus.status === 'healthy' ? 200 : 503;
     
     res.status(statusCode).json(healthStatus);
-  } catch (error) {
-    console.error('Health check error:', error);
+  } catch {
     res.status(500).json({
       status: 'error',
       message: 'Health check failed',

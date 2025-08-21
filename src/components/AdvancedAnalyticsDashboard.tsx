@@ -4,15 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
-import { api } from '@/utils/api';
-import {
-  TrendingUp, TrendingDown, BarChart3, PieChart, Activity, Target, AlertTriangle, Download, RefreshCw, Eye, Settings, Database, Zap, Users, DollarSign, Package, Building, Calendar, Clock, CheckCircle, XCircle, Minus, ArrowUpRight, ArrowDownRight, LineChart, Scatter, Gauge, Filter, Search, Plus, MoreHorizontal, FileText, Brain, Target as TargetIcon, TrendingUp as TrendingUpIcon, TrendingDown as TrendingDownIcon, BarChart3 as BarChart3Icon, PieChart as PieChartIcon, LineChart as LineChartIcon, Gauge as GaugeIcon, Brain as BrainIcon, Target as TargetIcon2, AlertTriangle as AlertTriangleIcon, CheckCircle as CheckCircleIcon, XCircle as XCircleIcon, Minus as MinusIcon, ArrowUpRight as ArrowUpRightIcon, ArrowDownRight as ArrowDownRightIcon, Download as DownloadIcon, RefreshCw as RefreshCwIcon, Eye as EyeIcon, Settings as SettingsIcon, FileText as FileTextIcon, Plus as PlusIcon, Search as SearchIcon, Filter as FilterIcon, MoreHorizontal as MoreHorizontalIcon
-} from 'lucide-react';
+import { TrendingUpIcon, TrendingDownIcon, BarChart3Icon, LineChartIcon, TargetIcon, AlertTriangleIcon, Users, DollarSign, Activity, RefreshCw, Download, Settings } from 'lucide-react';
+import { BrainIcon } from 'lucide-react';
 
 const AdvancedAnalyticsDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('predictive');
-  const [selectedTimeframe, setSelectedTimeframe] = useState('30d');
 
   // Mock data for advanced analytics
   const predictiveInsights = {
@@ -113,15 +109,15 @@ const AdvancedAnalyticsDashboard: React.FC = () => {
         </div>
         <div className="flex items-center space-x-2">
           <Button variant="outline" size="sm">
-            <RefreshCwIcon className="h-4 w-4 mr-2" />
+            <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
           <Button variant="outline" size="sm">
-            <DownloadIcon className="h-4 w-4 mr-2" />
+            <Download className="h-4 w-4 mr-2" />
             Export
           </Button>
           <Button size="sm">
-            <SettingsIcon className="h-4 w-4 mr-2" />
+            <Settings className="h-4 w-4 mr-2" />
             Configure
           </Button>
         </div>

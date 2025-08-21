@@ -16,7 +16,9 @@ import {
   ShoppingCart
 } from "lucide-react";
 import React, { type ReactNode } from "react";
-
+import { useRouter } from "next/router";
+import { ThemeToggle } from "../ThemeToggle";
+// import { useMobile } from "@/hooks/useMobile";
 import {
   Sidebar,
   SidebarContent,
@@ -29,8 +31,6 @@ import {
   SidebarSeparator,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { useRouter } from "next/router";
-import { ThemeToggle } from "../ThemeToggle";
 
 
 // Dashboard header component
@@ -39,7 +39,7 @@ interface DashboardHeaderProps {
   className?: string;
 }
 
-export const DashboardHeader = ({
+export const _DashboardHeader = ({
   children,
   className = "",
 }: DashboardHeaderProps) => {
@@ -52,7 +52,7 @@ interface DashboardTitleProps {
   className?: string;
 }
 
-export const DashboardTitle = ({
+export const _DashboardTitle = ({
   children,
   className = "",
 }: DashboardTitleProps) => {
@@ -69,7 +69,7 @@ interface DashboardDescriptionProps {
   className?: string;
 }
 
-export const DashboardDescription = ({
+export const _DashboardDescription = ({
   children,
   className = "",
 }: DashboardDescriptionProps) => {
@@ -77,13 +77,10 @@ export const DashboardDescription = ({
 };
 
 // Main dashboard layout component
-interface DashboardLayoutProps {
-  children: ReactNode;
-}
-
-export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
+const DashboardLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const router = useRouter();
 
+  // Simple navigation without complex conditional rendering
 
   const isActive = (path: string) => {
     return router.pathname.startsWith(path);
@@ -117,7 +114,6 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
             {/* Operations */}
             <SidebarMenu>
-
               <SidebarMenuItem>
                 <SidebarMenuButton
                   tooltip="Procurement Management"
@@ -318,3 +314,5 @@ export const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     </SidebarProvider>
   );
 };
+
+export { DashboardLayout };

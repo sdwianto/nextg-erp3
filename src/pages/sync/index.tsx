@@ -3,32 +3,11 @@ import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { 
-  Cloud, 
-  Wifi, 
-  RefreshCw, 
-  CheckCircle, 
-  AlertTriangle,
-  Clock,
-  Download,
-  Upload,
-  Database,
-  Activity,
-  Settings,
-  Eye,
-  Play,
-
-  ArrowUpDown,
-  FileText,
-  HardDrive,
-  Smartphone,
-  Monitor,
-  Tablet
-} from 'lucide-react';
+import { Cloud, Wifi, RefreshCw, CheckCircle, AlertTriangle, Clock, Download, Upload, Database, Activity, Settings, Eye, Play, ArrowUpDown, FileText, HardDrive, Smartphone, Monitor, Tablet } from 'lucide-react';
 
 const OfflineSyncPage: React.FC = () => {
   // Empty data arrays - ready for real data
-  const syncData = {
+  const _syncData = {
     totalDevices: 0,
     connectedDevices: 0,
     syncedToday: 0,
@@ -45,6 +24,7 @@ const OfflineSyncPage: React.FC = () => {
     lastSync: string;
     syncProgress: number;
     location: string;
+    pendingRecords?: number;
   }> = [];
   const syncQueue: Array<{
     id: string;
@@ -63,9 +43,10 @@ const OfflineSyncPage: React.FC = () => {
     device: string;
     records: number;
     timestamp: string;
+    description?: string;
   }> = [];
 
-  const getStatusColor = (status: string) => {
+  const _getStatusColor = (status: string) => {
     switch (status) {
       case 'Online':
       case 'Synced':
@@ -81,7 +62,7 @@ const OfflineSyncPage: React.FC = () => {
     }
   };
 
-  const getStatusBadgeColor = (status: string) => {
+  const _getStatusBadgeColor = (status: string) => {
     switch (status) {
       case 'Online':
       case 'Synced':
@@ -97,7 +78,7 @@ const OfflineSyncPage: React.FC = () => {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
+  const _getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'High':
         return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
@@ -110,7 +91,7 @@ const OfflineSyncPage: React.FC = () => {
     }
   };
 
-  const getDeviceIcon = (type: string) => {
+  const _getDeviceIcon = (type: string) => {
     switch (type) {
       case 'Desktop':
         return <Monitor className="h-4 w-4" />;
@@ -136,14 +117,18 @@ const OfflineSyncPage: React.FC = () => {
             <Button 
               variant="outline" 
               className="w-full sm:w-auto"
-              onClick={() => alert('Opening sync settings...')}
+              onClick={() => {
+                // console.log('Opening sync settings...')
+              }}
             >
               <Settings className="h-4 w-4 mr-2" />
               Settings
             </Button>
             <Button 
               className="w-full sm:w-auto"
-              onClick={() => alert('Forcing sync for all devices...')}
+              onClick={() => {
+                // console.log('Forcing sync for all devices...')
+              }}
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Force Sync
@@ -159,7 +144,7 @@ const OfflineSyncPage: React.FC = () => {
               <Database className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{syncData.totalDevices}</div>
+              <div className="text-2xl font-bold">{_syncData.totalDevices}</div>
               <p className="text-xs text-muted-foreground">Connected devices</p>
             </CardContent>
           </Card>
@@ -170,7 +155,7 @@ const OfflineSyncPage: React.FC = () => {
               <Wifi className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{syncData.connectedDevices}</div>
+              <div className="text-2xl font-bold text-green-600">{_syncData.connectedDevices}</div>
               <p className="text-xs text-muted-foreground">Currently connected</p>
             </CardContent>
           </Card>
@@ -181,7 +166,7 @@ const OfflineSyncPage: React.FC = () => {
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{syncData.pendingSync}</div>
+              <div className="text-2xl font-bold text-yellow-600">{_syncData.pendingSync}</div>
               <p className="text-xs text-muted-foreground">Records waiting</p>
             </CardContent>
           </Card>
@@ -230,14 +215,14 @@ const OfflineSyncPage: React.FC = () => {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
-                          {getDeviceIcon(device.type)}
+                          {_getDeviceIcon(device.type)}
                           {device.type}
                         </div>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${getStatusColor(device.status)}`}></div>
-                          <Badge className={getStatusBadgeColor(device.status)}>
+                          <div className={`w-2 h-2 rounded-full ${_getStatusColor(device.status)}`}></div>
+                          <Badge className={_getStatusBadgeColor(device.status)}>
                             {device.status}
                           </Badge>
                         </div>
@@ -249,7 +234,7 @@ const OfflineSyncPage: React.FC = () => {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <div className="font-medium">{device.pendingRecords}</div>
+                        <div className="font-medium">{device.pendingRecords || 0}</div>
                       </td>
                       <td className="py-3 px-4">
                         <div className="w-full bg-gray-200 rounded-full h-2">
@@ -270,21 +255,27 @@ const OfflineSyncPage: React.FC = () => {
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => alert(`Viewing ${device.name} details...`)}
+                            onClick={() => {
+                              // console.log(`Viewing ${device.name} details...`)
+                            }}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => alert(`Syncing ${device.name}...`)}
+                            onClick={() => {
+                              // console.log(`Syncing ${device.name}...`)
+                            }}
                           >
                             <RefreshCw className="h-4 w-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => alert(`Configuring ${device.name}...`)}
+                            onClick={() => {
+                              // console.log(`Configuring ${device.name}...`)
+                            }}
                           >
                             <Settings className="h-4 w-4" />
                           </Button>
@@ -313,7 +304,7 @@ const OfflineSyncPage: React.FC = () => {
                 {syncQueue.map((item) => (
                   <div key={item.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 border rounded-lg">
                     <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${getStatusColor(item.status)}`}></div>
+                      <div className={`w-3 h-3 rounded-full ${_getStatusColor(item.status)}`}></div>
                       <div>
                         <div className="font-medium">{item.type}</div>
                         <div className="text-sm text-muted-foreground">
@@ -324,10 +315,10 @@ const OfflineSyncPage: React.FC = () => {
                     <div className="text-right">
                       <div className="text-sm font-medium">{item.timestamp}</div>
                       <div className="flex items-center gap-2">
-                        <Badge className={getStatusBadgeColor(item.status)}>
+                        <Badge className={_getStatusBadgeColor(item.status)}>
                           {item.status}
                         </Badge>
-                        <Badge className={getPriorityColor(item.priority)}>
+                        <Badge className={_getPriorityColor(item.priority)}>
                           {item.priority}
                         </Badge>
                       </div>
@@ -351,17 +342,17 @@ const OfflineSyncPage: React.FC = () => {
                 {conflicts.map((conflict) => (
                   <div key={conflict.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 border rounded-lg">
                     <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${getStatusColor(conflict.status)}`}></div>
+                      <div className={`w-3 h-3 rounded-full ${_getStatusColor(conflict.status)}`}></div>
                       <div>
                         <div className="font-medium">{conflict.type}</div>
                         <div className="text-sm text-muted-foreground">
-                          {conflict.description}
+                          {conflict.description || 'No description'}
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-sm font-medium">{conflict.timestamp}</div>
-                      <Badge className={getStatusBadgeColor(conflict.status)}>
+                      <Badge className={_getStatusBadgeColor(conflict.status)}>
                         {conflict.status}
                       </Badge>
                     </div>
@@ -391,7 +382,9 @@ const OfflineSyncPage: React.FC = () => {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => alert('Enabling auto sync...')}
+                    onClick={() => {
+                      // console.log('Enabling auto sync...')
+                    }}
                   >
                     <Play className="h-4 w-4 mr-2" />
                     Enable
@@ -410,7 +403,9 @@ const OfflineSyncPage: React.FC = () => {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => alert('Configuring conflict resolution...')}
+                    onClick={() => {
+                      // console.log('Configuring conflict resolution...')
+                    }}
                   >
                     <Settings className="h-4 w-4 mr-2" />
                     Configure
@@ -429,7 +424,9 @@ const OfflineSyncPage: React.FC = () => {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    onClick={() => alert('Configuring data retention...')}
+                    onClick={() => {
+                      // console.log('Configuring data retention...')
+                    }}
                   >
                     <Settings className="h-4 w-4 mr-2" />
                     Configure
@@ -450,7 +447,9 @@ const OfflineSyncPage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="h-20 flex-col gap-2"
-                onClick={() => alert('Syncing all devices...')}
+                onClick={() => {
+                  // console.log('Syncing all devices...')
+                }}
               >
                 <RefreshCw className="h-6 w-6" />
                 <span>Sync All Devices</span>
@@ -458,7 +457,9 @@ const OfflineSyncPage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="h-20 flex-col gap-2"
-                onClick={() => alert('Downloading data...')}
+                onClick={() => {
+                  // console.log('Downloading data...')
+                }}
               >
                 <Download className="h-6 w-6" />
                 <span>Download Data</span>
@@ -466,7 +467,9 @@ const OfflineSyncPage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="h-20 flex-col gap-2"
-                onClick={() => alert('Uploading data...')}
+                onClick={() => {
+                  // console.log('Uploading data...')
+                }}
               >
                 <Upload className="h-6 w-6" />
                 <span>Upload Data</span>
@@ -474,7 +477,9 @@ const OfflineSyncPage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="h-20 flex-col gap-2"
-                onClick={() => alert('Viewing sync logs...')}
+                onClick={() => {
+                  // console.log('Viewing sync logs...')
+                }}
               >
                 <FileText className="h-6 w-6" />
                 <span>View Logs</span>

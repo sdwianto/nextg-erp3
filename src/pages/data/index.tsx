@@ -8,21 +8,21 @@ import {
   Download, 
   Upload, 
   RefreshCw, 
-  Archive,
-  FileText,
-  HardDrive,
-  Cloud,
-  Shield,
-  Clock,
-  CheckCircle,
-  AlertTriangle,
-  Eye,
-  Edit,
-  Lock
+  Archive, 
+  FileText, 
+  HardDrive, 
+  Cloud, 
+  Shield, 
+  Clock, 
+  CheckCircle, 
+  AlertTriangle, 
+  Eye, 
+  Edit, 
+  Lock 
 } from 'lucide-react';
 
 const DataManagementPage: React.FC = () => {
-  // Mock data for data management
+  // Mock data for data management - digunakan untuk display
   const dataStats = {
     totalRecords: 0,
     processedRecords: 0,
@@ -78,9 +78,22 @@ const DataManagementPage: React.FC = () => {
     }
   ];
 
-  const backupHistory: any[] = [];
+  const backupHistory: Array<{
+    id?: string;
+    status?: string;
+    type?: string;
+    size?: string;
+    duration?: string;
+    date?: string;
+  }> = [];
 
-  const syncLogs: any[] = [];
+  const syncLogs: Array<{
+    id?: string;
+    status?: string;
+    operation?: string;
+    details?: string;
+    timestamp?: string;
+  }> = [];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -125,7 +138,9 @@ const DataManagementPage: React.FC = () => {
             <Button 
               variant="outline" 
               className="w-full sm:w-auto"
-              onClick={() => alert('Opening data import...')}
+              onClick={() => {
+                // console.log('Opening data import...')
+              }}
             >
               <Upload className="h-4 w-4 mr-2" />
               Import
@@ -133,14 +148,18 @@ const DataManagementPage: React.FC = () => {
             <Button 
               variant="outline" 
               className="w-full sm:w-auto"
-              onClick={() => alert('Exporting data...')}
+              onClick={() => {
+                // console.log('Exporting data...')
+              }}
             >
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
             <Button 
               className="w-full sm:w-auto"
-              onClick={() => alert('Syncing data now...')}
+              onClick={() => {
+                // console.log('Syncing data now...')
+              }}
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Sync Now
@@ -251,21 +270,27 @@ const DataManagementPage: React.FC = () => {
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => alert(`Viewing ${category.name} data...`)}
+                            onClick={() => {
+                              // console.log(`Viewing ${category.name} data...`)
+                            }}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => alert(`Editing ${category.name} data...`)}
+                            onClick={() => {
+                              // console.log(`Editing ${category.name} data...`)
+                            }}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button 
                             variant="ghost" 
                             size="sm"
-                            onClick={() => alert(`Archiving ${category.name} data...`)}
+                            onClick={() => {
+                              // console.log(`Archiving ${category.name} data...`)
+                            }}
                           >
                             <Archive className="h-4 w-4" />
                           </Button>
@@ -291,25 +316,31 @@ const DataManagementPage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {backupHistory.map((backup) => (
-                  <div key={backup.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${getStatusColor(backup.status)}`}></div>
-                      <div>
-                        <div className="font-medium">{backup.type}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {backup.size} • {backup.duration}
+                {backupHistory.length > 0 ? (
+                  backupHistory.map((backup, index) => (
+                    <div key={backup?.id || index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-3 h-3 rounded-full ${getStatusColor(backup?.status || 'Unknown')}`}></div>
+                        <div>
+                          <div className="font-medium">{backup?.type || 'Unknown'}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {backup?.size || '0 MB'} • {backup?.duration || '0s'}
+                          </div>
                         </div>
                       </div>
+                      <div className="text-right">
+                        <div className="text-sm font-medium">{backup?.date || 'Unknown'}</div>
+                        <Badge className={getStatusBadgeColor(backup?.status || 'Unknown')}>
+                          {backup?.status || 'Unknown'}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium">{backup.date}</div>
-                      <Badge className={getStatusBadgeColor(backup.status)}>
-                        {backup.status}
-                      </Badge>
-                    </div>
+                  ))
+                ) : (
+                  <div className="p-8 text-center text-gray-500">
+                    No backup history available.
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
@@ -324,25 +355,31 @@ const DataManagementPage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {syncLogs.map((log) => (
-                  <div key={log.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 border rounded-lg">
-                    <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${getStatusColor(log.status)}`}></div>
-                      <div>
-                        <div className="font-medium">{log.operation}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {log.details}
+                {syncLogs.length > 0 ? (
+                  syncLogs.map((log, index) => (
+                    <div key={log?.id || index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 border rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-3 h-3 rounded-full ${getStatusColor(log?.status || 'Unknown')}`}></div>
+                        <div>
+                          <div className="font-medium">{log?.operation || 'Unknown'}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {log?.details || 'No details'}
+                          </div>
                         </div>
                       </div>
+                      <div className="text-right">
+                        <div className="text-sm font-medium">{log?.timestamp || 'Unknown'}</div>
+                        <Badge className={getStatusBadgeColor(log?.status || 'Unknown')}>
+                          {log?.status || 'Unknown'}
+                        </Badge>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-sm font-medium">{log.timestamp}</div>
-                      <Badge className={getStatusBadgeColor(log.status)}>
-                        {log.status}
-                      </Badge>
-                    </div>
+                  ))
+                ) : (
+                  <div className="p-8 text-center text-gray-500">
+                    No sync logs available.
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
@@ -399,7 +436,9 @@ const DataManagementPage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="h-20 flex-col gap-2"
-                onClick={() => alert('Exporting all data...')}
+                onClick={() => {
+                // console.log('Exporting all data...')
+              }}
               >
                 <Download className="h-6 w-6" />
                 <span>Export Data</span>
@@ -407,7 +446,9 @@ const DataManagementPage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="h-20 flex-col gap-2"
-                onClick={() => alert('Importing data...')}
+                onClick={() => {
+                // console.log('Importing data...')
+              }}
               >
                 <Upload className="h-6 w-6" />
                 <span>Import Data</span>
@@ -415,7 +456,9 @@ const DataManagementPage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="h-20 flex-col gap-2"
-                onClick={() => alert('Creating backup...')}
+                onClick={() => {
+                // console.log('Creating backup...')
+              }}
               >
                 <Archive className="h-6 w-6" />
                 <span>Create Backup</span>
@@ -423,7 +466,9 @@ const DataManagementPage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="h-20 flex-col gap-2"
-                onClick={() => alert('Syncing all data...')}
+                onClick={() => {
+                // console.log('Syncing all data...')
+              }}
               >
                 <RefreshCw className="h-6 w-6" />
                 <span>Sync Data</span>

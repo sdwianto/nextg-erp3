@@ -53,7 +53,7 @@ export const AssetLifecycleDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   // Use tRPC query for asset lifecycle data
-  const { data: assetData, isLoading: assetLoading } = api.rentalMaintenance.getDashboardData.useQuery();
+  const { data: assetData } = api.rentalMaintenance.getDashboardData.useQuery();
 
   useEffect(() => {
     if (assetData?.summary) {

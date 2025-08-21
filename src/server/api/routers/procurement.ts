@@ -2,6 +2,7 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
 import { InventoryTransactionType, AssetType, DepreciationMethod, ProcurementSourceType } from "@prisma/client";
+import type { PurchaseOrderStatus } from "@prisma/client";
 import { prisma } from "@/server/db";
 
 // Enhanced input validation schemas with JDE compliance
@@ -121,7 +122,7 @@ export const procurementRouter = createTRPCRouter({
           }),
           // Rejected POs count
           prisma.purchaseOrder.count({ 
-            where: { status: "REJECTED" } 
+            where: { status: "REJECTED" as PurchaseOrderStatus } 
           }),
           // Total PR count for comparison
           prisma.purchaseRequest.count()
@@ -249,31 +250,30 @@ export const procurementRouter = createTRPCRouter({
 
         return {
           stats: {
-            purchaseRequests: activePurchaseRequestsCount || 0,     // Active PRs only
-            purchaseOrders: activePurchaseOrdersCount || 0,         // Active POs only
-            goodsReceipts: goodsReceiptsCount || 0,
-            suppliers: suppliersCount || 0,                         // Active suppliers only
+            purchaseRequests: activePurchaseRequestsCount ?? 0,     // Active PRs only
+            purchaseOrders: activePurchaseOrdersCount ?? 0,         // Active POs only
+            goodsReceipts: goodsReceiptsCount ?? 0,
+            suppliers: suppliersCount ?? 0,                         // Active suppliers only
             totalSpend: totalSpendValue,                            // Ensure it's 0 after reset
-            pendingPRApprovals: pendingPRApprovals || 0,            // PRs waiting for approval
-            pendingPOApprovals: pendingPOApprovals || 0,            // POs waiting for approval
-            pendingApprovals: (pendingPRApprovals || 0) + (pendingPOApprovals || 0), // Total pending approvals
-            rejectedPRs: rejectedPRsCount || 0,                     // Rejected PRs count
-            rejectedPOs: rejectedPOsCount || 0,                     // Rejected POs count
-            totalPurchaseRequests: totalPurchaseRequestsCount || 0, // Total for reference
+            pendingPRApprovals: pendingPRApprovals ?? 0,            // PRs waiting for approval
+            pendingPOApprovals: pendingPOApprovals ?? 0,            // POs waiting for approval
+            pendingApprovals: (pendingPRApprovals ?? 0) + (pendingPOApprovals ?? 0), // Total pending approvals
+            rejectedPRs: rejectedPRsCount ?? 0,                     // Rejected PRs count
+            rejectedPOs: rejectedPOsCount ?? 0,                     // Rejected POs count
+            totalPurchaseRequests: totalPurchaseRequestsCount ?? 0, // Total for reference
             // Month-over-month changes
-            prChangePercent: prChange || 0,
-            poChangePercent: poChange || 0,
-            spendChangePercent: spendChange || 0,
-            thisMonthPRs: thisMonthPRCount || 0,
-            thisMonthPOs: thisMonthPOCount || 0,
+            prChangePercent: prChange ?? 0,
+            poChangePercent: poChange ?? 0,
+            spendChangePercent: spendChange ?? 0,
+            thisMonthPRs: thisMonthPRCount ?? 0,
+            thisMonthPOs: thisMonthPOCount ?? 0,
             thisMonthSpend: thisMonthSpendValue                     // Ensure it's 0 after reset
           },
           recentPurchaseRequests: prsWithoutPOs || [],
           recentPurchaseOrders: recentPurchaseOrders || [],
           supplierPerformance: supplierPerformance || [],
         };
-      } catch (error) {
-        console.error('Error fetching procurement dashboard data:', error);
+      } catch {
         throw new Error('Failed to fetch procurement dashboard data');
       }
     }),
@@ -326,8 +326,7 @@ export const procurementRouter = createTRPCRouter({
             totalPages: Math.ceil(total / input.limit),
           },
         };
-      } catch (error) {
-        console.error('Error fetching purchase requests:', error);
+      } catch {
         throw new Error('Failed to fetch purchase requests');
       }
     }),
@@ -412,7 +411,6 @@ export const procurementRouter = createTRPCRouter({
 
         return purchaseRequest;
       } catch (error) {
-        console.error('Error creating purchase request:', error);
         if (error instanceof Error) {
           throw new Error(error.message);
         }
@@ -449,8 +447,7 @@ export const procurementRouter = createTRPCRouter({
         });
 
         return purchaseRequest;
-      } catch (error) {
-        console.error('Error updating purchase request:', error);
+      } catch {
         throw new Error('Failed to update purchase request');
       }
     }),
@@ -471,8 +468,7 @@ export const procurementRouter = createTRPCRouter({
         });
 
         return purchaseRequest;
-      } catch (error) {
-        console.error('Error approving purchase request:', error);
+      } catch {
         throw new Error('Failed to approve purchase request');
       }
     }),
@@ -491,8 +487,7 @@ export const procurementRouter = createTRPCRouter({
         });
 
         return purchaseRequest;
-      } catch (error) {
-        console.error('Error submitting purchase request:', error);
+      } catch {
         throw new Error('Failed to submit purchase request');
       }
     }),
@@ -547,17 +542,16 @@ export const procurementRouter = createTRPCRouter({
             totalPages: Math.ceil(total / input.limit),
           },
         };
-      } catch (error) {
-        console.error('Error fetching purchase orders:', error);
+      } catch {
         throw new Error('Failed to fetch purchase orders');
       }
     }),
 
   createPurchaseOrder: publicProcedure
     .input(createPurchaseOrderSchema)
-    .mutation(async ({ input, ctx }) => {
+    .mutation(async ({ input }) => {
       try {
-        console.log('Creating PO with input:', JSON.stringify(input, null, 2)); // Debug log
+
         
         // Create the purchase order
         const purchaseOrder = await prisma.purchaseOrder.create({
@@ -599,12 +593,6 @@ export const procurementRouter = createTRPCRouter({
 
         return purchaseOrder;
       } catch (error) {
-        console.error('Error creating purchase order:', error);
-        console.error('Error details:', {
-          message: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : 'No stack trace',
-          name: error instanceof Error ? error.name : 'Unknown error type'
-        });
         throw new Error(`Failed to create purchase order: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }),
@@ -631,7 +619,7 @@ export const procurementRouter = createTRPCRouter({
     }))
     .mutation(async ({ input }) => {
       try {
-        console.log('Updating PO with input:', JSON.stringify(input, null, 2)); // Debug log
+
         
         // Get current PO to check status
         const currentPO = await prisma.purchaseOrder.findUnique({
@@ -691,12 +679,6 @@ export const procurementRouter = createTRPCRouter({
 
         return purchaseOrder;
       } catch (error) {
-        console.error('Error updating purchase order:', error);
-        console.error('Error details:', {
-          message: error instanceof Error ? error.message : 'Unknown error',
-          stack: error instanceof Error ? error.stack : 'No stack trace',
-          name: error instanceof Error ? error.name : 'Unknown error type'
-        });
         throw new Error(`Failed to update purchase order: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }),
@@ -709,12 +691,12 @@ export const procurementRouter = createTRPCRouter({
     }))
     .mutation(async ({ input }) => {
       try {
-        console.log('Rejecting PO with input:', JSON.stringify(input, null, 2));
+
         
         const purchaseOrder = await prisma.purchaseOrder.update({
           where: { id: input.id },
           data: {
-            status: 'REJECTED',
+            status: 'REJECTED' as PurchaseOrderStatus,
             rejectedBy: 'system', // In real app, this would be ctx.user.id
             rejectedDate: new Date(),
             rejectionReason: input.rejectionReason,
@@ -732,7 +714,6 @@ export const procurementRouter = createTRPCRouter({
 
         return purchaseOrder;
       } catch (error) {
-        console.error('Error rejecting purchase order:', error);
         throw new Error(`Failed to reject purchase order: ${error instanceof Error ? error.message : 'Unknown error'}`);
       }
     }),
@@ -789,8 +770,7 @@ export const procurementRouter = createTRPCRouter({
             totalPages: Math.ceil(total / input.limit),
           },
         };
-      } catch (error) {
-        console.error('Error fetching goods receipts:', error);
+      } catch {
         throw new Error('Failed to fetch goods receipts');
       }
     }),
@@ -928,6 +908,7 @@ export const procurementRouter = createTRPCRouter({
 
         return result;
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error creating goods receipt:', error);
         throw new Error('Failed to create goods receipt');
       }
@@ -957,6 +938,7 @@ export const procurementRouter = createTRPCRouter({
         const nextSku = `NGS-${nextSkuNumber.toString().padStart(3, '0')}`;
         return nextSku;
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error getting next SKU:', error);
         return 'NGS-001';
       }
@@ -982,6 +964,7 @@ export const procurementRouter = createTRPCRouter({
         const nextCode = `NGSP-${nextCodeNumber.toString().padStart(3, '0')}`;
         return nextCode;
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error getting next supplier code:', error);
         return 'NGSP-001';
       }
@@ -1033,6 +1016,7 @@ export const procurementRouter = createTRPCRouter({
           },
         };
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error fetching products:', error);
         throw new Error('Failed to fetch products');
       }
@@ -1071,6 +1055,7 @@ export const procurementRouter = createTRPCRouter({
 
         return supplier;
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error creating supplier:', error);
         throw new Error(error instanceof Error ? error.message : 'Failed to create supplier');
       }
@@ -1137,6 +1122,7 @@ export const procurementRouter = createTRPCRouter({
 
         return product;
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error creating product:', error);
         if (error instanceof Error) {
           throw new Error(error.message);
@@ -1205,6 +1191,7 @@ export const procurementRouter = createTRPCRouter({
           },
         };
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error fetching suppliers:', error);
         throw new Error('Failed to fetch suppliers');
       }
@@ -1238,6 +1225,7 @@ export const procurementRouter = createTRPCRouter({
           totalValue: totalValue._sum.grandTotal ?? 0,
         };
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error fetching workflow summary:', error);
         throw new Error('Failed to fetch workflow summary');
       }
@@ -1367,6 +1355,7 @@ export const procurementRouter = createTRPCRouter({
 
         throw new Error('Either purchaseOrderId or goodsReceiptId must be provided');
       } catch (error) {
+        // eslint-disable-next-line no-console
         console.error('Error fetching integration flow:', error);
         throw new Error('Failed to fetch integration flow');
       }

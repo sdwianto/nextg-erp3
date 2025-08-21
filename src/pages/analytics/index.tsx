@@ -3,38 +3,21 @@ import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { api } from '@/utils/api';
-import { 
-  BarChart3, 
-  PieChart,
-  LineChart,
-  Activity,
-  DollarSign,
-  Package,
-  Filter,
-  Download,
-  RefreshCw,
-  TrendingUp,
-  TrendingDown,
-  Eye,
-  Target,
-  Zap
-} from 'lucide-react';
+import { BarChart3, PieChart, LineChart, Activity, DollarSign, Package, Filter, Download, RefreshCw, TrendingUp, TrendingDown, Eye, Target, Zap } from 'lucide-react';
 
 const AnalyticsPage: React.FC = () => {
-  const [dateRange, setDateRange] = useState({
+  const [dateRange] = useState({
     startDate: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]!,
     endDate: new Date().toISOString().split('T')[0]!,
   });
 
   // tRPC API calls
-  const { data: businessMetrics, isLoading: businessLoading } = api.bi.getBusinessMetrics.useQuery({
+  const { data: businessMetrics } = api.bi.getBusinessMetrics.useQuery({
     startDate: dateRange.startDate,
     endDate: dateRange.endDate,
   });
 
-  const { data: customerAnalytics, isLoading: customerLoading } = api.bi.getCustomerAnalytics.useQuery();
-
-  const { data: equipmentAnalytics, isLoading: equipmentLoading } = api.bi.getEquipmentAnalytics.useQuery();
+  const { data: customerAnalytics } = api.bi.getCustomerAnalytics.useQuery();
 
   // Derived data from API with proper null checks
   const analyticsData = {
@@ -76,13 +59,13 @@ const AnalyticsPage: React.FC = () => {
     ],
   };
 
-  const getTrendIcon = (trend: string) => {
+  const _getTrendIcon = (trend: string) => {
     return trend === 'up' ? 
       <TrendingUp className="h-4 w-4 text-green-500" /> : 
       <TrendingDown className="h-4 w-4 text-red-500" />;
   };
 
-  const getTrendColor = (trend: string) => {
+  const _getTrendColor = (trend: string) => {
     return trend === 'up' ? 'text-green-600' : 'text-red-600';
   };
 
@@ -100,7 +83,9 @@ const AnalyticsPage: React.FC = () => {
               variant="outline" 
               size="sm" 
               className="w-full sm:w-auto"
-              onClick={() => alert('Opening analytics filter...')}
+              onClick={() => {
+                // console.log('Opening analytics filter...');
+              }}
             >
               <Filter className="h-4 w-4 mr-2" />
               Filter
@@ -109,7 +94,9 @@ const AnalyticsPage: React.FC = () => {
               variant="outline" 
               size="sm" 
               className="w-full sm:w-auto"
-              onClick={() => alert('Exporting analytics data...')}
+              onClick={() => {
+                // console.log('Exporting analytics data...');
+              }}
             >
               <Download className="h-4 w-4 mr-2" />
               Export
@@ -118,7 +105,9 @@ const AnalyticsPage: React.FC = () => {
               variant="outline" 
               size="sm" 
               className="w-full sm:w-auto"
-              onClick={() => alert('Refreshing analytics data...')}
+              onClick={() => {
+                // console.log('Refreshing analytics data...');
+              }}
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
@@ -201,8 +190,8 @@ const AnalyticsPage: React.FC = () => {
                 <div className="text-2xl font-bold">
                   {typeof metric.value === 'number' ? (metric.value || 0).toLocaleString() : metric.value}
                 </div>
-                <div className={`flex items-center text-sm ${getTrendColor(metric.trend)}`}>
-                  {getTrendIcon(metric.trend)}
+                <div className={`flex items-center text-sm ${_getTrendColor(metric.trend)}`}>
+                  {_getTrendIcon(metric.trend)}
                   <span className="ml-1">{metric.change > 0 ? '+' : ''}{metric.change}%</span>
                   <span className="text-muted-foreground ml-1">vs last month</span>
                 </div>

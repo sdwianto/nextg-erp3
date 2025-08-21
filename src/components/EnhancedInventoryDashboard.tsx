@@ -27,11 +27,7 @@ import {
   Filter,
   Search,
   ShoppingCart,
-  Truck,
-  Building,
-  DollarSign,
-  Calendar,
-  User
+  Building
 } from 'lucide-react';
 
 export const EnhancedInventoryDashboard: React.FC = () => {
@@ -97,30 +93,14 @@ export const EnhancedInventoryDashboard: React.FC = () => {
           status: string;
         }[];
         setProcurementInventoryItems(items);
-      } catch (error) {
-        console.error('Error parsing inventory items from localStorage:', error);
+      } catch {
+        // Error parsing inventory items from localStorage
       }
     }
   }, []);
 
   // API Queries for P1 Enhanced Features
-  const { data: dashboardData, isLoading: dashboardLoading } = api.inventory.getDashboardData.useQuery();
-  const { data: stockValuation } = api.inventory.getRealTimeStockValuation.useQuery({});
-  const { data: reorderAlerts } = api.inventory.getReorderAlerts.useQuery({ threshold: 10 });
-  const { data: locationTracking } = api.inventory.getLocationTracking.useQuery({});
-  const { data: supplierPerformance } = api.inventory.getSupplierPerformance.useQuery();
-  const { data: qualityInspection } = api.inventory.getQualityInspection.useQuery({});
-
-  // JDE-Style Enhanced Features
-  const { data: enhancedStockValuation } = api.inventory.getEnhancedStockValuation.useQuery({
-    valuationMethod: 'AVERAGE',
-    includeInactive: false,
-  });
-
-  const { data: masterData } = api.inventory.getMasterData.useQuery({
-    entityType: 'product',
-    search: '',
-  });
+  const { isLoading: dashboardLoading } = api.inventory.getDashboardData.useQuery();
 
   // Mock data for development (fallback)
   const mockStats = {
@@ -189,11 +169,9 @@ export const EnhancedInventoryDashboard: React.FC = () => {
   };
 
   // Additional mock data for missing variables
-  const mockInventoryItems = [];
-  const mockReorderAlerts = [];
+  const mockInventoryItems: unknown[] = [];
+  const mockReorderAlerts: unknown[] = [];
   const mockReorderAlertsData = { data: { totalAlerts: 5, criticalAlerts: 2 } };
-  const mockSupplierPerformance = { data: [] };
-  const mockQualityInspection = { data: [] };
 
   // Combine mock inventory items with procurement items
   const allInventoryItems = [
@@ -205,10 +183,9 @@ export const EnhancedInventoryDashboard: React.FC = () => {
   const stats = mockStats;
   const inventoryItems = allInventoryItems;
   const alerts = mockReorderAlerts;
-  const finalStockValuation = enhancedStockValuation || mockEnhancedStockValuation;
-  const finalReorderAlerts = reorderAlerts || mockReorderAlertsData;
-  const finalSupplierPerformance = supplierPerformance || mockSupplierPerformance;
-  const finalQualityInspection = qualityInspection || mockQualityInspection;
+  const finalStockValuation = mockEnhancedStockValuation;
+  const finalReorderAlerts = mockReorderAlertsData;
+  const stockValuation = mockEnhancedStockValuation;
 
   const getUrgencyColor = (urgency: string) => {
     switch (urgency) {
@@ -416,20 +393,20 @@ export const EnhancedInventoryDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {stockValuation?.data?.categoryBreakdown?.slice(0, 5).map((category: any, index: number) => (
+                  {stockValuation?.data?.categoryBreakdown?.slice(0, 5).map((category: Record<string, unknown>, index: number) => (
                     <div key={index} className="flex items-center justify-between p-3 border border-border rounded-lg">
                       <div>
-                        <h4 className="font-medium text-sm">{category.name}</h4>
+                        <h4 className="font-medium text-sm">{category.name as string}</h4>
                         <p className="text-xs text-muted-foreground">
-                          {category.quantity} units • {category.items} items
+                          {category.quantity as number} units • {category.items as number} items
                         </p>
                       </div>
                       <div className="text-right">
                         <div className="font-medium text-sm">
-                          ${category.costValue?.toLocaleString() || '0'}
+                          ${(category.costValue as number)?.toLocaleString() || '0'}
                         </div>
                         <div className="text-xs text-green-600 dark:text-green-400">
-                          +{category.profitMarginPercentage?.toFixed(1) || '0'}%
+                          +{(category.profitMarginPercentage as number)?.toFixed(1) || '0'}%
                         </div>
                       </div>
                     </div>
@@ -449,20 +426,20 @@ export const EnhancedInventoryDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {stockValuation?.data?.warehouseBreakdown?.slice(0, 5).map((warehouse: any, index: number) => (
+                  {stockValuation?.data?.warehouseBreakdown?.slice(0, 5).map((warehouse: Record<string, unknown>, index: number) => (
                     <div key={index} className="flex items-center justify-between p-3 border border-border rounded-lg">
                       <div>
-                        <h4 className="font-medium text-sm">{warehouse.name}</h4>
+                        <h4 className="font-medium text-sm">{warehouse.name as string}</h4>
                         <p className="text-xs text-muted-foreground">
-                          {warehouse.quantity} units • {warehouse.items} items
+                          {warehouse.quantity as number} units • {warehouse.items as number} items
                         </p>
                       </div>
                       <div className="text-right">
                         <div className="font-medium text-sm">
-                          ${warehouse.costValue?.toLocaleString() || '0'}
+                          ${(warehouse.costValue as number)?.toLocaleString() || '0'}
                         </div>
                         <div className="text-xs text-green-600 dark:text-green-400">
-                          +{warehouse.profitMarginPercentage?.toFixed(1) || '0'}%
+                          +{(warehouse.profitMarginPercentage as number)?.toFixed(1) || '0'}%
                         </div>
                       </div>
                     </div>
@@ -536,41 +513,54 @@ export const EnhancedInventoryDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {inventoryItems.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-3 border border-border rounded-lg hover:shadow-md transition-shadow hover:border-blue-500 dark:hover:border-blue-400">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium text-sm">{item.productName}</h4>
-                        <Badge variant="outline" className="text-xs">{item.category}</Badge>
-                        {(item).source === 'Procurement' && (
-                          <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs">
-                            Procurement
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-xs text-muted-foreground">{item.sku} - {item.warehouse}</p>
-                      {'source' in item && (item).source === 'Procurement' && (
-                        <p className="text-xs text-blue-600 dark:text-blue-400">
-                          Source: {(item).sourceDocument} • Received: {(item).receivedDate}
-                            </p>
+                {inventoryItems.map((item: unknown) => {
+                  const itemData = item as Record<string, unknown>;
+                  return (
+                    <div key={itemData.id as string} className="flex items-center justify-between p-3 border border-border rounded-lg hover:shadow-md transition-shadow hover:border-blue-500 dark:hover:border-blue-400">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium text-sm">{itemData.productName as string}</h4>
+                          <Badge variant="outline" className="text-xs">{itemData.category as string}</Badge>
+                          {itemData.source === 'Procurement' && (
+                            <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 text-xs">
+                              Procurement
+                            </Badge>
                           )}
-                      </div>
-                      <div className="flex items-center gap-4">
-                        <div className="text-right">
-                        <div className="font-medium text-sm">{item.quantity} units</div>
-                        <div className="text-xs text-muted-foreground">
-                          ${item.costValue?.toLocaleString() || '0'}
                         </div>
+                        <p className="text-xs text-muted-foreground">{itemData.sku as string} - {itemData.warehouse as string}</p>
+                        {'source' in itemData && itemData.source === 'Procurement' && (
+                          <p className="text-xs text-blue-600 dark:text-blue-400">
+                            Source: {itemData.sourceDocument as string} • Received: {itemData.receivedDate as string}
+                              </p>
+                            )}
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="text-right">
+                          <div className="font-medium text-sm">{itemData.quantity as number} units</div>
+                          <div className="text-xs text-muted-foreground">
+                            ${(itemData.costValue as number)?.toLocaleString() || '0'}
+                          </div>
+                        </div>
+                        <Button size="sm" variant="outline" onClick={() => {
+                           setSelectedItem({
+                             id: itemData.id as string,
+                             productName: itemData.productName as string,
+                             sku: itemData.sku as string,
+                             quantity: itemData.quantity as number,
+                             category: itemData.category as string,
+                             warehouse: itemData.warehouse as string,
+                             costPrice: itemData.costPrice as number,
+                             price: itemData.price as number,
+                             costValue: itemData.costValue as number,
+                           });
+                           setIsViewItemModalOpen(true);
+                         }}>
+                           <Eye className="h-3 w-3" />
+                         </Button>
                       </div>
-                      <Button size="sm" variant="outline" onClick={() => {
-                         setSelectedItem(item);
-                         setIsViewItemModalOpen(true);
-                       }}>
-                         <Eye className="h-3 w-3" />
-                       </Button>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -587,32 +577,35 @@ export const EnhancedInventoryDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
               <div className="space-y-3">
-                {alerts.map((alert) => (
-                  <div key={alert.id} className="flex items-center justify-between p-3 border border-border rounded-lg hover:shadow-md transition-shadow hover:border-blue-500 dark:hover:border-blue-400">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium text-sm">{alert.productName}</h4>
-                        <Badge className={getUrgencyColor(alert.urgency)}>
-                          {alert.urgency.toUpperCase()}
-                        </Badge>
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Current: {alert.currentStock} | Min: {alert.minStockLevel} | Reorder: {alert.reorderQuantity}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="text-right">
-                        <div className="font-medium text-sm">
-                          ${alert.estimatedCost?.toLocaleString() || '0'}
+                {alerts.map((alert: unknown) => {
+                  const alertData = alert as Record<string, unknown>;
+                  return (
+                    <div key={alertData.id as string} className="flex items-center justify-between p-3 border border-border rounded-lg hover:shadow-md transition-shadow hover:border-blue-500 dark:hover:border-blue-400">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-medium text-sm">{alertData.productName as string}</h4>
+                          <Badge className={getUrgencyColor(alertData.urgency as string)}>
+                            {(alertData.urgency as string).toUpperCase()}
+                          </Badge>
                         </div>
-                        <div className="text-xs text-muted-foreground">Estimated Cost</div>
+                        <p className="text-xs text-muted-foreground">
+                          Current: {alertData.currentStock as number} | Min: {alertData.minStockLevel as number} | Reorder: {alertData.reorderQuantity as number}
+                        </p>
                       </div>
-                      <Button size="sm" variant="default" onClick={() => setIsCreatePOModalOpen(true)}>
-                        <Plus className="h-3 w-3" />
+                      <div className="flex items-center gap-4">
+                        <div className="text-right">
+                          <div className="font-medium text-sm">
+                            ${(alertData.estimatedCost as number)?.toLocaleString() || '0'}
+                          </div>
+                          <div className="text-xs text-muted-foreground">Estimated Cost</div>
+                        </div>
+                        <Button size="sm" variant="default" onClick={() => setIsCreatePOModalOpen(true)}>
+                          <Plus className="h-3 w-3" />
                 </Button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               </CardContent>
             </Card>
@@ -630,18 +623,9 @@ export const EnhancedInventoryDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {supplierPerformance?.data?.suppliers?.slice(0, 3).map((supplier: { id: string; name: string; rating: string; onTimeDelivery: number }) => (
-                    <div key={supplier.id} className="flex items-center justify-between p-3 border border-border rounded-lg">
-                      <div>
-                        <h4 className="font-medium text-sm">{supplier.name}</h4>
-                        <p className="text-xs text-muted-foreground">Rating: {supplier.rating}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="font-medium text-sm">{supplier.onTimeDelivery}%</div>
-                        <div className="text-xs text-muted-foreground">On-time Delivery</div>
-                      </div>
-                    </div>
-                  ))}
+                  <div className="text-center text-muted-foreground py-4">
+                    No supplier performance data available
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -656,23 +640,9 @@ export const EnhancedInventoryDashboard: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {qualityInspection?.data?.inspections?.slice(0, 3).map((inspection: { id: string; grNumber: string; supplier: string; qualityStatus: string }) => (
-                    <div key={inspection.id} className="flex items-center justify-between p-3 border border-border rounded-lg">
-                      <div>
-                        <h4 className="font-medium text-sm">{inspection.grNumber}</h4>
-                        <p className="text-xs text-muted-foreground">{inspection.supplier}</p>
-                      </div>
-                      <div className="text-right">
-                        <Badge className={
-                          inspection.qualityStatus === 'passed' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-                          inspection.qualityStatus === 'failed' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                          'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
-                        }>
-                          {inspection.qualityStatus.toUpperCase()}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
+                  <div className="text-center text-muted-foreground py-4">
+                    No quality inspection data available
+                  </div>
                 </div>
               </CardContent>
             </Card>

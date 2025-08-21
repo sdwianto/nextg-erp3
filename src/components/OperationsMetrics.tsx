@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'; 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -22,10 +22,7 @@ import {
   PieChart
 } from 'lucide-react';
 
-// API base URL - Using Next.js API routes to avoid CORS issues
-const API_BASE_URL = '';
-
-interface OperationsMetrics {
+interface OperationsMetricsData {
   mttr: {
     current: number; // hours
     target: number;
@@ -65,8 +62,7 @@ interface OperationsMetrics {
 // All data now comes from API - no more mock data
 
 export const OperationsMetrics: React.FC = () => {
-  const [metrics, setMetrics] = useState<OperationsMetrics | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [metrics, setMetrics] = useState<OperationsMetricsData | null>(null);
   
   // Modal states
   const [isWorkOrderModalOpen, setIsWorkOrderModalOpen] = useState(false);
@@ -74,21 +70,14 @@ export const OperationsMetrics: React.FC = () => {
   const [isPerformanceReportOpen, setIsPerformanceReportOpen] = useState(false);
   const [isPredictiveAnalyticsOpen, setIsPredictiveAnalyticsOpen] = useState(false);
   const [isEquipmentMasterOpen, setIsEquipmentMasterOpen] = useState(false);
-  const [isWorkOrderLifecycleOpen, setIsWorkOrderLifecycleOpen] = useState(false);
-  const [isConditionBasedMaintenanceOpen, setIsConditionBasedMaintenanceOpen] = useState(false);
-  const [isBreakdownAnalysisOpen, setIsBreakdownAnalysisOpen] = useState(false);
-  const [isShiftManagementOpen, setIsShiftManagementOpen] = useState(false);
-  const [isMaintenanceApprovalOpen, setIsMaintenanceApprovalOpen] = useState(false);
-  const [isEquipmentUtilizationOpen, setIsEquipmentUtilizationOpen] = useState(false);
-  const [isOperationsSettingsOpen, setIsOperationsSettingsOpen] = useState(false);
 
   // Use tRPC query
-  const { data: dashboardData, isLoading: isLoading } = api.production.getDashboardData.useQuery();
+  const { data: dashboardData, isLoading } = api.production.getDashboardData.useQuery();
 
   // Transform tRPC data to match our interface
   useEffect(() => {
     if (dashboardData?.summary) {
-      const apiMetrics: OperationsMetrics = {
+      const apiMetrics: OperationsMetricsData = {
         mttr: {
           current: 4.2,
           target: 3.0,
@@ -173,31 +162,31 @@ export const OperationsMetrics: React.FC = () => {
   };
 
   const handleWorkOrderLifecycle = () => {
-    setIsWorkOrderLifecycleOpen(true);
+    // TODO: Implement Work Order Lifecycle functionality
   };
 
   const handleConditionBasedMaintenance = () => {
-    setIsConditionBasedMaintenanceOpen(true);
+    // TODO: Implement Condition-based Maintenance functionality
   };
 
   const handleBreakdownAnalysis = () => {
-    setIsBreakdownAnalysisOpen(true);
+    // TODO: Implement Breakdown Analysis functionality
   };
 
   const handleShiftManagement = () => {
-    setIsShiftManagementOpen(true);
+    // TODO: Implement Shift Management functionality
   };
 
   const handleMaintenanceApproval = () => {
-    setIsMaintenanceApprovalOpen(true);
+    // TODO: Implement Maintenance Approval functionality
   };
 
   const handleEquipmentUtilization = () => {
-    setIsEquipmentUtilizationOpen(true);
+    // TODO: Implement Equipment Utilization functionality
   };
 
   const handleOperationsSettings = () => {
-    setIsOperationsSettingsOpen(true);
+    // TODO: Implement Operations Settings functionality
   };
 
   if (isLoading) {

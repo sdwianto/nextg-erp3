@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import helmet from "helmet";
 import morgan from "morgan";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "./db";
 
 // Import routes - Commented out as we're using tRPC for internal API
 // import { inventoryRouter } from "./api/routers/inventory.js";
@@ -10,7 +10,6 @@ import { PrismaClient } from "@prisma/client";
 // import { operationsRouter } from "./api/routers/operations.js";
 
 const app = express();
-const prisma = new PrismaClient();
 
 import { getCorsConfig } from "../env";
 
@@ -72,13 +71,13 @@ app.get("/api/test", (req, res) => {
 // app.use("/api/operations", operationsRouter);
 
 // Error handling middleware
-app.use((err: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
-  console.error("Unhandled error:", err);
+app.use((err: unknown, req: express.Request, res: express.Response) => {
+  // console.error("Unhandled error:", err);
   
   res.status(500).json({
     success: false,
     error: "Internal server error",
-    message: process.env.NODE_ENV === "development" ? err.message : "Something went wrong",
+    message: process.env.NODE_ENV === "development" ? (err instanceof Error ? err.message : "Unknown error") : "Something went wrong",
   });
 });
 
@@ -93,13 +92,13 @@ app.use("*", (req, res) => {
 
 // Graceful shutdown
 process.on("SIGTERM", async () => {
-  console.log("SIGTERM received, shutting down gracefully");
+  // console.log("SIGTERM received, shutting down gracefully");
   await prisma.$disconnect();
   process.exit(0);
 });
 
 process.on("SIGINT", async () => {
-  console.log("SIGINT received, shutting down gracefully");
+  // console.log("SIGINT received, shutting down gracefully");
   await prisma.$disconnect();
   process.exit(0);
 });

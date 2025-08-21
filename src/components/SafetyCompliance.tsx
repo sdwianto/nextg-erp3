@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useRealtime } from '@/hooks/use-realtime';
-import { Shield, AlertTriangle, CheckCircle, Clock, Users, FileText } from 'lucide-react';
+import { Shield, AlertTriangle, FileText } from 'lucide-react';
 
 interface SafetyCertification {
   id: string;
@@ -34,11 +34,13 @@ export const SafetyCompliance: React.FC = () => {
   const [incidents, setIncidents] = useState<SafetyIncident[]>([]);
   const [complianceRate, setComplianceRate] = useState(0);
 
-  // Empty safety data - ready for real data
-  const mockCertifications: SafetyCertification[] = [];
-  const mockIncidents: SafetyIncident[] = [];
+
 
   useEffect(() => {
+    // Empty safety data - ready for real data
+    const mockCertifications: SafetyCertification[] = [];
+    const mockIncidents: SafetyIncident[] = [];
+    
     setCertifications(mockCertifications);
     setIncidents(mockIncidents);
     
@@ -54,25 +56,6 @@ export const SafetyCompliance: React.FC = () => {
       case 'MEDIUM': return 'bg-yellow-500';
       case 'HIGH': return 'bg-orange-500';
       case 'CRITICAL': return 'bg-red-500';
-      default: return 'bg-gray-500';
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'VALID': return 'bg-green-500';
-      case 'EXPIRING': return 'bg-yellow-500';
-      case 'EXPIRED': return 'bg-red-500';
-      default: return 'bg-gray-500';
-    }
-  };
-
-  const getIncidentStatusColor = (status: string) => {
-    switch (status) {
-      case 'REPORTED': return 'bg-blue-500';
-      case 'INVESTIGATING': return 'bg-yellow-500';
-      case 'RESOLVING': return 'bg-orange-500';
-      case 'RESOLVED': return 'bg-green-500';
       default: return 'bg-gray-500';
     }
   };
@@ -151,7 +134,6 @@ export const SafetyCompliance: React.FC = () => {
                         variant="outline"
                         onClick={() => {
                           // Schedule certification renewal
-                          console.log(`Scheduling renewal for ${cert.employeeName}`);
                         }}
                       >
                         Schedule Renewal
@@ -223,7 +205,6 @@ export const SafetyCompliance: React.FC = () => {
               size="sm"
               onClick={() => {
                 // Generate safety report
-                console.log('Generating safety compliance report...');
               }}
             >
               Generate Report
@@ -243,7 +224,6 @@ export const SafetyCompliance: React.FC = () => {
               size="sm"
               onClick={() => {
                 // Schedule safety training
-                console.log('Scheduling safety training...');
               }}
             >
               Schedule Training

@@ -1,11 +1,10 @@
+import { createTRPCRouter, publicProcedure, protectedProcedure } from "@/server/api/trpc";
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/server/db";
 
-const prisma = new PrismaClient();
 
-// Input validation schemas
-const createEmployeeSchema = z.object({
+// Input validation schemas,
+  const createEmployeeSchema = z.object({
   employeeNumber: z.string().min(1, "Employee number is required"),
   userId: z.string().min(1, "User is required"),
   firstName: z.string().min(1, "First name is required"),
@@ -61,7 +60,7 @@ export const hrmsRouter = createTRPCRouter({
   // EMPLOYEE MANAGEMENT
   // ========================================
 
-  // Get all employees
+  // Get all employees,
   getEmployees: publicProcedure
     .input(z.object({
       page: z.number().default(1),
@@ -71,12 +70,13 @@ export const hrmsRouter = createTRPCRouter({
       status: z.enum(["ACTIVE", "INACTIVE", "TERMINATED", "ON_LEAVE"]).optional(),
     }))
     .query(async ({ input }) => {
-      const skip = (input.page - 1) * input.limit;
+      const _skip = (input.page - 1) * input.limit;
 
       const where = {
         ...(input.search && {
           OR: [
-            { firstName: { contains: input.search, mode: "insensitive" as const } },
+            { firstName: { contains: input.search, mode: "insensitive" as const 
+          } },
             { lastName: { contains: input.search, mode: "insensitive" as const } },
             { employeeNumber: { contains: input.search, mode: "insensitive" as const } },
             { email: { contains: input.search, mode: "insensitive" as const } },
@@ -99,7 +99,7 @@ export const hrmsRouter = createTRPCRouter({
               },
             },
           },
-          skip,
+          skip: _skip,
           take: input.limit,
           orderBy: { hireDate: "desc" },
         }),
@@ -118,7 +118,7 @@ export const hrmsRouter = createTRPCRouter({
       };
     }),
 
-  // Get employee by ID
+  // Get employee by ID,
   getEmployeeById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
@@ -145,7 +145,7 @@ export const hrmsRouter = createTRPCRouter({
       return { success: true, data: employee };
     }),
 
-  // Create employee
+  // Create employee,
   createEmployee: protectedProcedure
     .input(createEmployeeSchema)
     .mutation(async ({ input }) => {
@@ -164,26 +164,26 @@ export const hrmsRouter = createTRPCRouter({
       return { success: true, data: employee };
     }),
 
-  // Update employee
+  // Update employee,
   updateEmployee: protectedProcedure
     .input(z.object({
       id: z.string(),
       data: createEmployeeSchema.partial(),
     }))
     .mutation(async ({ input }) => {
-      const updateData = { ...input.data };
+      const _updateData = { ...input.data };
       
       // Convert monetary values to cents if provided
-      if (updateData.baseSalary !== undefined) {
-        updateData.baseSalary = Math.round(updateData.baseSalary * 100);
+      if (_updateData.baseSalary !== undefined) {
+        _updateData.baseSalary = Math.round(_updateData.baseSalary * 100);
       }
-      if (updateData.allowances !== undefined) {
-        updateData.allowances = Math.round(updateData.allowances * 100);
+      if (_updateData.allowances !== undefined) {
+        _updateData.allowances = Math.round(_updateData.allowances * 100);
       }
 
       const employee = await prisma.employee.update({
         where: { id: input.id },
-        data: updateData,
+        data: _updateData,
         include: {
           department: { select: { name: true, code: true } },
           user: { select: { firstName: true, lastName: true } },
@@ -197,7 +197,7 @@ export const hrmsRouter = createTRPCRouter({
   // LEAVE MANAGEMENT
   // ========================================
 
-  // Get leave requests
+  // Get leave requests,
   getLeaveRequests: publicProcedure
     .input(z.object({
       page: z.number().default(1),
@@ -209,10 +209,11 @@ export const hrmsRouter = createTRPCRouter({
       endDate: z.string().optional(),
     }))
     .query(async ({ input }) => {
-      const skip = (input.page - 1) * input.limit;
+      const _skip = (input.page - 1) * input.limit;
 
       const where = {
-        ...(input.employeeId && { employeeId: input.employeeId }),
+        ...(input.employeeId && { employeeId: input.employeeId 
+        }),
         ...(input.status && { status: input.status }),
         ...(input.leaveType && { leaveType: input.leaveType }),
         ...(input.startDate && input.endDate && {
@@ -236,7 +237,7 @@ export const hrmsRouter = createTRPCRouter({
               } 
             },
           },
-          skip,
+          skip: _skip,
           take: input.limit,
           orderBy: { startDate: "desc" },
         }),
@@ -255,7 +256,7 @@ export const hrmsRouter = createTRPCRouter({
       };
     }),
 
-  // Create leave request
+  // Create leave request,
   createLeaveRequest: protectedProcedure
     .input(createLeaveRequestSchema)
     .mutation(async ({ input }) => {
@@ -276,7 +277,7 @@ export const hrmsRouter = createTRPCRouter({
       return { success: true, data: leaveRequest };
     }),
 
-  // Update leave request
+  // Update leave request,
   updateLeaveRequest: protectedProcedure
     .input(z.object({
       id: z.string(),
@@ -305,7 +306,7 @@ export const hrmsRouter = createTRPCRouter({
   // PAYROLL MANAGEMENT
   // ========================================
 
-  // Get payroll records
+  // Get payroll records,
   getPayrollRecords: publicProcedure
     .input(z.object({
       page: z.number().default(1),
@@ -317,7 +318,7 @@ export const hrmsRouter = createTRPCRouter({
       endDate: z.string().optional(),
     }))
     .query(async ({ input }) => {
-      const skip = (input.page - 1) * input.limit;
+      const _skip = (input.page - 1) * input.limit;
 
       const where = {
         ...(input.employeeId && { employeeId: input.employeeId }),
@@ -344,7 +345,7 @@ export const hrmsRouter = createTRPCRouter({
               } 
             },
           },
-          skip,
+          skip: _skip,
           take: input.limit,
           orderBy: { paymentDate: "desc" },
         }),
@@ -363,7 +364,7 @@ export const hrmsRouter = createTRPCRouter({
       };
     }),
 
-  // Create payroll record
+  // Create payroll record,
   createPayrollRecord: protectedProcedure
     .input(createPayrollSchema)
     .mutation(async ({ input }) => {
@@ -391,35 +392,35 @@ export const hrmsRouter = createTRPCRouter({
       return { success: true, data: payrollRecord };
     }),
 
-  // Update payroll record
+  // Update payroll record,
   updatePayrollRecord: protectedProcedure
     .input(z.object({
       id: z.string(),
       data: createPayrollSchema.partial(),
     }))
     .mutation(async ({ input }) => {
-      const updateData = { ...input.data };
+      const _updateData = { ...input.data };
       
       // Convert monetary values to cents if provided
-      if (updateData.baseSalary !== undefined) {
-        updateData.baseSalary = Math.round(updateData.baseSalary * 100);
+      if (_updateData.baseSalary !== undefined) {
+        _updateData.baseSalary = Math.round(_updateData.baseSalary * 100);
       }
-      if (updateData.allowances !== undefined) {
-        updateData.allowances = Math.round(updateData.allowances * 100);
+      if (_updateData.allowances !== undefined) {
+        _updateData.allowances = Math.round(_updateData.allowances * 100);
       }
-      if (updateData.overtimePay !== undefined) {
-        updateData.overtimePay = Math.round(updateData.overtimePay * 100);
+      if (_updateData.overtimePay !== undefined) {
+        _updateData.overtimePay = Math.round(_updateData.overtimePay * 100);
       }
-      if (updateData.deductions !== undefined) {
-        updateData.deductions = Math.round(updateData.deductions * 100);
+      if (_updateData.deductions !== undefined) {
+        _updateData.deductions = Math.round(_updateData.deductions * 100);
       }
-      if (updateData.netSalary !== undefined) {
-        updateData.netSalary = Math.round(updateData.netSalary * 100);
+      if (_updateData.netSalary !== undefined) {
+        _updateData.netSalary = Math.round(_updateData.netSalary * 100);
       }
 
       const payrollRecord = await prisma.payrollRecord.update({
         where: { id: input.id },
-        data: updateData,
+        data: _updateData,
         include: {
           employee: { 
             select: { 
@@ -439,7 +440,7 @@ export const hrmsRouter = createTRPCRouter({
   // DEPARTMENT MANAGEMENT
   // ========================================
 
-  // Get departments
+  // Get departments,
   getDepartments: publicProcedure
     .input(z.object({
       page: z.number().default(1),
@@ -447,7 +448,7 @@ export const hrmsRouter = createTRPCRouter({
       search: z.string().optional(),
     }))
     .query(async ({ input }) => {
-      const skip = (input.page - 1) * input.limit;
+      const _skip = (input.page - 1) * input.limit;
 
       const where = {
         ...(input.search && {
@@ -466,7 +467,7 @@ export const hrmsRouter = createTRPCRouter({
               select: { employees: true },
             },
           },
-          skip,
+          skip: _skip,
           take: input.limit,
           orderBy: { name: "asc" },
         }),
@@ -489,7 +490,7 @@ export const hrmsRouter = createTRPCRouter({
   // DASHBOARD & ANALYTICS
   // ========================================
 
-  // Get HRMS dashboard data
+  // Get HRMS dashboard data,
   getDashboardData: publicProcedure
     .query(async () => {
       const [
@@ -576,7 +577,7 @@ export const hrmsRouter = createTRPCRouter({
       };
     }),
 
-  // Get HRMS analytics
+  // Get HRMS analytics,
   getHRMSAnalytics: publicProcedure
     .input(z.object({
       startDate: z.string(),
@@ -584,13 +585,13 @@ export const hrmsRouter = createTRPCRouter({
       type: z.enum(["HIRES", "LEAVES", "PAYROLL"]).optional(),
     }))
     .query(async ({ input }) => {
-      const startDate = new Date(input.startDate);
-      const endDate = new Date(input.endDate);
+      const _startDate = new Date(input.startDate);
+      const _endDate = new Date(input.endDate);
 
       const where = {
         hireDate: {
-          gte: startDate,
-          lte: endDate,
+          gte: _startDate,
+          lte: _endDate,
         },
       };
 
@@ -602,8 +603,8 @@ export const hrmsRouter = createTRPCRouter({
         prisma.leaveRequest.findMany({
           where: {
             startDate: {
-              gte: startDate,
-              lte: endDate,
+              gte: _startDate,
+              lte: _endDate,
             },
           },
           select: { startDate: true, leaveType: true, status: true },
@@ -611,8 +612,8 @@ export const hrmsRouter = createTRPCRouter({
         prisma.payrollRecord.findMany({
           where: {
             paymentDate: {
-              gte: startDate,
-              lte: endDate,
+              gte: _startDate,
+              lte: _endDate,
             },
           },
           select: { paymentDate: true, netSalary: true, status: true },
@@ -621,28 +622,37 @@ export const hrmsRouter = createTRPCRouter({
 
       // Group by date
       const dailyData = {
-        hires: hires.reduce((acc: Record<string, any>, hire) => {
-          const date = hire.hireDate.toISOString().split('T')[0];
-          if (date) {
-            acc[date] = acc[date] ?? { date, count: 0 };
-            acc[date].count++;
+        hires: hires.reduce((acc: Record<string, unknown>, hire) => {
+          const _date = hire.hireDate.toISOString().split('T')[0];
+          if (_date) {
+            acc[_date] = acc[_date] ?? { date: _date, count: 0 };
+            const record = acc[_date] as Record<string, number>;
+            if (record) {
+              record.count = (record.count ?? 0) + 1;
+            }
           }
           return acc;
         }, {}),
-        leaves: leaves.reduce((acc: Record<string, any>, leave) => {
-          const date = leave.startDate.toISOString().split('T')[0];
-          if (date) {
-            acc[date] = acc[date] ?? { date, ANNUAL_LEAVE: 0, SICK_LEAVE: 0, PERSONAL_LEAVE: 0, MATERNITY_LEAVE: 0, PATERNITY_LEAVE: 0, UNPAID_LEAVE: 0 };
-            (acc[date])[leave.leaveType]++;
+        leaves: leaves.reduce((acc: Record<string, unknown>, leave) => {
+          const _date = leave.startDate.toISOString().split('T')[0];
+          if (_date) {
+            acc[_date] = acc[_date] ?? { date: _date, ANNUAL_LEAVE: 0, SICK_LEAVE: 0, PERSONAL_LEAVE: 0, MATERNITY_LEAVE: 0, PATERNITY_LEAVE: 0, UNPAID_LEAVE: 0 };
+            const record = acc[_date] as Record<string, number>;
+            if (record && leave.leaveType) {
+                record[leave.leaveType as keyof typeof record] = (record[leave.leaveType as keyof typeof record] ?? 0) + 1;
+            }
           }
           return acc;
         }, {}),
-        payroll: payroll.reduce((acc: Record<string, any>, record) => {
-          const date = record.paymentDate?.toISOString().split('T')[0];
-          if (date) {
-            acc[date] = acc[date] ?? { date, totalPay: 0, count: 0 };
-            (acc[date]).totalPay += record.netSalary / 100; // Convert from cents
-            (acc[date]).count++;
+        payroll: payroll.reduce((acc: Record<string, unknown>, record) => {
+          const _date = record.paymentDate?.toISOString().split('T')[0];
+          if (_date) {
+            acc[_date] = acc[_date] ?? { date: _date, totalPay: 0, count: 0 };
+            const recordData = acc[_date] as Record<string, number>;
+            if (recordData) {
+              recordData.totalPay = (recordData.totalPay ?? 0) + (record.netSalary / 100); // Convert from cents
+              recordData.count = (recordData.count ?? 0) + 1;
+            }
           }
           return acc;
         }, {}),

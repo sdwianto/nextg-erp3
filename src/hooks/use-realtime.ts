@@ -58,49 +58,47 @@ export const useRealtime = () => {
       return;
     }
 
+    // Only attempt connection if websocketUrl is valid
+    if (!websocketUrl || websocketUrl === 'undefined' || websocketUrl === 'null') {
+      // WebSocket URL not configured, skipping real-time connection
+      return;
+    }
+
     const newSocket = io(websocketUrl, {
       transports: ['polling', 'websocket'], // Start with polling first
       autoConnect: true,
-      timeout: 10000,
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
+      timeout: 5000, // Reduced timeout
+      reconnection: false, // Disable reconnection to prevent spam
       forceNew: true,
       withCredentials: true
     });
 
     newSocket.on('connect', () => {
-      console.log('WebSocket connected');
       setIsConnected(true);
     });
 
     newSocket.on('disconnect', () => {
-      console.log('WebSocket disconnected');
       setIsConnected(false);
     });
 
-    newSocket.on('connect_error', (error: any) => {
-      console.log('WebSocket connection error:', error);
+    newSocket.on('connect_error', () => {
+      // WebSocket connection failed
       setIsConnected(false);
     });
 
     newSocket.on('dashboard-update', (newData: RealtimeData) => {
-      console.log('Received real-time dashboard update:', newData);
       setData(newData);
     });
 
-    newSocket.on('alert', (alert: any) => {
-      console.log('Received real-time alert:', alert);
+    newSocket.on('alert', () => {
       // Handle real-time alerts
     });
 
-    newSocket.on('equipment-status', (equipmentData: any) => {
-      console.log('Received equipment status update:', equipmentData);
+    newSocket.on('equipment-status', () => {
       // Handle equipment status updates
     });
 
-    newSocket.on('inventory-update', (inventoryData: any) => {
-      console.log('Received inventory update:', inventoryData);
+    newSocket.on('inventory-update', () => {
       // Handle inventory updates
     });
 
@@ -113,7 +111,7 @@ export const useRealtime = () => {
     };
   }, [socket]);
 
-  const emitEvent = (event: string, data: any) => {
+  const emitEvent = (event: string, data: Record<string, unknown>) => {
     if (socket && isConnected) {
       socket.emit(event, data);
     }

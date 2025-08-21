@@ -1,30 +1,15 @@
 import React from 'react';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { Users, Shield, UserPlus, Search, Filter, MoreHorizontal, Edit, Eye, Lock, Calendar, MapPin, Building, User, UserCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { 
-  Users, 
-  Shield, 
-  UserPlus, 
-  Search, 
-  Filter,
-  MoreHorizontal,
-  Edit,
-  Eye,
-  Lock,
-  Calendar,
-  MapPin,
-  Building,
-  User,
-  UserCheck
-} from 'lucide-react';
 
 const UsersPage: React.FC = () => {
   // Empty data arrays - ready for real data
-  const users: any[] = [];
-  const roles: any[] = [];
+  const users: Record<string, unknown>[] = [];
+  const roles: Record<string, unknown>[] = [];
 
   const getStatusColor = (status: string) => {
     return status === 'Active' ? 'bg-green-500' : 'bg-red-500';
@@ -140,47 +125,47 @@ const UsersPage: React.FC = () => {
                 </thead>
                 <tbody>
                   {users.map((user) => (
-                    <tr key={user.id} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800 align-top">
+                    <tr key={user.id as string} className="border-b hover:bg-gray-50 dark:hover:bg-gray-800 align-top">
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center">
                             <span className="text-sm font-medium text-blue-600 dark:text-blue-200">
-                              {user.avatar}
+                              {user.avatar as string}
                             </span>
                           </div>
                           <div>
-                            <div className="font-medium">{user.name}</div>
-                            <div className="text-sm text-muted-foreground">{user.email}</div>
+                            <div className="font-medium">{user.name as string}</div>
+                            <div className="text-sm text-muted-foreground">{user.email as string}</div>
                           </div>
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <Badge className={getRoleColor(user.role)}>
-                          {user.role}
+                        <Badge className={getRoleColor(user.role as string)}>
+                          {user.role as string}
                         </Badge>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
                           <Building className="h-4 w-4 text-muted-foreground" />
-                          {user.department}
+                          {user.department as string}
                         </div>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${getStatusColor(user.status)}`}></div>
-                          {user.status}
+                          <div className={`w-2 h-2 rounded-full ${getStatusColor(user.status as string)}`}></div>
+                          {user.status as string}
                         </div>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
-                          {user.lastLogin}
+                          {user.lastLogin as string}
                         </div>
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
                           <MapPin className="h-4 w-4 text-muted-foreground" />
-                          {user.location}
+                          {user.location as string}
                         </div>
                       </td>
                       <td className="py-3 px-4 text-right">
@@ -213,14 +198,14 @@ const UsersPage: React.FC = () => {
                 {roles.map((role, index) => (
                   <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
                     <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${role.color}`}></div>
+                      <div className={`w-3 h-3 rounded-full ${role.color as string}`}></div>
                       <div>
-                        <div className="font-medium">{role.name}</div>
-                        <div className="text-sm text-muted-foreground">{role.permissions}</div>
+                        <div className="font-medium">{role.name as string}</div>
+                        <div className="text-sm text-muted-foreground">{role.permissions as string}</div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold">{role.users} users</div>
+                      <div className="font-bold">{role.users as string} users</div>
                       <Button variant="ghost" size="sm">
                         <Edit className="h-4 w-4" />
                       </Button>

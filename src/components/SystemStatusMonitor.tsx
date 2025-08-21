@@ -3,15 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { 
-  CheckCircle, 
-  XCircle, 
-  AlertTriangle, 
+import {
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
   RefreshCw, 
   Database, 
   Server, 
   Activity,
-  Wifi,
   WifiOff
 } from 'lucide-react';
 
@@ -45,8 +44,7 @@ const SystemStatusMonitor: React.FC = () => {
       const data = await response.json();
       setSystemStatus(data);
       setLastCheck(new Date());
-    } catch (error) {
-      console.error('Health check failed:', error);
+    } catch {
       setSystemStatus({
         status: 'error',
         timestamp: new Date().toISOString(),
@@ -93,21 +91,7 @@ const SystemStatusMonitor: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'connected':
-      case 'operational':
-      case 'healthy':
-        return 'bg-green-500';
-      case 'disconnected':
-      case 'error':
-        return 'bg-red-500';
-      case 'degraded':
-        return 'bg-yellow-500';
-      default:
-        return 'bg-gray-500';
-    }
-  };
+
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {

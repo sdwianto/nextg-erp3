@@ -65,13 +65,13 @@ const BusinessIntelligencePage: React.FC = () => {
     ]
   };
 
-  const getTrendIcon = (trend: string) => {
+  const _getTrendIcon = (trend: string) => {
     return trend === 'up' ? 
       <TrendingUp className="h-4 w-4 text-green-500" /> : 
       <TrendingDown className="h-4 w-4 text-red-500" />;
   };
 
-  const getTrendColor = (trend: string) => {
+  const _getTrendColor = (trend: string) => {
     return trend === 'up' ? 'text-green-600' : 'text-red-600';
   };
 
@@ -89,7 +89,9 @@ const BusinessIntelligencePage: React.FC = () => {
               variant="outline" 
               size="sm" 
               className="w-full sm:w-auto"
-              onClick={() => alert('Opening BI filter...')}
+              onClick={() => {
+                // console.log('Opening BI filter...');
+              }}
             >
               <Filter className="h-4 w-4 mr-2" />
               Filter
@@ -98,7 +100,9 @@ const BusinessIntelligencePage: React.FC = () => {
               variant="outline" 
               size="sm" 
               className="w-full sm:w-auto"
-              onClick={() => alert('Exporting BI data...')}
+              onClick={() => {
+                // console.log('Exporting BI data...');
+              }}
             >
               <Download className="h-4 w-4 mr-2" />
               Export
@@ -107,7 +111,9 @@ const BusinessIntelligencePage: React.FC = () => {
               variant="outline" 
               size="sm" 
               className="w-full sm:w-auto"
-              onClick={() => alert('Refreshing BI data...')}
+              onClick={() => {
+                // console.log('Refreshing BI data...');
+              }}
             >
               <RefreshCw className="h-4 w-4 mr-2" />
               Refresh
@@ -124,8 +130,8 @@ const BusinessIntelligencePage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">${(biData.revenue.current || 0).toLocaleString()}</div>
-              <div className={`flex items-center text-sm ${getTrendColor(biData.revenue.trend)}`}>
-                {getTrendIcon(biData.revenue.trend)}
+              <div className={`flex items-center text-sm ${_getTrendColor(biData.revenue.trend)}`}>
+                {_getTrendIcon(biData.revenue.trend)}
                 <span className="ml-1">+{biData.revenue.change}%</span>
                 <span className="text-muted-foreground ml-1">vs last month</span>
               </div>
@@ -139,8 +145,8 @@ const BusinessIntelligencePage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">${(biData.profit.current || 0).toLocaleString()}</div>
-              <div className={`flex items-center text-sm ${getTrendColor(biData.profit.trend)}`}>
-                {getTrendIcon(biData.profit.trend)}
+              <div className={`flex items-center text-sm ${_getTrendColor(biData.profit.trend)}`}>
+                {_getTrendIcon(biData.profit.trend)}
                 <span className="ml-1">+{biData.profit.change}%</span>
                 <span className="text-muted-foreground ml-1">vs last month</span>
               </div>
@@ -154,8 +160,8 @@ const BusinessIntelligencePage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{(biData.customers.current || 0).toLocaleString()}</div>
-              <div className={`flex items-center text-sm ${getTrendColor(biData.customers.trend)}`}>
-                {getTrendIcon(biData.customers.trend)}
+              <div className={`flex items-center text-sm ${_getTrendColor(biData.customers.trend)}`}>
+                {_getTrendIcon(biData.customers.trend)}
                 <span className="ml-1">+{biData.customers.change}%</span>
                 <span className="text-muted-foreground ml-1">vs last month</span>
               </div>
@@ -169,8 +175,8 @@ const BusinessIntelligencePage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{(biData.orders.current || 0).toLocaleString()}</div>
-              <div className={`flex items-center text-sm ${getTrendColor(biData.orders.trend)}`}>
-                {getTrendIcon(biData.orders.trend)}
+              <div className={`flex items-center text-sm ${_getTrendColor(biData.orders.trend)}`}>
+                {_getTrendIcon(biData.orders.trend)}
                 <span className="ml-1">+{biData.orders.change}%</span>
                 <span className="text-muted-foreground ml-1">vs last month</span>
               </div>

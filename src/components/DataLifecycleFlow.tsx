@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+//src/components/DataLifecycleFlow.tsx
+
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import React, { useState } from 'react';
 import { api } from '@/utils/api';
 import {
-  ShoppingCart, Package, Wrench, Building, Truck, ArrowRight, Eye, Settings, RefreshCw, AlertTriangle, CheckCircle, Clock, DollarSign, Users, Calendar, TrendingUp, Database, Zap
+  ShoppingCart, Package, Wrench, Building, Truck, CheckCircle, Zap, Clock, AlertTriangle,
+  ArrowRight, Eye, Settings, RefreshCw, Database, TrendingUp
 } from 'lucide-react';
 
 interface LifecycleStep {
@@ -14,7 +17,7 @@ interface LifecycleStep {
   module: string;
   icon: React.ReactNode;
   status: 'completed' | 'active' | 'pending' | 'error';
-  data: any;
+  data: unknown;
   metrics: {
     records: number;
     efficiency: number;
@@ -24,7 +27,7 @@ interface LifecycleStep {
 
 const DataLifecycleFlow: React.FC = () => {
   const [selectedStep, setSelectedStep] = useState<string | null>(null);
-  const [selectedEntity, setSelectedEntity] = useState('EQ001');
+  const [selectedEntity] = useState('EQ001');
 
   // API Queries
   const { data: integratedData } = api.integration.getIntegratedData.useQuery({
@@ -40,7 +43,7 @@ const DataLifecycleFlow: React.FC = () => {
       module: 'procurement',
       icon: <ShoppingCart className="h-6 w-6" />,
       status: 'completed',
-      data: integratedData?.data?.procurement || {},
+             data: (integratedData?.data as Record<string, unknown>)?.procurement || {},
       metrics: {
         records: 45,
         efficiency: 94.2,
@@ -53,7 +56,7 @@ const DataLifecycleFlow: React.FC = () => {
       module: 'inventory',
       icon: <Package className="h-6 w-6" />,
       status: 'active',
-      data: integratedData?.data?.inventory || {},
+             data: (integratedData?.data as Record<string, unknown>)?.inventory || {},
       metrics: {
         records: 120,
         efficiency: 96.8,
@@ -66,7 +69,7 @@ const DataLifecycleFlow: React.FC = () => {
       module: 'maintenance',
       icon: <Wrench className="h-6 w-6" />,
       status: 'active',
-      data: integratedData?.data?.maintenance || {},
+             data: (integratedData?.data as Record<string, unknown>)?.maintenance || {},
       metrics: {
         records: 35,
         efficiency: 91.5,
@@ -79,7 +82,7 @@ const DataLifecycleFlow: React.FC = () => {
       module: 'asset',
       icon: <Building className="h-6 w-6" />,
       status: 'active',
-      data: integratedData?.data?.asset || {},
+             data: (integratedData?.data as Record<string, unknown>)?.asset || {},
       metrics: {
         records: 28,
         efficiency: 98.1,
@@ -92,7 +95,7 @@ const DataLifecycleFlow: React.FC = () => {
       module: 'rental',
       icon: <Truck className="h-6 w-6" />,
       status: 'active',
-      data: integratedData?.data?.rental || {},
+             data: (integratedData?.data as Record<string, unknown>)?.rental || {},
       metrics: {
         records: 18,
         efficiency: 89.7,
@@ -129,6 +132,46 @@ const DataLifecycleFlow: React.FC = () => {
     }).format(amount);
   };
 
+  const safeArrayLength = (data: unknown, key: string): number => {
+    if (data && typeof data === 'object' && key in data) {
+      const value = (data as Record<string, unknown>)[key];
+      return Array.isArray(value) ? value.length : 0;
+    }
+    return 0;
+  };
+
+  // eslint-disable-next-line no-unused-vars
+  const safeArrayMap = (data: unknown, key: string, callback: (_item: unknown, _index: number) => React.ReactNode): React.ReactNode => {
+    if (data && typeof data === 'object' && key in data) {
+      const value = (data as Record<string, unknown>)[key];
+      return Array.isArray(value) ? value.map(callback) : null; 
+    }
+    return null;
+  };
+
+  const safeGet = (data: unknown, key: string): unknown => {
+    if (data && typeof data === 'object' && key in data) {
+      return (data as Record<string, unknown>)[key];
+    }
+    return null;
+  };
+
+  const safeGetNested = (data: unknown, key1: string, key2: string): unknown => {
+    const nested = safeGet(data, key1);
+    if (nested && typeof nested === 'object' && key2 in nested) {
+      return (nested as Record<string, unknown>)[key2];
+    }
+    return null;
+  };
+
+  const safeGetArrayIndex = (data: unknown, key: string, index: number): unknown => {
+    const array = safeGet(data, key);
+    if (Array.isArray(array) && array[index]) {
+      return array[index];
+    }
+    return null;
+  };
+
   const renderStepDetails = (step: LifecycleStep) => {
     switch (step.module) {
       case 'procurement':
@@ -137,28 +180,28 @@ const DataLifecycleFlow: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-3 bg-blue-50 rounded-lg">
                 <div className="text-lg font-bold text-blue-600">
-                  {step.data.purchaseOrders?.length || 0}
+                  {safeArrayLength(step.data, 'purchaseOrders')}
                 </div>
                 <div className="text-sm text-blue-600">Purchase Orders</div>
               </div>
               <div className="text-center p-3 bg-green-50 rounded-lg">
                 <div className="text-lg font-bold text-green-600">
-                  {step.data.requisitions?.length || 0}
+                  {safeArrayLength(step.data, 'requisitions')}
                 </div>
                 <div className="text-sm text-green-600">Requisitions</div>
               </div>
             </div>
-            {step.data.purchaseOrders?.map((po: any, index: number) => (
-              <div key={index} className="p-3 border rounded-lg">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">{po.poId}</span>
-                  <Badge variant="secondary">{po.status}</Badge>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {po.supplierName} - {formatCurrency(po.totalAmount)}
-                </div>
-              </div>
-            ))}
+                {safeArrayMap(step.data, 'purchaseOrders', (_po: unknown, index: number) => (
+               <div key={index} className="p-3 border rounded-lg">
+                 <div className="flex justify-between items-center">
+                  <span className="font-medium">{((_po as Record<string, unknown>).poId as string)}</span>
+                   <Badge variant="secondary">{((_po as Record<string, unknown>).status as string)}</Badge>
+                 </div>
+                 <div className="text-sm text-muted-foreground">
+                   {((_po as Record<string, unknown>).supplierName as string)} - {formatCurrency(((_po as Record<string, unknown>).totalAmount as number))}
+                 </div>
+               </div>
+             ))}
           </div>
         );
 
@@ -168,28 +211,28 @@ const DataLifecycleFlow: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-3 bg-blue-50 rounded-lg">
                 <div className="text-lg font-bold text-blue-600">
-                  {step.data.stockLevels?.length || 0}
+                                     {safeArrayLength(step.data, 'stockLevels')}
                 </div>
                 <div className="text-sm text-blue-600">Stock Items</div>
               </div>
               <div className="text-center p-3 bg-green-50 rounded-lg">
                 <div className="text-lg font-bold text-green-600">
-                  {step.data.transactions?.length || 0}
+                                     {safeArrayLength(step.data, 'transactions')}
                 </div>
                 <div className="text-sm text-green-600">Transactions</div>
               </div>
             </div>
-            {step.data.stockLevels?.map((stock: any, index: number) => (
-              <div key={index} className="p-3 border rounded-lg">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">{stock.itemDescription}</span>
-                  <Badge variant="secondary">{stock.quantityOnHand} units</Badge>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Location: {stock.location} | Reorder: {stock.reorderPoint}
-                </div>
-              </div>
-            ))}
+                         {safeArrayMap(step.data, 'stockLevels', (_stock: unknown, index: number) => (
+               <div key={index} className="p-3 border rounded-lg">
+                 <div className="flex justify-between items-center">
+                   <span className="font-medium">{((_stock as Record<string, unknown>).itemDescription as string)}</span>
+                   <Badge variant="secondary">{((_stock as Record<string, unknown>).quantityOnHand as number)} units</Badge>
+                 </div>
+                 <div className="text-sm text-muted-foreground">
+                   Location: {((_stock as Record<string, unknown>).location as string)} | Reorder: {((_stock as Record<string, unknown>).reorderPoint as number)}
+                 </div>
+               </div>
+             ))}
           </div>
         );
 
@@ -199,28 +242,28 @@ const DataLifecycleFlow: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-3 bg-blue-50 rounded-lg">
                 <div className="text-lg font-bold text-blue-600">
-                  {step.data.workOrders?.length || 0}
+                                     {safeArrayLength(step.data, 'workOrders')}
                 </div>
                 <div className="text-sm text-blue-600">Work Orders</div>
               </div>
               <div className="text-center p-3 bg-green-50 rounded-lg">
                 <div className="text-lg font-bold text-green-600">
-                  {step.data.maintenanceHistory?.length || 0}
+                                     {safeArrayLength(step.data, 'maintenanceHistory')}
                 </div>
                 <div className="text-sm text-green-600">History Records</div>
               </div>
             </div>
-            {step.data.workOrders?.map((wo: any, index: number) => (
-              <div key={index} className="p-3 border rounded-lg">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">{wo.workOrderId}</span>
-                  <Badge variant="secondary">{wo.status}</Badge>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {wo.workOrderType} - {formatCurrency(wo.estimatedCost)}
-                </div>
-              </div>
-            ))}
+                                                   {safeArrayMap(step.data, 'workOrders', (wo: unknown, index: number) => (
+               <div key={index} className="p-3 border rounded-lg">
+                 <div className="flex justify-between items-center">
+                   <span className="font-medium">{(wo as Record<string, unknown>).workOrderId as string}</span>
+                   <Badge variant="secondary">{(wo as Record<string, unknown>).status as string}</Badge>
+                 </div>
+                 <div className="text-sm text-muted-foreground">
+                   {(wo as Record<string, unknown>).workOrderType as string} - {formatCurrency((wo as Record<string, unknown>).estimatedCost as number)}
+                 </div>
+               </div>
+             ))}
           </div>
         );
 
@@ -230,35 +273,17 @@ const DataLifecycleFlow: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-3 bg-blue-50 rounded-lg">
                 <div className="text-lg font-bold text-blue-600">
-                  {step.data.equipmentDetails?.equipmentId || 'N/A'}
+                                     {(safeGetNested(step.data, 'equipmentDetails', 'equipmentId') as string) || 'N/A'}
                 </div>
                 <div className="text-sm text-blue-600">Equipment ID</div>
               </div>
               <div className="text-center p-3 bg-green-50 rounded-lg">
                 <div className="text-lg font-bold text-green-600">
-                  {formatCurrency(step.data.equipmentDetails?.currentValue || 0)}
+                                     {formatCurrency((safeGetNested(step.data, 'equipmentDetails', 'currentValue') as number) || 0)}
                 </div>
                 <div className="text-sm text-green-600">Current Value</div>
               </div>
-            </div>
-            {step.data.equipmentDetails && (
-              <div className="p-3 border rounded-lg">
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span className="text-sm font-medium">Model:</span>
-                    <span className="text-sm">{step.data.equipmentDetails.model}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm font-medium">Location:</span>
-                    <span className="text-sm">{step.data.equipmentDetails.currentLocation}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-sm font-medium">Book Value:</span>
-                    <span className="text-sm">{formatCurrency(step.data.equipmentDetails.bookValue || 0)}</span>
-                  </div>
-                </div>
-              </div>
-            )}
+            </div>         
           </div>
         );
 
@@ -268,31 +293,31 @@ const DataLifecycleFlow: React.FC = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="text-center p-3 bg-blue-50 rounded-lg">
                 <div className="text-lg font-bold text-blue-600">
-                  {step.data.rentalContracts?.length || 0}
+                                     {safeArrayLength(step.data, 'rentalContracts')}
                 </div>
                 <div className="text-sm text-blue-600">Active Contracts</div>
               </div>
               <div className="text-center p-3 bg-green-50 rounded-lg">
                 <div className="text-lg font-bold text-green-600">
-                  {formatCurrency(step.data.rentalContracts?.[0]?.revenue || 0)}
+                                     {formatCurrency((safeGetArrayIndex(step.data, 'rentalContracts', 0) as Record<string, unknown>)?.revenue as number || 0)}
                 </div>
                 <div className="text-sm text-green-600">Total Revenue</div>
               </div>
             </div>
-            {step.data.rentalContracts?.map((rental: any, index: number) => (
-              <div key={index} className="p-3 border rounded-lg">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">{rental.rentalId}</span>
-                  <Badge variant="secondary">{rental.billingStatus}</Badge>
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {rental.customerName} - {rental.hoursUsed} hours
-                </div>
-                <div className="text-sm text-blue-600">
-                  {formatCurrency(rental.totalAmount)}
-                </div>
-              </div>
-            ))}
+                                                   {safeArrayMap(step.data, 'rentalContracts', (rental: unknown, index: number) => (
+               <div key={index} className="p-3 border rounded-lg">
+                 <div className="flex justify-between items-center">
+                   <span className="font-medium">{(rental as Record<string, unknown>).rentalId as string}</span>
+                   <Badge variant="secondary">{(rental as Record<string, unknown>).billingStatus as string}</Badge>
+                 </div>
+                 <div className="text-sm text-muted-foreground">
+                   {(rental as Record<string, unknown>).customerName as string} - {(rental as Record<string, unknown>).hoursUsed as number} hours
+                 </div>
+                 <div className="text-sm text-blue-600">
+                   {formatCurrency((rental as Record<string, unknown>).totalAmount as number)}
+                 </div>
+               </div>
+             ))}
           </div>
         );
 

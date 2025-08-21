@@ -1,48 +1,107 @@
-import { FlatCompat } from "@eslint/eslintrc";
-import tseslint from "typescript-eslint";
+import js from '@eslint/js';
+import tseslint from '@typescript-eslint/eslint-plugin';
+import tsparser from '@typescript-eslint/parser';
+import reactHooks from 'eslint-plugin-react-hooks';
+import globals from 'globals';
 
-const compat = new FlatCompat({
-  baseDirectory: import.meta.dirname,
-});
+const isDevelopment = process.env.NODE_ENV === 'development';
 
-export default tseslint.config(
+export default [
   {
-    ignores: [".next"],
-  },
-  ...compat.extends("next/core-web-vitals"),
-  {
-    files: ["**/*.ts", "**/*.tsx"],
-    extends: [
-      ...tseslint.configs.recommended,
-      ...tseslint.configs.recommendedTypeChecked,
-      ...tseslint.configs.stylisticTypeChecked,
-    ],
-    rules: {
-      "@typescript-eslint/array-type": "off",
-      "@typescript-eslint/consistent-type-definitions": "off",
-      "@typescript-eslint/consistent-type-imports": [
-        "warn",
-        { prefer: "type-imports", fixStyle: "inline-type-imports" },
-      ],
-      "@typescript-eslint/no-unused-vars": [
-        "warn",
-        { argsIgnorePattern: "^_" },
-      ],
-      "@typescript-eslint/require-await": "off",
-      "@typescript-eslint/no-misused-promises": [
-        "error",
-        { checksVoidReturn: { attributes: false } },
-      ],
-    },
-  },
-  {
-    linterOptions: {
-      reportUnusedDisableDirectives: true,
-    },
+    files: ['**/*.{js,jsx,ts,tsx}'],
     languageOptions: {
+      ecmaVersion: 2020,
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+      parser: tsparser,
       parserOptions: {
-        projectService: true,
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+        ecmaFeatures: {
+          jsx: true,
+        },
       },
     },
+    plugins: {
+      '@typescript-eslint': tseslint,
+      'react-hooks': reactHooks,
+    },
+    rules: {
+      // Base rules
+      ...js.configs.recommended.rules,
+      
+      // TypeScript rules (basic, no type checking required)
+      '@typescript-eslint/no-unused-vars': 'warn',
+      '@typescript-eslint/no-explicit-any': isDevelopment ? 'warn' : 'error',
+      '@typescript-eslint/no-var-requires': 'error',
+      '@typescript-eslint/consistent-type-imports': [
+        'error',
+        { prefer: 'type-imports' },
+      ],
+      
+      // React rules
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn',
+      
+      // Development-friendly rules (no type checking required)
+      ...(isDevelopment && {
+        // Basic rules that don't require type information
+        '@typescript-eslint/no-unused-vars': 'warn',
+        '@typescript-eslint/no-explicit-any': 'warn',
+        'no-console': 'warn',
+      }),
+      
+      // Production rules (stricter)
+      ...(!isDevelopment && {
+        '@typescript-eslint/no-explicit-any': 'error',
+        '@typescript-eslint/no-unused-vars': 'error',
+        'no-console': 'error',
+      }),
+      
+      // Code quality rules
+      'prefer-const': 'error',
+      'no-var': 'error',
+      'no-debugger': 'error',
+      'no-alert': 'error',
+      
+      // Import rules
+      'import/no-unresolved': 'off', // Handled by TypeScript
+      'import/named': 'off', // Handled by TypeScript
+      'import/default': 'off', // Handled by TypeScript
+      'import/namespace': 'off', // Handled by TypeScript
+    },
   },
-);
+  {
+    files: ['**/*.config.{js,ts}', '**/scripts/**/*.{js,ts}'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
+    rules: {
+      '@typescript-eslint/no-var-requires': 'off',
+      'no-console': 'off',
+    },
+  },
+  {
+    files: ['**/*.test.{js,jsx,ts,tsx}', '**/*.spec.{js,jsx,ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      'no-console': 'off',
+    },
+  },
+  {
+    ignores: [
+      'node_modules/**',
+      '.next/**',
+      'out/**',
+      'dist/**',
+      'build/**',
+      'coverage/**',
+      '*.config.js',
+      '*.config.ts',
+    ],
+  },
+];

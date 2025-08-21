@@ -1,33 +1,22 @@
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import React from 'react';
+
+import { api } from '@/utils/api';
+import { useRouter } from 'next/router';
+import { useRealtime } from '@/hooks/use-realtime';
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
 import { DashboardRealTime } from '@/components/DashboardRealTime';
-import { MaintenanceCard } from '@/components/MaintenanceCard';
-import { MaintenanceAlerts } from '@/components/MaintenanceAlerts';
 import { RentalMaintenanceDashboard } from '@/components/RentalMaintenanceDashboard';
 import { AssetLifecycleDashboard } from '@/components/AssetLifecycleDashboard';
 import { EquipmentGPSMap } from '@/components/EquipmentGPSMap';
 import { SafetyCompliance } from '@/components/SafetyCompliance';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { MaintenanceCard } from '@/components/MaintenanceCard';
+import { MaintenanceAlerts } from '@/components/MaintenanceAlerts';
+
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { useRouter } from 'next/router';
-import { api } from '@/utils/api';
-import { useRealtime } from '@/hooks/use-realtime';
-import { 
-  Package, 
-  Truck, 
-  DollarSign, 
-  Users, 
-  Wrench, 
-  Building2,
-  TrendingUp,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Plus,
-  BarChart3,
-  ShoppingCart
-} from 'lucide-react';
+import { AlertTriangle, CheckCircle, Clock, Building2, Package, Truck, DollarSign, Users, BarChart3, TrendingUp, Wrench, ShoppingCart } from 'lucide-react';
+
 
 const DashboardPage: React.FC = () => {
   const router = useRouter();
@@ -81,15 +70,14 @@ const DashboardPage: React.FC = () => {
   React.useEffect(() => {
     if (rentalData.data && operationsData.data && inventoryData.data && financeData.data && hrData.data) {
       // Calculate real metrics from actual data
-      const inventoryTotal = inventoryData.data.pagination?.total || 0;
-      const inventoryProducts = inventoryData.data || [];
-      const lowStockCount = 0;
-      const outOfStockCount = 0;
-      const inventoryValue = 0;
+      const _inventoryTotal = inventoryData.data.pagination?.total || 0;
+      const _lowStockCount = 0;
+      const _outOfStockCount = 0;
+      const _inventoryValue = 0;
 
-      const rentalRevenue = 0;
-      const financeRevenue = 0;
-      const totalRevenue = rentalRevenue + financeRevenue;
+      const _rentalRevenue = 0;
+      const _financeRevenue = 0;
+      const _totalRevenue = _rentalRevenue + _financeRevenue;
 
       // Use real-time data if available, otherwise use calculated data
       const finalStats = realtimeData ? {
@@ -100,22 +88,22 @@ const DashboardPage: React.FC = () => {
         maintenance: realtimeData.maintenance
       } : {
         inventory: {
-          totalItems: inventoryTotal,
-          lowStock: lowStockCount,
-          outOfStock: outOfStockCount,
-          value: inventoryValue
+          totalItems: _inventoryTotal,
+          lowStock: _lowStockCount,
+          outOfStock: _outOfStockCount,
+          value: _inventoryValue
         },
         rental: {
           activeRentals: rentalData.data?.summary?.inUseEquipment || 0,
           pendingReturns: rentalData.data?.summary?.pendingMaintenanceRecords || 0,
           maintenanceDue: rentalData.data?.summary?.pendingMaintenanceRecords || 0,
-          revenue: rentalRevenue
+          revenue: _rentalRevenue
         },
         finance: {
-          monthlyRevenue: totalRevenue,
+          monthlyRevenue: _totalRevenue,
           pendingPayments: 0,
           expenses: 0,
-          profit: totalRevenue
+          profit: _totalRevenue
         },
         hr: {
           totalEmployees: hrData.data?.data?.totalEmployees || 0,
@@ -136,10 +124,10 @@ const DashboardPage: React.FC = () => {
       setStats(finalStats);
       setLoading(false);
     }
-  }, [rentalData.data, operationsData.data, inventoryData.data, financeData.data, hrData.data]);
+  }, [rentalData.data, operationsData.data, inventoryData.data, financeData.data, hrData.data, realtimeData]);
 
-  const maintenanceAlerts: any[] = [];
-  const recentActivities: any[] = [];
+  const maintenanceAlerts: Array<{id: number; equipmentName: string; equipmentCode: string; alertType: 'OVERDUE' | 'EMERGENCY' | 'SCHEDULED' | 'INSPECTION'; message: string; priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'; daysOverdue?: number; scheduledDate?: string}> = [];
+  const recentActivities: Array<{id: string; status: string; message: string; time: string; type: string}> = [];
 
   const getStatusIcon = (status: string) => {
     switch (status) {

@@ -1,23 +1,22 @@
+import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "../trpc";
-import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
+import { prisma } from "@/server/db";
 
 export const biRouter = createTRPCRouter({
   // ========================================
   // BUSINESS INTELLIGENCE & ANALYTICS
   // ========================================
 
-  // Get overall business metrics
+  // Get overall business metrics,
   getBusinessMetrics: publicProcedure
     .input(z.object({
       startDate: z.string(),
       endDate: z.string(),
     }))
     .query(async ({ input }) => {
-      const startDate = new Date(input.startDate);
-      const endDate = new Date(input.endDate);
+      const _startDate = new Date(input.startDate);
+        const _endDate = new Date(input.endDate);
 
       const [
         transactions,
@@ -28,12 +27,12 @@ export const biRouter = createTRPCRouter({
       ] = await Promise.all([
         prisma.financialTransaction.findMany({
           where: {
-            transactionDate: { gte: startDate, lte: endDate },
+            transactionDate: { gte: _startDate, lte: _endDate },
           },
         }),
         prisma.order.findMany({
           where: {
-            createdAt: { gte: startDate, lte: endDate },
+            createdAt: { gte: _startDate, lte: _endDate },
           },
           include: { orderItems: true },
         }),
@@ -69,13 +68,13 @@ export const biRouter = createTRPCRouter({
         },
       };
 
-      // Calculate financial metrics
-      transactions.forEach(transaction => {
-        const amount = transaction.amount / 100;
+      // Calculate financial metrics,
+  transactions.forEach(transaction => {
+        const _amount = transaction.amount / 100;
         if (['SALE', 'RENTAL_INCOME', 'OTHER_INCOME'].includes(transaction.transactionType)) {
-          metrics.financial.totalRevenue += amount;
+          metrics.financial.totalRevenue += _amount;
         } else {
-          metrics.financial.totalExpenses += amount;
+          metrics.financial.totalExpenses += _amount;
         }
       });
 
@@ -85,30 +84,31 @@ export const biRouter = createTRPCRouter({
       metrics.financial.averageTransactionValue = transactions.length > 0 ? 
         (metrics.financial.totalRevenue + metrics.financial.totalExpenses) / transactions.length : 0;
 
-      // Calculate sales metrics
-      orders.forEach(order => {
+      // Calculate sales metrics,
+  orders.forEach(order => {
         const orderTotal = order.orderItems.reduce((sum, item) => 
-          sum + (item.quantity * (item.unitPrice || 0)), 0);
+          sum + (item.quantity * (item.unitPrice ?? 0)), 0);
         metrics.sales.totalSalesValue += orderTotal;
       });
 
       metrics.sales.averageOrderValue = orders.length > 0 ? 
         metrics.sales.totalSalesValue / orders.length : 0;
 
-      // Calculate operations metrics
-      const _availableEquipment = equipment.filter(e => e.status === 'AVAILABLE').length;
-      const inUseEquipment = equipment.filter(e => e.status === 'IN_USE').length;
+      // Calculate operations metrics,
+  // const _availableEquipment = equipment.filter(e => e.status === 'AVAILABLE').length;
+      const _inUseEquipment = equipment.filter(e => e.status === 'IN_USE').length;
       metrics.operations.equipmentUtilization = equipment.length > 0 ? 
-        (inUseEquipment / equipment.length) * 100 : 0;
+        (_inUseEquipment / equipment.length) * 100 : 0;
       metrics.operations.activeEmployees = employees.filter(e => e.employmentStatus === 'ACTIVE').length;
 
       return {
         success: true,
         data: metrics,
       };
-    }),
 
-  // Get revenue analytics
+  }),
+
+  // Get revenue analytics,
   getRevenueAnalytics: publicProcedure
     .input(z.object({
       startDate: z.string(),
@@ -116,22 +116,22 @@ export const biRouter = createTRPCRouter({
       groupBy: z.enum(["day", "week", "month"]).default("month"),
     }))
     .query(async ({ input }) => {
-      const startDate = new Date(input.startDate);
-      const endDate = new Date(input.endDate);
+      const _startDate = new Date(input.startDate);
+      const _endDate = new Date(input.endDate);
 
       const transactions = await prisma.financialTransaction.findMany({
         where: {
-          transactionDate: { gte: startDate, lte: endDate },
+          transactionDate: { gte: _startDate, lte: _endDate },
           transactionType: { in: ['SALE', 'RENTAL_INCOME', 'OTHER_INCOME'] },
         },
         orderBy: { transactionDate: 'asc' },
       });
 
       const revenueData = transactions.reduce((acc: Record<string, number>, transaction) => {
-        const date = transaction.transactionDate.toISOString().split('T')[0];
-        if (date) {
-          const amount = transaction.amount / 100;
-          acc[date] = (acc[date] ?? 0) + amount;
+        const _date = transaction.transactionDate.toISOString().split('T')[0];
+        if (_date) {
+          const _amount = transaction.amount / 100;
+          acc[_date] = (acc[_date] ?? 0) + _amount;
         }
         return acc;
       }, {});
@@ -148,9 +148,10 @@ export const biRouter = createTRPCRouter({
             Object.values(revenueData).reduce((sum, amount) => sum + amount, 0) / Object.values(revenueData).length : 0,
         },
       };
-    }),
+    
+  }),
 
-  // Get customer analytics
+  // Get customer analytics,
   getCustomerAnalytics: publicProcedure
     .query(async () => {
       const customers = await prisma.customer.findMany({
@@ -183,14 +184,14 @@ export const biRouter = createTRPCRouter({
       customers.forEach(customer => {
         if (customer.status === 'ACTIVE') analytics.activeCustomers++;
         
-        const customerType = customer.type?.toLowerCase() || 'individual';
-        if (customerType in analytics.customerSegments) {
-          analytics.customerSegments[customerType as keyof typeof analytics.customerSegments]++;
+        const _customerType = customer.type?.toLowerCase() || 'individual';
+        if (_customerType in analytics.customerSegments) {
+          analytics.customerSegments[_customerType as keyof typeof analytics.customerSegments]++;
         }
 
         const totalSpent = customer.orders.reduce((sum, order) => 
           sum + order.orderItems.reduce((orderSum, item) => 
-            orderSum + (item.quantity * (item.unitPrice || 0)), 0), 0);
+            orderSum + (item.quantity * (item.unitPrice ?? 0)), 0), 0);
 
         if (totalSpent > 0) {
           analytics.topCustomers.push({
@@ -211,7 +212,7 @@ export const biRouter = createTRPCRouter({
       };
     }),
 
-  // Get equipment analytics
+  // Get equipment analytics,
   getEquipmentAnalytics: publicProcedure
     .query(async () => {
       const equipment = await prisma.equipment.findMany({
@@ -250,25 +251,25 @@ export const biRouter = createTRPCRouter({
        };
 
       equipment.forEach(item => {
-        // Status breakdown
-        const status = item.status?.toLowerCase() ?? 'available';
-        if (status in analytics.equipmentByStatus) {
-          analytics.equipmentByStatus[status as keyof typeof analytics.equipmentByStatus]++;
+        // Status breakdown,
+  const _status = item.status?.toLowerCase() ?? 'available';
+        if (_status in analytics.equipmentByStatus) {
+          analytics.equipmentByStatus[_status as keyof typeof analytics.equipmentByStatus]++;
         }
 
-        // Type breakdown
-        const type = item.type ?? 'Unknown';
-        analytics.equipmentByType[type] = (analytics.equipmentByType[type] ?? 0) + 1;
+        // Type breakdown,
+  const _type = item.type ?? 'Unknown';
+        analytics.equipmentByType[_type] = (analytics.equipmentByType[_type] ?? 0) + 1;
 
-                 // Financial metrics
-         analytics.financialMetrics.totalValue += item.purchasePrice ?? 0;
-         analytics.financialMetrics.maintenanceCosts += item.maintenanceRecords.reduce((sum, _record) => 
-           sum + 0, 0); // TODO: Add cost field to maintenance records
-         analytics.financialMetrics.rentalIncome += item.rentalOrders.reduce((sum, order) => 
+                 // Financial metrics,
+  analytics.financialMetrics.totalValue += item.purchasePrice ?? 0;
+         analytics.financialMetrics.maintenanceCosts += item.maintenanceRecords.reduce((sum) => 
+           sum + 0, 0); // TODO: Add cost field to maintenance records,
+  analytics.financialMetrics.rentalIncome += item.rentalOrders.reduce((sum, order) => 
            sum + (order.dailyRate ?? 0), 0); // TODO: Calculate total amount from daily rate and duration
 
-        // Maintenance metrics
-        analytics.maintenanceMetrics.totalMaintenanceRecords += item.maintenanceRecords.length;
+        // Maintenance metrics,
+  analytics.maintenanceMetrics.totalMaintenanceRecords += item.maintenanceRecords.length;
         item.maintenanceRecords.forEach(record => {
           if (record.maintenanceType === 'PREVENTIVE') {
             analytics.maintenanceMetrics.preventiveMaintenance++;
@@ -288,10 +289,10 @@ export const biRouter = createTRPCRouter({
       };
     }),
 
-  // Get predictive analytics
+  // Get predictive analytics,
   getPredictiveAnalytics: publicProcedure
     .query(async () => {
-      // This would typically use ML models, but for now we'll provide basic forecasting
+      // This would typically use ML models, but for now we'll provide basic forecasting,
       const predictions = {
         revenueForecast: {
           nextMonth: 0,

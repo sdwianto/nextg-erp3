@@ -1,34 +1,31 @@
 import React, { useState, useMemo } from 'react';
+
 import { DashboardLayout } from '@/components/layouts/DashboardLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { api } from '@/utils/api';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { 
-  Users,
-  Phone,
-  Mail,
-  DollarSign,
-  TrendingUp,
+  TrendingUp,   
+  MessageSquare,
+  Plus,
+  UserPlus,
   CheckCircle,
-  Calendar,
+  Users,
+  DollarSign,
+  Target,
   Search,
   Filter,
-  Plus,
-  MessageSquare,
-  Target,
-  UserPlus,
-  Activity,
   X,
-  Eye,
-  Edit,
-  Clock,
-  FileText,
-  BarChart3
+  Mail,
+  Phone,
+  Calendar,
+  Activity,
 } from 'lucide-react';
 
 interface Customer {
@@ -47,21 +44,7 @@ interface Customer {
   createdAt: string;
 }
 
-interface CustomerContact {
-  id: string;
-  customerId: string;
-  userId: string;
-  contactType: string;
-  contactDate: string;
-  summary: string;
-  details?: string;
-  followUpDate?: string;
-  status: string;
-  user?: {
-    firstName: string;
-    lastName: string;
-  };
-}
+
 
 interface FilterState {
   search: string;
@@ -70,6 +53,28 @@ interface FilterState {
   source: string;
   stage: string;
 }
+
+type Lead = {
+  name: string;
+  email?: string | null;
+  phone?: string | null;
+  source?: string;
+  status?: string;
+  value?: number;
+  assignedTo?: string;
+  contactPerson?: string;
+  nextAction?: string;
+};
+
+type Opportunity = {
+  title?: string;
+  customerName?: string;
+  status?: string;
+  value?: number;
+  probability?: number;
+  assignedTo?: string;
+  expectedClose?: string;
+};
 
 const CRMPage: React.FC = () => {
   // Filter state
@@ -97,8 +102,8 @@ const CRMPage: React.FC = () => {
   const [isCallLogsDialogOpen, setIsCallLogsDialogOpen] = useState(false);
   const [isFollowUpScheduleDialogOpen, setIsFollowUpScheduleDialogOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
-  const [selectedLead, setSelectedLead] = useState<any | null>(null);
-  const [selectedOpportunity, setSelectedOpportunity] = useState<any | null>(null);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [selectedOpportunity, setSelectedOpportunity] = useState<Opportunity | null>(null);
 
   // tRPC API calls
   const { data: dashboardData, isLoading: dashboardLoading } = api.crm.getDashboardData.useQuery();
@@ -106,7 +111,7 @@ const CRMPage: React.FC = () => {
     page: 1,
     limit: 50,
     search: filters.search || undefined,
-    status: filters.status !== 'all' ? filters.status as any : undefined,
+    status: filters.status !== 'all' ? filters.status as unknown as 'ACTIVE' | 'INACTIVE' | 'PROSPECT' | 'LEAD' : undefined,
     industry: filters.type !== 'all' ? filters.type : undefined,
   });
 
@@ -141,7 +146,7 @@ const CRMPage: React.FC = () => {
     return customersData?.data || [];
   }, [customersData]);
 
-  // Loading states
+  // Loading states - digunakan untuk conditional rendering
   const isLoading = dashboardLoading || customersLoading;
 
   // Get unique values for filter options
@@ -151,16 +156,6 @@ const CRMPage: React.FC = () => {
   );
 
   const statuses = useMemo(() => 
-    Array.from(new Set(customers.map(item => item.status))), 
-    [customers]
-  );
-
-  const sources = useMemo(() => 
-    Array.from(new Set(customers.map(item => item.status))), 
-    [customers]
-  );
-
-  const stages = useMemo(() => 
     Array.from(new Set(customers.map(item => item.status))), 
     [customers]
   );
@@ -243,7 +238,7 @@ const CRMPage: React.FC = () => {
   // Add new customer
   const addNewCustomer = () => {
     // This would be handled by tRPC mutation in a real implementation
-    console.log('Adding new customer:', newCustomer);
+    // // console.log('Adding new customer:', newCustomer);
     
     setNewCustomer({
       customerNumber: '',
@@ -264,7 +259,7 @@ const CRMPage: React.FC = () => {
   // Update customer
   const updateCustomer = () => {
     // This would be handled by tRPC mutation in a real implementation
-    console.log('Updating customer:', editCustomer);
+    // // console.log('Updating customer:', editCustomer);
     
     setEditCustomer({
       customerNumber: '',
@@ -285,7 +280,7 @@ const CRMPage: React.FC = () => {
   // Add new lead
   const addNewLead = () => {
     // This would be handled by tRPC mutation in a real implementation
-    console.log('Adding new lead:', newLead);
+    // // console.log('Adding new lead:', newLead);
     
     setNewLead({
       name: '',
@@ -300,48 +295,51 @@ const CRMPage: React.FC = () => {
   };
 
   // Handle edit customer click
-  const handleEditCustomerClick = (item: Customer) => {
-    setSelectedCustomer(item);
+  const handleEditCustomerClick = (item: Record<string, unknown>) => {
+    setSelectedCustomer(item as unknown as Customer);
     setEditCustomer({
-      customerNumber: item.customerNumber,
-      name: item.name,
-      type: item.type,
-      email: item.email || '',
-      phone: item.phone || '',
-      address: item.address || '',
-      companyName: item.companyName || '',
-      industry: item.industry || '',
-      status: item.status,
-      creditLimit: item.creditLimit,
+      customerNumber: item.customerNumber as string,
+      name: item.name as string,
+      type: item.type as string,
+      email: (item.email as string) || '',
+      phone: (item.phone as string) || '',
+      address: (item.address as string) || '',
+      companyName: (item.companyName as string) || '',
+      industry: (item.industry as string) || '',
+      status: item.status as string,
+      creditLimit: item.creditLimit as number,
       contactPerson: '',
     });
     setIsEditCustomerDialogOpen(true);
   };
 
   // Handle view customer details
-  const handleViewCustomerClick = (item: Customer) => {
-    setSelectedCustomer(item);
+  const handleViewCustomerClick = (item: Record<string, unknown>) => {
+    setSelectedCustomer(item as unknown as Customer);
     setIsViewCustomerDialogOpen(true);
   };
 
   // Handle view lead details
-  const handleViewLeadClick = (item: any) => {
-    setSelectedLead(item);
+  const handleViewLeadClick = (item: Partial<Lead>) => {
+    setSelectedLead(item as Lead);
     setIsViewLeadDialogOpen(true);
   };
 
   // Handle view opportunity details
-  const handleViewOpportunityClick = (item: any) => {
-    setSelectedOpportunity(item);
+  const handleViewOpportunityClick = (item: Partial<Opportunity>) => {
+    setSelectedOpportunity(item as Opportunity);
     setIsViewOpportunityDialogOpen(true);
   };
 
   // Check if forms are valid
-  const isNewCustomerFormValid = newCustomer.customerNumber && newCustomer.name && newCustomer.type;
+  const isNewCustomerFormValid =
+    Boolean(newCustomer.customerNumber && newCustomer.name && newCustomer.type);
 
-  const isEditCustomerFormValid = editCustomer.customerNumber && editCustomer.name && editCustomer.type;
+  const isEditCustomerFormValid =
+    Boolean(editCustomer.customerNumber && editCustomer.name && editCustomer.type);
 
-  const isNewLeadFormValid = newLead.name && newLead.email;
+  const isNewLeadFormValid =
+    Boolean(newLead.name && newLead.email);
 
   // Check if any filters are active
   const hasActiveFilters = filters.search || 
@@ -763,7 +761,7 @@ const CRMPage: React.FC = () => {
 
             {/* Results Count */}
             <div className="mb-4 text-sm text-gray-500">
-              Showing {filteredCustomers.length} of {customers.length} customers
+              {isLoading ? 'Loading...' : `Showing ${filteredCustomers.length} of ${customers.length} customers`}
             </div>
 
             <div className="overflow-x-auto">
@@ -809,12 +807,14 @@ const CRMPage: React.FC = () => {
                             <span>{formatCurrency(customer.currentBalance)}</span>
                           </div>
                         </td>
-                        <td className="p-3 text-sm text-gray-500">{customer.createdAt?.toLocaleDateString() || 'N/A'}</td>
+                        <td className="p-3 text-sm text-gray-500">
+                          {customer.createdAt ? new Date(customer.createdAt).toLocaleDateString() : 'N/A'}
+                        </td>
                         <td className="p-3 text-sm text-gray-500">N/A</td>
                         <td className="p-3">
                           <div className="flex gap-2">
-                            <Button size="sm" variant="outline" onClick={() => handleViewCustomerClick(customer as any)}>View</Button>
-                            <Button size="sm" variant="outline" onClick={() => handleEditCustomerClick(customer as any)}>Edit</Button>
+                            <Button size="sm" variant="outline" onClick={() => handleViewCustomerClick(customer)}>View</Button>
+                            <Button size="sm" variant="outline" onClick={() => handleEditCustomerClick(customer)}>Edit</Button>
                           </div>
                         </td>
                       </tr>
@@ -861,7 +861,7 @@ const CRMPage: React.FC = () => {
                         <div className="text-sm text-gray-500">N/A</div>
                       </div>
                       {getStatusBadge(lead.status)}
-                      <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => handleViewLeadClick(lead)}>View</Button>
+                      <Button size="sm" variant="outline" className="w-full sm:w-auto" onClick={() => handleViewLeadClick(lead as Partial<Lead>)}>View</Button>
                     </div>
                   </div>
                 ))}
@@ -1249,7 +1249,7 @@ const CRMPage: React.FC = () => {
                   </div>
                   <div className="grid gap-2">
                     <Label>Status</Label>
-                    <div className="font-medium">{getStatusBadge(selectedLead.status)}</div>
+                    <div className="font-medium">{selectedLead.status ? getStatusBadge(selectedLead.status) : 'N/A'}</div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -1269,7 +1269,7 @@ const CRMPage: React.FC = () => {
                   </div>
                   <div className="grid gap-2">
                     <Label>Value</Label>
-                    <div className="font-medium">{formatCurrency(selectedLead.value)}</div>
+                    <div className="font-medium">{selectedLead.value ? formatCurrency(selectedLead.value) : 'N/A'}</div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -1312,8 +1312,8 @@ const CRMPage: React.FC = () => {
                   <div className="grid gap-2">
                     <Label>Stage</Label>
                     <div className="font-medium">
-                      <Badge className={getStageColor(selectedOpportunity.status)}>
-                        {selectedOpportunity.status}
+                      <Badge className={selectedOpportunity.status ? getStageColor(selectedOpportunity.status) : ''}>
+                        {selectedOpportunity.status || 'N/A'}
                       </Badge>
                     </div>
                   </div>
@@ -1321,7 +1321,7 @@ const CRMPage: React.FC = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="grid gap-2">
                     <Label>Value</Label>
-                    <div className="font-medium">{formatCurrency(selectedOpportunity.value)}</div>
+                    <div className="font-medium">{selectedOpportunity.value ? formatCurrency(selectedOpportunity.value) : 'N/A'}</div>
                   </div>
                   <div className="grid gap-2">
                     <Label>Probability</Label>
@@ -1365,15 +1365,15 @@ const CRMPage: React.FC = () => {
                 />
               </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="leadContactPerson">Contact Person *</Label>
-                <Input
-                  id="leadContactPerson"
-                                          placeholder="e.g., Employee Name"
-                  value=""
-                  onChange={(e) => {}}
-                />
-              </div>
+                                <div className="grid gap-2">
+                    <Label htmlFor="leadContactPerson">Contact Person *</Label>
+                    <Input
+                      id="leadContactPerson"
+                      placeholder="e.g., Employee Name"
+                      value=""
+                      onChange={() => {}}
+                    />
+                  </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="grid gap-2">
@@ -1455,7 +1455,7 @@ const CRMPage: React.FC = () => {
                       <SelectValue placeholder="Select assignee" />
                     </SelectTrigger>
                     <SelectContent>
-                                              <SelectItem value="no-assignee">No assignee available</SelectItem>
+                      <SelectItem value="no-assignee">No assignee available</SelectItem>
                       
                     </SelectContent>
                   </Select>
@@ -1468,7 +1468,7 @@ const CRMPage: React.FC = () => {
                   id="leadNextAction"
                   type="date"
                   value=""
-                  onChange={(e) => {}}
+                  onChange={() => {}}
                 />
               </div>
             </div>
@@ -1536,7 +1536,7 @@ const CRMPage: React.FC = () => {
                       </div>
                       <div className="flex items-center gap-2">
                         {getStatusBadge(customer.status)}
-                        <Button size="sm" variant="outline" onClick={() => handleViewCustomerClick(customer as any)}>
+                        <Button size="sm" variant="outline" onClick={() => handleViewCustomerClick(customer)}>
                           View
                         </Button>
                       </div>

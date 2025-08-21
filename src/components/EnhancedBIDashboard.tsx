@@ -4,12 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { Separator } from '@/components/ui/separator';
+
 import {
   TrendingUp,
-  TrendingDown,
   BarChart3,
-  PieChart,
   Activity,
   Brain,
   Target,
@@ -20,30 +18,17 @@ import {
   Settings,
   Database,
   Zap,
-  Users,
-  DollarSign,
-  Package,
-  Building,
-  Calendar,
-  Clock,
   CheckCircle,
   XCircle,
   Minus,
   ArrowUpRight,
   ArrowDownRight,
-  LineChart,
-  Scatter,
-  Gauge,
-  Filter,
-  Search,
-  Plus,
-  MoreHorizontal,
   FileText
 } from 'lucide-react';
 
 const EnhancedBIDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedTimeframe, setSelectedTimeframe] = useState('7d');
+
 
   // Mock data for BI Dashboard
   const biOverview = {

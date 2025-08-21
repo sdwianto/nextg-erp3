@@ -1,3 +1,4 @@
+//src/components/EnhancedAssetIntegration.tsx
 'use client';
 
 import React, { useState, useEffect } from 'react';
@@ -9,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Building2, 
   TrendingDown, 
@@ -19,18 +20,10 @@ import {
   Eye,
   Plus,
   RefreshCw,
-  AlertTriangle,
   CheckCircle,
-  Edit,
-  Trash2,
   Download,
   Filter,
-  Search,
   Calendar,
-  User,
-  FileText,
-  BarChart3,
-  Activity,
   Truck,
   Package,
   Clock
@@ -121,7 +114,7 @@ export default function EnhancedAssetIntegration() {
   
   // Selected item state
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
-  const [selectedTransaction, setSelectedTransaction] = useState<AssetTransaction | null>(null);
+  // const [selectedTransaction, setSelectedTransaction] = useState<AssetTransaction | null>(null);
   const [selectedRental, setSelectedRental] = useState<RentalContract | null>(null);
 
   // Form states
@@ -147,7 +140,7 @@ export default function EnhancedAssetIntegration() {
   });
 
   const [transactionForm, setTransactionForm] = useState({
-    transactionType: 'maintenance' as const,
+    transactionType: 'maintenance' as 'purchase' | 'depreciation' | 'maintenance' | 'sale' | 'transfer' | 'rental',
     amount: '',
     description: '',
     referenceType: '',
@@ -247,8 +240,8 @@ export default function EnhancedAssetIntegration() {
       try {
         const parsedAssets = JSON.parse(storedAssets);
         setProcurementAssets(parsedAssets);
-      } catch (error) {
-        console.error('Error parsing procurement assets:', error);
+      } catch {
+        // Error parsing procurement assets
       }
     }
 
@@ -258,8 +251,8 @@ export default function EnhancedAssetIntegration() {
       try {
         const parsedRentals = JSON.parse(storedRentals);
         setRentalContracts(parsedRentals);
-      } catch (error) {
-        console.error('Error parsing rental contracts:', error);
+      } catch {
+        // Error parsing rental contracts
       }
     }
   }, []);
@@ -404,7 +397,6 @@ export default function EnhancedAssetIntegration() {
 
   const handleRefresh = () => {
     // Refresh data logic
-    console.log('Refreshing asset data...');
   };
 
   // Rental functions
@@ -454,14 +446,15 @@ export default function EnhancedAssetIntegration() {
     localStorage.setItem('assetRentalContracts', JSON.stringify(updatedRentals));
 
     // Update asset status
-    const updatedAssets = allAssets.map(asset => 
-      asset.id === selectedAsset.id 
-        ? { ...asset, status: 'rented' as const, rentalStatus: 'rented', currentRental: newRental.id }
-        : asset
+    setProcurementAssets(prev =>
+      prev.map(asset =>
+        asset.id === selectedAsset.id
+          ? { ...asset, status: 'rented' as const, rentalStatus: 'rented', currentRental: newRental.id }
+          : asset
+      )
     );
 
     setIsRentAssetOpen(false);
-    console.log('Rental contract created:', newRental);
   };
 
   const getStatusColor = (status: string) => {
@@ -504,7 +497,6 @@ export default function EnhancedAssetIntegration() {
 
   const totalAssets = allAssets.length;
   const activeAssets = allAssets.filter(asset => asset.status === 'active').length;
-  const maintenanceAssets = allAssets.filter(asset => asset.status === 'maintenance').length;
   const rentedAssets = allAssets.filter(asset => asset.status === 'rented').length;
   const totalAssetValue = allAssets.reduce((sum, asset) => sum + asset.currentValue, 0);
   const procurementAssetsCount = allAssets.filter(asset => asset.sourceType === 'procurement').length;
@@ -529,6 +521,10 @@ export default function EnhancedAssetIntegration() {
           <Button variant="outline" size="sm" onClick={handleExportReport}>
             <Download className="h-4 w-4 mr-2" />
             Export
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleDepreciationReport}>
+            <TrendingDown className="h-4 w-4 mr-2" />
+            Depreciation
           </Button>
           <Button size="sm" onClick={handleNewAsset}>
             <Plus className="h-4 w-4 mr-2" />
@@ -679,6 +675,22 @@ export default function EnhancedAssetIntegration() {
                       <Button size="sm" variant="outline" className="flex-1" onClick={() => handleViewAsset(asset)}>
                         <Eye className="h-3 w-3 mr-1" />
                         View Details
+                      </Button>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => handleEditAsset(asset)}>
+                        <Settings className="h-3 w-3 mr-1" />
+                        Edit
+                      </Button>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => handleAssetTransaction(asset)}>
+                        <DollarSign className="h-3 w-3 mr-1" />
+                        Transaction
+                      </Button>
+                      <Button size="sm" variant="outline" className="flex-1" onClick={() => handleAssetTransfer(asset)}>
+                        <Truck className="h-3 w-3 mr-1" />
+                        Transfer
+                      </Button>
+                      <Button size="sm" variant="destructive" className="flex-1" onClick={() => handleDeleteAsset(asset)}>
+                        <Settings className="h-3 w-3 mr-1" />
+                        Delete
                       </Button>
                       <Button size="sm" variant="outline" className="flex-1" onClick={() => handleMaintenanceSchedule(asset)}>
                         <Settings className="h-3 w-3 mr-1" />
@@ -974,7 +986,6 @@ export default function EnhancedAssetIntegration() {
                 Cancel
               </Button>
               <Button onClick={() => {
-                console.log('Creating new asset:', newAssetForm);
                 setIsNewAssetOpen(false);
               }}>
                 Create Asset
@@ -1122,7 +1133,7 @@ export default function EnhancedAssetIntegration() {
               </div>
               <div>
                 <Label htmlFor="editStatus">Status</Label>
-                <Select value={editAssetForm.status} onValueChange={(value: any) => setEditAssetForm({...editAssetForm, status: value})}>
+                <Select value={editAssetForm.status} onValueChange={(value: 'active' | 'maintenance' | 'retired' | 'sold' | 'rented') => setEditAssetForm({...editAssetForm, status: value})}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -1149,7 +1160,6 @@ export default function EnhancedAssetIntegration() {
                 Cancel
               </Button>
               <Button onClick={() => {
-                console.log('Updating asset:', editAssetForm);
                 setIsEditAssetOpen(false);
               }}>
                 Update Asset
@@ -1173,7 +1183,6 @@ export default function EnhancedAssetIntegration() {
                 Cancel
               </Button>
               <Button variant="destructive" onClick={() => {
-                console.log('Deleting asset:', selectedAsset?.id);
                 setIsDeleteAssetOpen(false);
               }}>
                 Delete Asset
@@ -1193,7 +1202,7 @@ export default function EnhancedAssetIntegration() {
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="transactionType">Transaction Type</Label>
-                <Select value={transactionForm.transactionType} onValueChange={(value: any) => setTransactionForm({...transactionForm, transactionType: value})}>
+                  <Select value={transactionForm.transactionType} onValueChange={(value: 'purchase' | 'depreciation' | 'maintenance' | 'sale' | 'transfer' | 'rental') => setTransactionForm({...transactionForm, transactionType: value})}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -1250,7 +1259,6 @@ export default function EnhancedAssetIntegration() {
                 Cancel
               </Button>
               <Button onClick={() => {
-                console.log('Creating transaction:', transactionForm);
                 setIsAssetTransactionOpen(false);
               }}>
                 Create Transaction
@@ -1466,7 +1474,6 @@ export default function EnhancedAssetIntegration() {
                   Cancel
                 </Button>
                 <Button onClick={() => {
-                  console.log('Transferring asset:', selectedAsset.id);
                   setIsAssetTransferOpen(false);
                 }}>
                   Transfer Asset
@@ -1516,7 +1523,6 @@ export default function EnhancedAssetIntegration() {
                 Cancel
               </Button>
               <Button onClick={() => {
-                console.log('Exporting report...');
                 setIsExportReportOpen(false);
               }}>
                 <Download className="h-4 w-4 mr-2" />
@@ -1584,7 +1590,6 @@ export default function EnhancedAssetIntegration() {
                 Cancel
               </Button>
               <Button onClick={() => {
-                console.log('Applying filters...');
                 setIsFilterOpen(false);
               }}>
                 Apply Filters

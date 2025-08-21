@@ -4,90 +4,26 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-  TrendingUp,
-  TrendingDown,
-  Settings,
   AlertTriangle,
   CheckCircle,
   XCircle,
   Minus,
   ArrowUpRight,
   ArrowDownRight,
-  Plus,
-  Search,
-  Filter,
-  Eye,
-  Edit,
-  Trash2,
   Target,
   Activity,
-  BarChart3,
-  PieChart,
-  LineChart,
-  Gauge,
-  Wrench,
-  Clock,
-  Calendar,
-  Zap,
-  Thermometer,
-  Droplets,
-  Gauge as GaugeIcon,
-  AlertTriangle as AlertTriangleIcon,
   CheckCircle2,
-  XCircle as XCircleIcon,
-  MoreHorizontal,
   Download,
   RefreshCw,
-  Settings as SettingsIcon,
-  FileText,
-  Tag,
-  Award,
-  TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
+  Settings,
   Factory,
   Package,
-  Truck,
-  Users,
-  DollarSign,
-  Database,
-  Activity as ActivityIcon,
-  BarChart3 as BarChart3Icon,
-  PieChart as PieChartIcon,
-  LineChart as LineChartIcon,
-  Gauge as GaugeIcon2,
-  Wrench as WrenchIcon,
-  Clock as ClockIcon,
-  Calendar as CalendarIcon,
-  Zap as ZapIcon,
-  Thermometer as ThermometerIcon,
-  Droplets as DropletsIcon,
-  Gauge as GaugeIcon3,
-  AlertTriangle as AlertTriangleIcon2,
-  CheckCircle2 as CheckCircle2Icon,
-  XCircle as XCircleIcon2,
-  MoreHorizontal as MoreHorizontalIcon,
-  Download as DownloadIcon,
-  RefreshCw as RefreshCwIcon,
-  Settings as SettingsIcon2,
-  FileText as FileTextIcon,
-  Tag as TagIcon,
-  Award as AwardIcon,
-  TrendingUp as TrendingUpIcon2,
-  TrendingDown as TrendingDownIcon2,
-  Factory as FactoryIcon,
-  Package as PackageIcon,
-  Truck as TruckIcon,
-  Users as UsersIcon,
-  DollarSign as DollarSignIcon,
-  Database as DatabaseIcon
+  Eye
 } from 'lucide-react';
 
 const EnhancedProductionDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedTimeframe, setSelectedTimeframe] = useState('24h');
 
   // Mock data for Production Dashboard
   const productionOverview = {
@@ -216,7 +152,7 @@ const EnhancedProductionDashboard: React.FC = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Production Efficiency</CardTitle>
-            <Gauge className="h-4 w-4 text-muted-foreground" />
+            <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{productionOverview.efficiency}%</div>

@@ -32,7 +32,7 @@ export const publicProcedure = t.procedure;
 
 const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
   // For now, we'll allow all requests
-  // In a real app, you'd check authentication here
+  // In a real app, need to implement authentication here
   return next({
     ctx: {
       ...ctx,

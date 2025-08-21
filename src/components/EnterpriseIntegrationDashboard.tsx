@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,7 +7,7 @@ import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { api } from '@/utils/api';
 import {
-  TrendingUp, TrendingDown, BarChart3, PieChart, Activity, Target, AlertTriangle, Download, RefreshCw, Eye, Settings, Database, Zap, Users, DollarSign, Package, Building, Calendar, Clock, CheckCircle, XCircle, Minus, ArrowUpRight, ArrowDownRight, LineChart, Scatter, Gauge, Filter, Search, Plus, MoreHorizontal, FileText, Link, ArrowRight, ArrowLeft, RotateCcw, Shield, Database as DatabaseIcon, Activity as ActivityIcon, BarChart3 as BarChart3Icon, PieChart as PieChartIcon, LineChart as LineChartIcon, Gauge as GaugeIcon, AlertTriangle as AlertTriangleIcon, CheckCircle as CheckCircleIcon, XCircle as XCircleIcon, Minus as MinusIcon, ArrowUpRight as ArrowUpRightIcon, ArrowDownRight as ArrowDownRightIcon, TrendingUp as TrendingUpIcon, TrendingDown as TrendingDownIcon, Download as DownloadIcon, RefreshCw as RefreshCwIcon, Eye as EyeIcon, Settings as SettingsIcon, FileText as FileTextIcon, Plus as PlusIcon, Search as SearchIcon, Filter as FilterIcon, MoreHorizontal as MoreHorizontalIcon, Link as LinkIcon, ArrowRight as ArrowRightIcon, ArrowLeft as ArrowLeftIcon, RotateCcw as RotateCcwIcon, Shield as ShieldIcon
+  AlertTriangle, Eye, CheckCircle, XCircle, Minus, Zap, BarChart3
 } from 'lucide-react';
 
 const EnterpriseIntegrationDashboard: React.FC = () => {
@@ -22,7 +22,7 @@ const EnterpriseIntegrationDashboard: React.FC = () => {
   });
 
   const { data: integratedData } = api.integration.getIntegratedData.useQuery({
-    module: selectedModule as any,
+    module: selectedModule as 'asset' | 'inventory' | 'procurement' | 'maintenance' | 'rental',
     entityId: selectedEntity,
     includeRelated: true,
   });
@@ -80,11 +80,11 @@ const EnterpriseIntegrationDashboard: React.FC = () => {
 
   const getAlertIcon = (type: string) => {
     switch (type) {
-      case 'warning': return <AlertTriangleIcon className="h-4 w-4 text-yellow-500" />;
-      case 'error': return <XCircleIcon className="h-4 w-4 text-red-500" />;
-      case 'success': return <CheckCircleIcon className="h-4 w-4 text-green-500" />;
-      case 'info': return <EyeIcon className="h-4 w-4 text-blue-500" />;
-      default: return <MinusIcon className="h-4 w-4 text-gray-500" />;
+      case 'warning': return <AlertTriangle className="h-4 w-4 text-yellow-500" />;
+      case 'error': return <XCircle className="h-4 w-4 text-red-500" />;
+      case 'success': return <CheckCircle className="h-4 w-4 text-green-500" />;
+      case 'info': return <Eye className="h-4 w-4 text-blue-500" />;
+      default: return <Minus className="h-4 w-4 text-gray-500" />;
     }
   };
 
@@ -107,16 +107,16 @@ const EnterpriseIntegrationDashboard: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm">
-            <RefreshCwIcon className="h-4 w-4 mr-2" />
+          <Button variant="outline" size="sm" onClick={() => setSelectedEntity('EQ002')}>
+            <Minus className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button variant="outline" size="sm">
-            <DownloadIcon className="h-4 w-4 mr-2" />
+          <Button variant="outline" size="sm" onClick={() => setSelectedModule('inventory')}>
+            <Minus className="h-4 w-4 mr-2" />
             Export
           </Button>
           <Button size="sm">
-            <SettingsIcon className="h-4 w-4 mr-2" />
+            <Minus className="h-4 w-4 mr-2" />
             Configure
           </Button>
         </div>
@@ -127,12 +127,12 @@ const EnterpriseIntegrationDashboard: React.FC = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Entities</CardTitle>
-            <DatabaseIcon className="h-4 w-4 text-muted-foreground" />
+            <Minus className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{integrationOverview.totalEntities}</div>
             <p className="text-xs text-muted-foreground">
-              Master data records
+              Master data records ({masterData?.data?.length || 0} available)
             </p>
           </CardContent>
         </Card>
@@ -140,12 +140,12 @@ const EnterpriseIntegrationDashboard: React.FC = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active Workflows</CardTitle>
-            <ActivityIcon className="h-4 w-4 text-muted-foreground" />
+            <Minus className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{integrationOverview.activeWorkflows}</div>
             <p className="text-xs text-muted-foreground">
-              Cross-module processes
+              Cross-module processes ({integratedData?.data ? 'active' : 'loading'})
             </p>
           </CardContent>
         </Card>
@@ -153,7 +153,7 @@ const EnterpriseIntegrationDashboard: React.FC = () => {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Data Consistency</CardTitle>
-            <ShieldIcon className="h-4 w-4 text-muted-foreground" />
+            <Minus className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{integrationOverview.dataConsistency}%</div>
@@ -171,9 +171,9 @@ const EnterpriseIntegrationDashboard: React.FC = () => {
           <CardContent>
             <div className="text-2xl font-bold">
               {integrationOverview.realTimeSync ? (
-                <CheckCircleIcon className="h-6 w-6 text-green-500" />
+                <CheckCircle className="h-6 w-6 text-green-500" />
               ) : (
-                <XCircleIcon className="h-6 w-6 text-red-500" />
+                                  <XCircle className="h-6 w-6 text-red-500" />
               )}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -199,7 +199,7 @@ const EnterpriseIntegrationDashboard: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <DatabaseIcon className="h-5 w-5 mr-2" />
+                  <Minus className="h-5 w-5 mr-2" />
                   Module Integration Status
                 </CardTitle>
               </CardHeader>
@@ -223,7 +223,7 @@ const EnterpriseIntegrationDashboard: React.FC = () => {
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center">
-                  <BarChart3Icon className="h-5 w-5 mr-2" />
+                  <BarChart3 className="h-5 w-5 mr-2" />
                   Integration Metrics
                 </CardTitle>
               </CardHeader>
@@ -258,7 +258,7 @@ const EnterpriseIntegrationDashboard: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <ActivityIcon className="h-5 w-5 mr-2" />
+                <Minus className="h-5 w-5 mr-2" />
                 Cross-Module Workflow Status
               </CardTitle>
             </CardHeader>
@@ -278,7 +278,7 @@ const EnterpriseIntegrationDashboard: React.FC = () => {
                     <div className="flex items-center space-x-2">
                       <Badge variant="secondary">{workflow.status}</Badge>
                       <Button variant="ghost" size="sm">
-                        <EyeIcon className="h-4 w-4" />
+                        <Eye className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -292,7 +292,7 @@ const EnterpriseIntegrationDashboard: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <ArrowRightIcon className="h-5 w-5 mr-2" />
+                <Minus className="h-5 w-5 mr-2" />
                 Data Flow Analysis
               </CardTitle>
             </CardHeader>
@@ -329,7 +329,7 @@ const EnterpriseIntegrationDashboard: React.FC = () => {
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center">
-                <ShieldIcon className="h-5 w-5 mr-2" />
+                <Minus className="h-5 w-5 mr-2" />
                 Data Consistency Report
               </CardTitle>
             </CardHeader>
@@ -398,31 +398,34 @@ const EnterpriseIntegrationDashboard: React.FC = () => {
             <CardContent>
               {realTimeSync?.data && (
                 <div className="space-y-4">
-                  {Object.entries(realTimeSync.data).map(([module, data]: [string, any]) => (
-                    <div key={module} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
-                        <div>
-                          <h4 className="font-medium capitalize">{module}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            Last update: {data.lastUpdate?.toLocaleTimeString()}
-                          </p>
+                  {Object.entries(realTimeSync.data).map(([module, data]) => {
+                    const moduleData = data as Record<string, unknown>;
+                    return (
+                      <div key={module} className="flex items-center justify-between p-4 border rounded-lg">
+                        <div className="flex items-center space-x-4">
+                          <div className="w-3 h-3 rounded-full bg-green-500 animate-pulse" />
+                          <div>
+                            <h4 className="font-medium capitalize">{module}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              Last update: {(moduleData.lastUpdate as Date)?.toLocaleTimeString()}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-medium">
+                            {module === 'procurement' && `${moduleData.newPurchaseOrders} new POs`}
+                            {module === 'inventory' && `${moduleData.lowStockItems} low stock items`}
+                            {module === 'maintenance' && `${moduleData.scheduledWorkOrders} scheduled WOs`}
+                            {module === 'asset' && `${moduleData.equipmentAvailability}% availability`}
+                            {module === 'rental' && `${moduleData.activeRentals} active rentals`}
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            {module === 'rental' && formatCurrency(moduleData.revenueToday as number)}
+                          </div>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="font-medium">
-                          {module === 'procurement' && `${data.newPurchaseOrders} new POs`}
-                          {module === 'inventory' && `${data.lowStockItems} low stock items`}
-                          {module === 'maintenance' && `${data.scheduledWorkOrders} scheduled WOs`}
-                          {module === 'asset' && `${data.equipmentAvailability}% availability`}
-                          {module === 'rental' && `${data.activeRentals} active rentals`}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                          {module === 'rental' && formatCurrency(data.revenueToday)}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>

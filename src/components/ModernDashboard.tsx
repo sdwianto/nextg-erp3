@@ -1,18 +1,36 @@
-import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Badge } from '@/components/ui/badge';
+import React from 'react';
+import { 
+  PieChart as PieChartIcon, 
+  Filter, 
+  Download, 
+  DollarSign, 
+  TrendingUp, 
+  TrendingDown, 
+  Activity, 
+  Wrench, 
+  Package, 
+  Target,
+  BarChart3,
+  AlertTriangle,
+  CheckCircle,
+  Zap,
+  Clock
+} from 'lucide-react';
 import {
+  ResponsiveContainer,
   AreaChart,
   Area,
   BarChart,
   Bar,
-  LineChart,
-  Line,
   PieChart,
   Pie,
   Cell,
+  LineChart,
+  Line,
   RadarChart,
   PolarGrid,
   PolarAngleAxis,
@@ -20,38 +38,20 @@ import {
   Radar,
   RadialBarChart,
   RadialBar,
+  CartesianGrid,
   XAxis,
   YAxis,
-  CartesianGrid,
   Tooltip,
-  Legend,
-  ResponsiveContainer
+  Legend
 } from 'recharts';
-import {
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Package,
-  Wrench,
-  Activity,
-  BarChart3,
-  PieChart as PieChartIcon,
-  Target,
-  Zap,
-  AlertTriangle,
-  CheckCircle,
-  Clock,
-  Download,
-  Filter
-} from 'lucide-react';
 
 // Empty data arrays - ready for real data
-const monthlyRevenueData: any[] = [];
-const equipmentUtilizationData: any[] = [];
-const inventoryData: any[] = [];
-const workOrderData: any[] = [];
-const performanceMetrics: any[] = [];
-const radarData: any[] = [];
+const monthlyRevenueData: unknown[] = [];
+const equipmentUtilizationData: unknown[] = [];
+const inventoryData: unknown[] = [];
+const workOrderData: unknown[] = [];
+const performanceMetrics: unknown[] = [];
+const radarData: unknown[] = [];
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8'];
 
@@ -402,18 +402,21 @@ const ModernDashboard: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {performanceMetrics.map((metric) => (
-                  <div key={metric.metric} className="p-4 border rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{metric.metric}</span>
-                      <Badge variant={metric.value >= metric.target ? "default" : "destructive"}>
-                        {metric.value >= metric.target ? "On Target" : "Below Target"}
-                      </Badge>
+                {performanceMetrics.map((metric) => {
+                  const metricData = metric as { metric: string; value: number; target: number; unit: string };
+                  return (
+                    <div key={metricData.metric} className="p-4 border rounded-lg">
+                                          <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-gray-600 dark:text-gray-400">{metricData.metric}</span>
+                        <Badge variant={metricData.value >= metricData.target ? "default" : "destructive"}>
+                          {metricData.value >= metricData.target ? "On Target" : "Below Target"}
+                        </Badge>
+                      </div>
+                      <div className="text-2xl font-bold">{metricData.value} {metricData.unit}</div>
+                      <div className="text-sm text-gray-500">Target: {metricData.target} {metricData.unit}</div>
                     </div>
-                    <div className="text-2xl font-bold">{metric.value} {metric.unit}</div>
-                    <div className="text-sm text-gray-500">Target: {metric.target} {metric.unit}</div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>

@@ -10,8 +10,6 @@ import {
   TrendingUp, 
   TrendingDown,
   BarChart3,
-  PieChart,
-  LineChart,
   Activity,
   Eye,
   Download,
@@ -20,21 +18,16 @@ import {
   CheckCircle,
   Clock,
   Target,
-  Zap,
-  FileText,
-  Building,
   DollarSign,
   Users,
-  Package,
-  Calendar,
+  Target as TargetIcon,
   Brain,
   Lightbulb,
-  Target as TargetIcon
+  FileText
 } from 'lucide-react';
 
 const EnhancedReportingDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedTimeframe, setSelectedTimeframe] = useState('month');
 
   // Mock data for JDE BI Dashboard
   const mockBIData = {

@@ -1,9 +1,6 @@
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
-import { TRPCError } from "@trpc/server";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/server/db";
 
 // Input validation schemas
 const createEquipmentSchema = z.object({
@@ -57,7 +54,7 @@ export const rentalMaintenanceRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const { page, limit, search, status, type, location } = input;
-      const skip = (page - 1) * limit;
+      const _skip = (page - 1) * limit;
 
       const where = {
         ...(search && {
@@ -68,10 +65,10 @@ export const rentalMaintenanceRouter = createTRPCRouter({
             { manufacturer: { contains: search, mode: "insensitive" as const } },
           ],
         }),
-        ...(status && { status }),
+        ...(status && { status: status as "AVAILABLE" | "IN_USE" | "MAINTENANCE" | "REPAIR" | "RETIRED" | "LOST" }),
         ...(type && { type }),
         ...(location && { location: { contains: location, mode: "insensitive" as const } }),
-      } as any;
+      };
 
       const [equipment, total] = await Promise.all([
         prisma.equipment.findMany({
@@ -89,7 +86,7 @@ export const rentalMaintenanceRouter = createTRPCRouter({
               },
             },
           },
-          skip,
+          skip: _skip,
           take: limit,
           orderBy: { createdAt: "desc" },
         }),
@@ -127,10 +124,7 @@ export const rentalMaintenanceRouter = createTRPCRouter({
       });
 
       if (!equipment) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Equipment not found",
-        });
+        throw new Error("Equipment not found");
       }
 
       return equipment;
@@ -139,7 +133,7 @@ export const rentalMaintenanceRouter = createTRPCRouter({
   // Create equipment
   createEquipment: protectedProcedure
     .input(createEquipmentSchema)
-    .mutation(async ({ input, _ctx }) => {
+    .mutation(async ({ input, ctx }) => {
       const equipment = await prisma.equipment.create({
         data: {
           ...input,
@@ -159,7 +153,7 @@ export const rentalMaintenanceRouter = createTRPCRouter({
       id: z.string(),
       data: createEquipmentSchema.partial(),
     }))
-    .mutation(async ({ input, _ctx }) => {
+    .mutation(async ({ input, ctx }) => {
       const equipment = await prisma.equipment.update({
         where: { id: input.id },
         data: {
@@ -200,12 +194,12 @@ export const rentalMaintenanceRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const { page, limit, equipmentId, status, type } = input;
-      const skip = (page - 1) * limit;
+      const _skip = (page - 1) * limit;
 
       const where = {
         ...(equipmentId && { equipmentId }),
-        ...(status && { status: status as any }),
-        ...(type && { maintenanceType: type as any }),
+        ...(status && { status: status as "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" }),
+        ...(type && { maintenanceType: type as "PREVENTIVE" | "CORRECTIVE" | "EMERGENCY" | "INSPECTION" }),
       };
 
       const [records, total] = await Promise.all([
@@ -215,7 +209,7 @@ export const rentalMaintenanceRouter = createTRPCRouter({
             equipment: { select: { name: true, code: true } },
             user: { select: { firstName: true, lastName: true } },
           },
-          skip,
+          skip: _skip,
           take: limit,
           orderBy: { createdAt: "desc" },
         }),
@@ -236,7 +230,7 @@ export const rentalMaintenanceRouter = createTRPCRouter({
   // Create maintenance record
   createMaintenanceRecord: protectedProcedure
     .input(createMaintenanceRecordSchema)
-    .mutation(async ({ input, _ctx }) => {
+    .mutation(async ({ input }) => {
       const record = await prisma.maintenanceRecord.create({
         data: {
           ...input,
@@ -258,7 +252,7 @@ export const rentalMaintenanceRouter = createTRPCRouter({
       id: z.string(),
       data: createMaintenanceRecordSchema.partial(),
     }))
-    .mutation(async ({ input, _ctx }) => {
+    .mutation(async ({ input }) => {
       const record = await prisma.maintenanceRecord.update({
         where: { id: input.id },
         data: {

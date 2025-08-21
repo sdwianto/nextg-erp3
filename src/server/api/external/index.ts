@@ -1,9 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/server/db';
 
-const prisma = new PrismaClient();
 const app = express();
 
 // Middleware
@@ -21,7 +20,7 @@ const limiter = rateLimit({
 app.use(limiter);
 
 // Authentication middleware
-const authenticateAPI = async (req: any, res: any, _next: any) => {
+const authenticateAPI = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   const apiKey = req.headers['x-api-key'];
   
   if (!apiKey) {
@@ -30,14 +29,14 @@ const authenticateAPI = async (req: any, res: any, _next: any) => {
 
   try {
     // In real implementation, validate API key against database
-    const isValidKey = await validateAPIKey(apiKey);
+    const isValidKey = await validateAPIKey(apiKey as string);
     if (!isValidKey) {
       return res.status(401).json({ error: 'Invalid API key' });
     }
     
-    req.apiKey = apiKey;
+    (req as unknown as Record<string, unknown>).apiKey = apiKey;
     next();
-  } catch (error) {
+  } catch {
     return res.status(500).json({ error: 'Authentication error' });
   }
 };
@@ -54,7 +53,7 @@ app.get('/inventory/levels', async (req, res) => {
   try {
     const { warehouse, product, category } = req.query;
     
-    const where: any = {};
+    const where: Record<string, unknown> = {};
     if (warehouse) where.warehouseId = warehouse as string;
     if (product) where.productId = product as string;
     if (category) where.product = { categoryId: category as string };
@@ -92,7 +91,7 @@ app.get('/inventory/levels', async (req, res) => {
         lastUpdated: item.updatedAt,
       })),
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Failed to fetch inventory levels' });
   }
 });
@@ -147,119 +146,8 @@ app.post('/inventory/update', async (req, res) => {
         newQuantity: inventoryItem ? inventoryItem.quantity + quantity : quantity,
       },
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Failed to update inventory' });
-  }
-});
-
-// ========================================
-// PROCUREMENT EXTERNAL APIs
-// ========================================
-
-// Get purchase orders
-app.get('/procurement/orders', async (req, res) => {
-  try {
-    const { status, supplier, startDate, endDate } = req.query;
-    
-    const where: any = {};
-    if (status) where.status = status;
-    if (supplier) where.supplier = { name: { contains: supplier as string } };
-    if (startDate && endDate) {
-      where.orderDate = {
-        gte: new Date(startDate as string),
-        lte: new Date(endDate as string),
-      };
-    }
-
-    const orders = await prisma.purchaseOrder.findMany({
-      where,
-      include: {
-        supplier: { select: { name: true, code: true } },
-        items: {
-          include: {
-            product: { select: { name: true, sku: true } },
-          },
-        },
-      },
-      orderBy: { orderDate: 'desc' },
-    });
-
-    res.json({
-      success: true,
-      data: orders.map(order => ({
-        id: order.id,
-        poNumber: order.poNumber,
-        supplier: order.supplier.name,
-        orderDate: order.orderDate,
-        status: order.status,
-        totalAmount: order.items.reduce((sum, item) => sum + item.totalPrice, 0),
-        items: order.items.map(item => ({
-          productName: item.product.name,
-          sku: item.product.sku,
-          quantity: item.quantity,
-          unitCost: item.totalPrice / item.quantity,
-          totalCost: item.totalPrice,
-        })),
-      })),
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch purchase orders' });
-  }
-});
-
-// Create purchase order
-app.post('/procurement/orders', async (req, res) => {
-  try {
-    const { supplierId, orderDate, expectedDelivery, items, notes } = req.body;
-
-    if (!supplierId || !orderDate || !items || !Array.isArray(items)) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
-
-    const totalAmount = items.reduce((sum: number, item: any) => 
-      sum + (item.quantity * item.unitCost), 0);
-
-    const order = await prisma.purchaseOrder.create({
-      data: {
-        supplierId,
-        orderDate: new Date(orderDate),
-        expectedDeliveryDate: expectedDelivery ? new Date(expectedDelivery) : null,
-        notes,
-        status: 'DRAFT',
-        poNumber: `PO-EXT-${Date.now()}`,
-        createdBy: 'external-api',
-        items: {
-          create: items.map((item: any) => ({
-            productId: item.productId,
-            quantity: item.quantity,
-            unitPrice: item.unitCost,
-            totalPrice: item.quantity * item.unitCost,
-            isAsset: item.isAsset ?? false,
-          })),
-        },
-      },
-      include: {
-        supplier: { select: { name: true } },
-        items: {
-          include: {
-            product: { select: { name: true, sku: true } },
-          },
-        },
-      },
-    });
-
-    res.json({
-      success: true,
-      data: {
-        id: order.id,
-        poNumber: order.poNumber,
-        supplier: order.supplier.name,
-        totalAmount: order.items.reduce((sum, item) => sum + item.totalPrice, 0),
-        status: order.status,
-      },
-    });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to create purchase order' });
   }
 });
 
@@ -270,8 +158,6 @@ app.post('/procurement/orders', async (req, res) => {
 // Get supplier catalog
 app.get('/suppliers/:supplierId/catalog', async (req, res) => {
   try {
-    const { supplierId } = req.params;
-    
     const products = await prisma.product.findMany({
       where: { isActive: true },
       select: {
@@ -291,13 +177,13 @@ app.get('/suppliers/:supplierId/catalog', async (req, res) => {
     res.json({
       success: true,
       data: {
-        supplierId,
+        supplierId: req.params.supplierId,
         products,
         totalProducts: products.length,
         lastUpdated: new Date(),
       },
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Failed to fetch supplier catalog' });
   }
 });
@@ -305,7 +191,6 @@ app.get('/suppliers/:supplierId/catalog', async (req, res) => {
 // Update supplier pricing
 app.post('/suppliers/:supplierId/pricing', async (req, res) => {
   try {
-    const { supplierId } = req.params;
     const { products } = req.body;
 
     if (!Array.isArray(products)) {
@@ -313,14 +198,14 @@ app.post('/suppliers/:supplierId/pricing', async (req, res) => {
     }
 
     const updates = await Promise.all(
-      products.map(async (product: any) => {
+      products.map(async (product: Record<string, unknown>) => {
         return prisma.product.updateMany({
           where: {
-            id: product.id,
+            id: product.id as string,
           },
           data: {
-            price: product.price,
-            costPrice: product.costPrice,
+            price: product.price as number,
+            costPrice: product.costPrice as number,
             updatedAt: new Date(),
           },
         });
@@ -334,7 +219,7 @@ app.post('/suppliers/:supplierId/pricing', async (req, res) => {
         lastUpdated: new Date(),
       },
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Failed to update supplier pricing' });
   }
 });
@@ -353,7 +238,7 @@ app.post('/delivery/location', async (req, res) => {
     }
 
     // TODO: Implement goods receipt location update
-    console.log('Updating delivery location:', { grNumber, latitude, longitude, timestamp });
+    // console.log('Updating delivery location:', { grNumber, latitude, longitude, timestamp });
 
     res.json({
       success: true,
@@ -363,7 +248,7 @@ app.post('/delivery/location', async (req, res) => {
         timestamp: timestamp || new Date(),
       },
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Failed to update delivery location' });
   }
 });
@@ -374,7 +259,7 @@ app.get('/delivery/tracking/:grNumber', async (req, res) => {
     const { grNumber } = req.params;
 
     // TODO: Implement goods receipt tracking
-    console.log('Fetching delivery tracking for:', grNumber);
+    // console.log('Fetching delivery tracking for:', grNumber);
 
     res.json({
       success: true,
@@ -388,7 +273,7 @@ app.get('/delivery/tracking/:grNumber', async (req, res) => {
         lastUpdated: new Date(),
       },
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Failed to fetch delivery tracking' });
   }
 });
@@ -400,14 +285,14 @@ app.get('/delivery/tracking/:grNumber', async (req, res) => {
 // Submit quality inspection results
 app.post('/quality/inspection', async (req, res) => {
   try {
-    const { grNumber, status, items, inspector, notes } = req.body;
+    const { grNumber, status, items, inspector } = req.body;
 
     if (!grNumber || !status || !Array.isArray(items)) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
     // TODO: Implement quality inspection
-    console.log('Submitting quality inspection:', { grNumber, status, items, inspector, notes });
+    // console.log('Submitting quality inspection:', { grNumber, status, items, inspector });
 
     res.json({
       success: true,
@@ -419,7 +304,7 @@ app.post('/quality/inspection', async (req, res) => {
         itemsInspected: items.length,
       },
     });
-  } catch (error) {
+  } catch {
     res.status(500).json({ error: 'Failed to submit quality inspection' });
   }
 });
@@ -435,8 +320,8 @@ async function validateAPIKey(apiKey: string): Promise<boolean> {
 }
 
 // Error handling middleware
-app.use((error: any, req: any, res: any, next: any) => {
-  console.error('External API Error:', error);
+app.use((error: unknown, req: express.Request, res: express.Response) => {
+  // console.error('External API Error:', error);
   res.status(500).json({ error: 'Internal server error' });
 });
 

@@ -1,9 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
- 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
-// src/services/RentalMaintenanceService.ts
-// Simplified version using mock data to avoid Prisma type conflicts
 
 export type EquipmentStatus = 'AVAILABLE' | 'IN_USE' | 'MAINTENANCE' | 'RETIRED';
 export type MaintenanceStatus = 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
@@ -41,7 +35,7 @@ export interface MaintenanceRecord {
   endDate: Date | null;
   status: MaintenanceStatus;
   cost: number | null;
-  partsUsed: any;
+  partsUsed: Record<string, unknown>;
   assignedTechnician: string;
   priority: string;
   userId?: string;
@@ -106,7 +100,7 @@ export class RentalMaintenanceService {
     return { ...equipment, ...data };
   }
 
-  async deleteEquipment(_id: string): Promise<boolean> {
+  async deleteEquipment(): Promise<boolean> {
     // Mock implementation
     return true;
   }
@@ -126,7 +120,7 @@ export class RentalMaintenanceService {
       endDate: null,
       status: 'SCHEDULED',
       cost: null,
-      partsUsed: [],
+      partsUsed: {},
       userId: 'user-1',
       assetId: null
     };
@@ -144,7 +138,7 @@ export class RentalMaintenanceService {
       endDate: null,
       status: 'SCHEDULED',
       cost: null,
-      partsUsed: [],
+      partsUsed: {},
       assignedTechnician: 'John Doe',
       priority: 'MEDIUM',
       userId: 'user-1',
@@ -159,7 +153,7 @@ export class RentalMaintenanceService {
     return { ...record, ...data };
   }
 
-  async deleteMaintenanceRecord(_id: string): Promise<boolean> {
+  async deleteMaintenanceRecord(): Promise<boolean> {
     // Mock implementation
     return true;
   }
@@ -195,7 +189,7 @@ export class RentalMaintenanceService {
     };
   }
 
-  async getRentalOrderById(_id: string): Promise<RentalOrder | null> {
+  async getRentalOrderById(id: string): Promise<RentalOrder | null> {
     // Mock implementation
     return {
       id,
@@ -224,7 +218,7 @@ export class RentalMaintenanceService {
     return { ...order, ...data };
   }
 
-  async deleteRentalOrder(_id: string): Promise<boolean> {
+  async deleteRentalOrder(): Promise<boolean> {
     // Mock implementation
     return true;
   }

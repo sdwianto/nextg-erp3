@@ -4,31 +4,41 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { api } from '@/utils/api';
-import { 
-  TrendingUp, 
-  Download,
-  FileText,
-  BarChart3,
-  DollarSign,
-  Package,
-  Building,
-  Users,
-  Calendar,
-  Eye,
-  Plus
-} from 'lucide-react';
+import { TrendingUp, Download, FileText, BarChart3, DollarSign, Package, Building, Calendar, Eye, Plus } from 'lucide-react';
+
+interface Template {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  jdeCompliance: boolean;
+  features: string[];
+  outputFormats: string[];
+}
+
+interface KPIs {
+  inventory: {
+    stockTurnover: number;
+    fillRate: number;
+    accuracy: number;
+  };
+  procurement: {
+    orderFulfillment: number;
+    supplierOnTimeDelivery: number;
+    costSavings: number;
+  };
+  financial: {
+    revenueGrowth: number;
+    profitMargin: number;
+    cashFlow: number;
+  };
+}
 
 const ReportsPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('jde-dashboards');
 
-  // API Queries for JDE Reports - using mock data for now
-  const jdeTemplates = { data: null };
-  const scheduledReports = { data: null };
-  const operationalKPIs = { data: null };
-
   // Mock data for development
-  const mockJDETemplates = [
+  const mockJDETemplates: Template[] = [
     {
       id: 'jde-inventory-valuation',
       name: 'JDE Inventory Valuation Report',
@@ -58,7 +68,7 @@ const ReportsPage: React.FC = () => {
     },
   ];
 
-  const mockOperationalKPIs = {
+  const mockOperationalKPIs: KPIs = {
     inventory: {
       stockTurnover: 4.2,
       fillRate: 95.8,
@@ -76,11 +86,11 @@ const ReportsPage: React.FC = () => {
     },
   };
 
-  // Use real API data or fallback to mock data
-  const templates = jdeTemplates?.data?.templates || mockJDETemplates;
-  const kpis = operationalKPIs?.data?.kpis || mockOperationalKPIs;
+  // Use mock data directly
+  const templates: Template[] = mockJDETemplates;
+  const kpis: KPIs = mockOperationalKPIs;
 
-  const getCategoryIcon = (category: string) => {
+  const _getCategoryIcon = (category: string) => {
     switch (category) {
       case 'inventory': return <Package className="h-5 w-5" />;
       case 'procurement': return <Building className="h-5 w-5" />;
@@ -171,8 +181,8 @@ const ReportsPage: React.FC = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
           <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="jde-dashboards">JDE Dashboards</TabsTrigger>
-            <TabsTrigger value="report-templates">Report Templates</TabsTrigger>
-            <TabsTrigger value="operational-kpis">Operational KPIs</TabsTrigger>
+            <TabsTrigger value="report-_templates">Report Templates</TabsTrigger>
+            <TabsTrigger value="operational-_kpis">Operational KPIs</TabsTrigger>
           </TabsList>
 
           {/* JDE Dashboards Tab */}
@@ -268,14 +278,14 @@ const ReportsPage: React.FC = () => {
           </TabsContent>
 
           {/* Report Templates Tab */}
-          <TabsContent value="report-templates" className="space-y-4">
+          <TabsContent value="report-_templates" className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {templates.map((template) => (
                 <Card key={template.id} className="hover:shadow-md transition-shadow">
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        {getCategoryIcon(template.category)}
+                        {_getCategoryIcon(template.category)}
                         <CardTitle className="text-lg">{template.name}</CardTitle>
                         {template.jdeCompliance && (
                           <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
@@ -331,7 +341,7 @@ const ReportsPage: React.FC = () => {
           </TabsContent>
 
           {/* Operational KPIs Tab */}
-          <TabsContent value="operational-kpis" className="space-y-4">
+          <TabsContent value="operational-_kpis" className="space-y-4">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Inventory KPIs */}
               <Card>

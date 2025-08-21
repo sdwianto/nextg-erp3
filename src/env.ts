@@ -93,7 +93,7 @@ export const getWebSocketConfig = () => {
   
   return {
     cors: corsConfig,
-    transports: ['polling', 'websocket'] as any,
+    transports: ['polling', 'websocket'] as string[],
     allowEIO3: true,
     pingTimeout: 60000,
     pingInterval: 25000,

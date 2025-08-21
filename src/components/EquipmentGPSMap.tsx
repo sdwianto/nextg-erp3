@@ -23,10 +23,9 @@ export const EquipmentGPSMap: React.FC = () => {
   const [equipment, setEquipment] = useState<EquipmentLocation[]>([]);
   const [selectedEquipment, setSelectedEquipment] = useState<string | null>(null);
 
-  // Empty equipment data - ready for real data
-  const mockEquipmentData: EquipmentLocation[] = [];
-
   useEffect(() => {
+    // Empty equipment data - ready for real data
+    const mockEquipmentData: EquipmentLocation[] = [];
     setEquipment(mockEquipmentData);
   }, []);
 
@@ -34,7 +33,7 @@ export const EquipmentGPSMap: React.FC = () => {
     if (isConnected) {
       // Join equipment tracking rooms
       equipment.forEach(eq => {
-        emitEvent('join-equipment-tracking', eq.id);
+        emitEvent('join-equipment-tracking', { equipmentId: eq.id });
       });
     }
   }, [isConnected, equipment, emitEvent]);
@@ -170,7 +169,6 @@ export const EquipmentGPSMap: React.FC = () => {
               size="sm"
               onClick={() => {
                 // Refresh equipment locations
-                console.log('Refreshing equipment locations...');
               }}
             >
               Refresh Locations

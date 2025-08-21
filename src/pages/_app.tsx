@@ -9,7 +9,6 @@ import type { ReactElement, ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { httpBatchLink } from "@trpc/client";
-import { useState as useStateReact } from "react";
 import { api } from "@/utils/api";
 import superjson from "superjson";
 
@@ -18,6 +17,7 @@ const outfit = Outfit({
 });
 
 export type NextPageWithLayout<P = object, IP = P> = NextPage<P, IP> & {
+  // eslint-disable-next-line no-unused-vars
   getLayout?: (page: ReactElement) => ReactNode;
 };
 
@@ -30,8 +30,8 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
   const [mounted, setMounted] = useState(false);
 
   // tRPC setup
-  const [queryClient] = useStateReact(() => new QueryClient());
-  const [trpcClient] = useStateReact(() =>
+  const [queryClient] = useState(() => new QueryClient());
+  const [trpcClient] = useState(() =>
     api.createClient({
       links: [
         httpBatchLink({

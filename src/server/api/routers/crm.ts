@@ -1,11 +1,10 @@
+import { createTRPCRouter, publicProcedure, protectedProcedure } from "@/server/api/trpc";
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
-import { PrismaClient } from "@prisma/client";
+import { prisma } from "@/server/db";
 
-const prisma = new PrismaClient();
 
-// Input validation schemas
-const createCustomerSchema = z.object({
+// Input validation schemas,
+  const createCustomerSchema = z.object({
   customerNumber: z.string().min(1, "Customer number is required"),
   name: z.string().min(1, "Customer name is required"),
   type: z.enum(["INDIVIDUAL", "COMPANY", "GOVERNMENT"]).default("INDIVIDUAL"),
@@ -41,7 +40,7 @@ export const crmRouter = createTRPCRouter({
   // CUSTOMER MANAGEMENT
   // ========================================
 
-  // Get all customers
+  // Get all customers,
   getCustomers: publicProcedure
     .input(z.object({
       page: z.number().default(1),
@@ -51,7 +50,7 @@ export const crmRouter = createTRPCRouter({
       industry: z.string().optional(),
     }))
     .query(async ({ input }) => {
-      const skip = (input.page - 1) * input.limit;
+      const _skip = (input.page - 1) * input.limit;
 
       const where = {
         ...(input.search && {
@@ -78,7 +77,7 @@ export const crmRouter = createTRPCRouter({
               },
             },
           },
-          skip,
+          skip: _skip,
           take: input.limit,
           orderBy: { createdAt: "desc" },
         }),
@@ -97,7 +96,7 @@ export const crmRouter = createTRPCRouter({
       };
     }),
 
-  // Get customer by ID
+  // Get customer by ID,
   getCustomerById: publicProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ input }) => {
@@ -124,7 +123,7 @@ export const crmRouter = createTRPCRouter({
       return { success: true, data: customer };
     }),
 
-  // Create customer
+  // Create customer,
   createCustomer: protectedProcedure
     .input(createCustomerSchema)
     .mutation(async ({ input }) => {
@@ -139,7 +138,7 @@ export const crmRouter = createTRPCRouter({
       return { success: true, data: customer };
     }),
 
-  // Update customer
+  // Update customer,
   updateCustomer: protectedProcedure
     .input(z.object({
       id: z.string(),
@@ -162,7 +161,7 @@ export const crmRouter = createTRPCRouter({
   // CONTACT MANAGEMENT
   // ========================================
 
-  // Get contacts for a customer
+  // Get contacts for a customer,
   getCustomerContacts: publicProcedure
     .input(z.object({
       customerId: z.string(),
@@ -179,7 +178,7 @@ export const crmRouter = createTRPCRouter({
       return { success: true, data: contacts };
     }),
 
-  // Create contact
+  // Create contact,
   createContact: protectedProcedure
     .input(createContactSchema)
     .mutation(async ({ input }) => {
@@ -193,7 +192,7 @@ export const crmRouter = createTRPCRouter({
       return { success: true, data: contact };
     }),
 
-  // Update contact
+  // Update contact,
   updateContact: protectedProcedure
     .input(z.object({
       id: z.string(),
@@ -215,7 +214,7 @@ export const crmRouter = createTRPCRouter({
   // DASHBOARD & ANALYTICS
   // ========================================
 
-  // Get CRM dashboard data
+  // Get CRM dashboard data,
   getDashboardData: publicProcedure
     .query(async () => {
       const [
@@ -258,20 +257,20 @@ export const crmRouter = createTRPCRouter({
       };
     }),
 
-  // Get CRM analytics
+  // Get CRM analytics,
   getCRMAnalytics: publicProcedure
     .input(z.object({
       startDate: z.string(),
       endDate: z.string(),
     }))
     .query(async ({ input }) => {
-      const startDate = new Date(input.startDate);
-      const endDate = new Date(input.endDate);
+      const _startDate = new Date(input.startDate);
+      const _endDate = new Date(input.endDate);
 
       const where = {
         createdAt: {
-          gte: startDate,
-          lte: endDate,
+          gte: _startDate,
+          lte: _endDate,
         },
       };
 
@@ -283,31 +282,37 @@ export const crmRouter = createTRPCRouter({
         prisma.customerContact.findMany({
           where: {
             contactDate: {
-              gte: startDate,
-              lte: endDate,
+              gte: _startDate,
+              lte: _endDate,
             },
           },
           select: { contactDate: true, contactType: true, status: true },
         }),
       ]);
 
-      // Group by date
-      const dailyData = {
-        customers: customers.reduce((acc: Record<string, any>, customer) => {
-          const date = customer.createdAt.toISOString().split('T')[0];
-          if (date) {
-            acc[date] = acc[date] ?? { date, ACTIVE: 0, INACTIVE: 0, PROSPECT: 0, LEAD: 0 };
-            (acc[date])[customer.status]++;
+      // Group by date,
+  const dailyData = {
+        customers: customers.reduce((acc: Record<string, unknown>, customer) => {
+          const _date = customer.createdAt.toISOString().split('T')[0];
+          if (_date) {
+            acc[_date] = acc[_date] ?? { date: _date, ACTIVE: 0, INACTIVE: 0, PROSPECT: 0, LEAD: 0 };
+            const record = acc[_date] as Record<string, number>;
+            if (record && customer.status) {
+              record[customer.status as keyof typeof record] = (record[customer.status as keyof typeof record] ?? 0) + 1;
+            }
           }
           return acc;
         }, {}),
-        contacts: contacts.reduce((acc: Record<string, any>, contact) => {
-          const date = contact.contactDate.toISOString().split('T')[0];
-          if (date) {
-            acc[date] = acc[date] ?? { date, PHONE_CALL: 0, EMAIL: 0, MEETING: 0, VISIT: 0, OTHER: 0 };
-            (acc[date])[contact.contactType]++;
+        contacts: contacts.reduce((acc: Record<string, unknown>, contact) => {
+          const _date = contact.contactDate.toISOString().split('T')[0];
+          if (_date) {
+            acc[_date] = acc[_date] ?? { date: _date, PHONE_CALL: 0, EMAIL: 0, MEETING: 0, VISIT: 0, OTHER: 0 };
+            const record = acc[_date] as Record<string, number>;
+            if (record && contact.contactType) {
+              record[contact.contactType as keyof typeof record] = (record[contact.contactType as keyof typeof record] ?? 0) + 1  ;
+            }
           }
-          return acc;
+          return acc; 
         }, {}),
       };
 

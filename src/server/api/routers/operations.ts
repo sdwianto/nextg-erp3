@@ -1,14 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unsafe-assignment */
  
  
  
  
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/server/db";
 
 // Input validation schemas
 const createOperationSchema = z.object({
@@ -100,7 +97,7 @@ export const operationsRouter = createTRPCRouter({
     }))
     .query(async ({ input }) => {
       const { page, limit, search, status, type, priority } = input;
-      const skip = (page - 1) * limit;
+      const _skip = (page - 1) * limit;
 
       const where = {
         ...(search && {
@@ -141,7 +138,7 @@ export const operationsRouter = createTRPCRouter({
               },
             },
           },
-          skip,
+          skip: _skip,
           take: limit,
           orderBy: { createdAt: "desc" },
         }),

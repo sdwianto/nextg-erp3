@@ -5,30 +5,11 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ThemeColorPicker } from '@/components/ThemeColorPicker';
-import { 
-  Settings, 
-  Users,
-  Shield,
-  Database,
-  Cloud,
-  Bell,
-  Globe,
-  Palette,
-  Key,
-  Lock,
-  Activity,
-  CheckCircle,
-  AlertTriangle,
-  Clock,
-  Download,
-  Upload,
-  RefreshCw,
-  Save
-} from 'lucide-react';
+import { Settings, Users, Shield, Database, Cloud, Bell, Globe, Palette, Key, Lock, Activity, CheckCircle, AlertTriangle, Clock, Download, Upload, RefreshCw, Save } from 'lucide-react';
 
 const SettingsPage: React.FC = () => {
   // Empty data arrays - ready for real data
-  const systemStats = {
+  const _systemStats = {
     totalUsers: 0,
     activeUsers: 0,
     systemUptime: '0 days',
@@ -45,7 +26,7 @@ const SettingsPage: React.FC = () => {
     permissions: string[];
   }> = [];
 
-  const systemSettings = [
+  const _systemSettings = [
     {
       category: 'General',
       settings: [
@@ -75,7 +56,7 @@ const SettingsPage: React.FC = () => {
     }
   ];
 
-  const roles = [
+  const _roles = [
     {
       id: 1,
       name: 'Administrator',
@@ -106,7 +87,7 @@ const SettingsPage: React.FC = () => {
     }
   ];
 
-  const getStatusBadge = (status: string) => {
+  const _getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
         return <Badge variant="default">Active</Badge>;
@@ -117,7 +98,7 @@ const SettingsPage: React.FC = () => {
     }
   };
 
-  const getRoleColor = (role: string) => {
+  const _getRoleColor = (role: string) => {
     switch (role) {
       case 'Administrator':
         return 'text-red-600';
@@ -145,14 +126,18 @@ const SettingsPage: React.FC = () => {
             <Button 
               variant="outline" 
               className="w-full sm:w-auto flex items-center gap-2"
-              onClick={() => alert('Exporting system configuration...')}
+              onClick={() => {
+                // console.log('Exporting system configuration...')
+              }}
             >
               <Download className="h-4 w-4" />
               Export Config
             </Button>
             <Button 
               className="w-full sm:w-auto flex items-center gap-2"
-              onClick={() => alert('Saving system changes...')}
+              onClick={() => {
+                // console.log('Saving system changes...')
+              }}
             >
               <Save className="h-4 w-4" />
               Save Changes
@@ -168,9 +153,9 @@ const SettingsPage: React.FC = () => {
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{systemStats.totalUsers}</div>
+              <div className="text-2xl font-bold">{_systemStats.totalUsers}</div>
               <p className="text-xs text-muted-foreground">
-                <CheckCircle className="inline h-3 w-3 text-green-500" /> {systemStats.activeUsers} active
+                <CheckCircle className="inline h-3 w-3 text-green-500" /> {_systemStats.activeUsers} active
               </p>
             </CardContent>
           </Card>
@@ -181,7 +166,7 @@ const SettingsPage: React.FC = () => {
               <Activity className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{systemStats.systemUptime}</div>
+              <div className="text-2xl font-bold">{_systemStats.systemUptime}</div>
               <p className="text-xs text-muted-foreground">
                 <CheckCircle className="inline h-3 w-3 text-green-500" /> Excellent performance
               </p>
@@ -194,7 +179,7 @@ const SettingsPage: React.FC = () => {
               <Database className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{systemStats.lastBackup}</div>
+              <div className="text-2xl font-bold">{_systemStats.lastBackup}</div>
               <p className="text-xs text-muted-foreground">
                 <Clock className="inline h-3 w-3 text-yellow-500" /> Next: Scheduled
               </p>
@@ -234,14 +219,18 @@ const SettingsPage: React.FC = () => {
               <Button 
                 variant="outline" 
                 className="flex items-center gap-2"
-                onClick={() => alert('Opening role management...')}
+                onClick={() => {
+                  // console.log('Opening role management...')
+                }}
               >
                 <Shield className="h-4 w-4" />
                 Roles
               </Button>
               <Button 
                 className="flex items-center gap-2"
-                onClick={() => alert('Adding new user...')}
+                onClick={() => {
+                  // console.log('Adding new user...')
+                }}
               >
                 <Users className="h-4 w-4" />
                 Add User
@@ -270,12 +259,12 @@ const SettingsPage: React.FC = () => {
                         </div>
                       </td>
                       <td className="p-3">
-                        <span className={`font-medium ${getRoleColor(user.role)}`}>
+                        <span className={`font-medium ${_getRoleColor(user.role)}`}>
                           {user.role}
                         </span>
                       </td>
                       <td className="p-3">
-                        {getStatusBadge(user.status)}
+                        {_getStatusBadge(user.status)}
                       </td>
                       <td className="p-3 text-sm text-gray-500">{user.lastLogin}</td>
                       <td className="p-3">
@@ -292,14 +281,18 @@ const SettingsPage: React.FC = () => {
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => alert(`Editing user: ${user.name}`)}
+                            onClick={() => {
+                              // console.log(`Editing user: ${user.name}`)
+                            }}
                           >
                             Edit
                           </Button>
                           <Button 
                             size="sm" 
                             variant="outline"
-                            onClick={() => alert(`Resetting password for: ${user.name}`)}
+                            onClick={() => {
+                              // console.log(`Resetting password for: ${user.name}`)
+                            }}
                           >
                             Reset Password
                           </Button>
@@ -325,7 +318,7 @@ const SettingsPage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-6">
-                {systemSettings.map((category) => (
+                {_systemSettings.map((category) => (
                   <div key={category.category} className="space-y-4">
                     <h3 className="font-semibold text-lg border-b pb-2">{category.category}</h3>
                     <div className="space-y-4">
@@ -339,7 +332,9 @@ const SettingsPage: React.FC = () => {
                             size="sm" 
                             variant="outline" 
                             className="w-full sm:w-auto"
-                            onClick={() => alert(`Editing setting: ${setting.name}`)}
+                            onClick={() => {
+                              // console.log(`Editing setting: ${setting.name}`)
+                            }}
                           >
                             Edit
                           </Button>
@@ -359,7 +354,7 @@ const SettingsPage: React.FC = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {roles.map((role) => (
+                {_roles.map((role) => (
                   <div key={role.id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center gap-4">
                       <div className="p-2 bg-blue-100 rounded-lg">
@@ -377,14 +372,18 @@ const SettingsPage: React.FC = () => {
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => alert(`Editing role: ${role.name}`)}
+                        onClick={() => {
+                          // console.log(`Editing role: ${role.name}`)
+                        }}
                       >
                         Edit
                       </Button>
                       <Button 
                         size="sm" 
                         variant="outline"
-                        onClick={() => alert(`Managing permissions for: ${role.name}`)}
+                        onClick={() => {
+                          // console.log(`Managing permissions for: ${role.name}`)
+                        }}
                       >
                         Permissions
                       </Button>
