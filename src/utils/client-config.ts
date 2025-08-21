@@ -1,29 +1,24 @@
 // Client-side configuration utilities
 // Safe to use in browser environment
-import { getClientConfig } from '../env';
 
 export const getClientPorts = () => {
-  const config = getClientConfig();
   return {
     frontend: 3002,
     backend: 3001,
-    websocket: config.websocketUrl,
-    api: config.apiUrl,
-    frontendUrl: config.frontendUrl,
+    websocket: process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001',
+    api: process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001/api',
+    frontendUrl: process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3002',
   };
 };
 
 export const getWebSocketUrl = () => {
-  const config = getClientConfig();
-  return process.env.NEXT_PUBLIC_WS_URL ?? config.websocketUrl;
+  return process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:3001';
 };
 
 export const getApiUrl = () => {
-  const config = getClientConfig();
-  return process.env.NEXT_PUBLIC_BACKEND_URL ?? config.apiUrl;
+  return process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001/api';
 };
 
 export const getFrontendUrl = () => {
-  const config = getClientConfig();
-  return process.env.NEXT_PUBLIC_FRONTEND_URL ?? config.frontendUrl;
+  return process.env.NEXT_PUBLIC_FRONTEND_URL || 'http://localhost:3002';
 };
