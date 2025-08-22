@@ -71,7 +71,7 @@ app.get("/api/test", (req, res) => {
 // app.use("/api/operations", operationsRouter);
 
 // Error handling middleware
-app.use((err: unknown, req: express.Request, res: express.Response) => {
+app.use((err: unknown, req: express.Request, res: express.Response, next: express.NextFunction) => {
   // console.error("Unhandled error:", err);
   
   res.status(500).json({

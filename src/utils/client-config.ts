@@ -12,6 +12,12 @@ export const getClientPorts = () => {
 };
 
 export const getWebSocketUrl = () => {
+  // Production: Disable WebSocket for now (use polling/SSE instead)
+  if (process.env.NODE_ENV === 'production') {
+    return process.env.NEXT_PUBLIC_WS_URL || '';
+  }
+  
+  // Development: Use separate backend server
   return process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:3001';
 };
 
