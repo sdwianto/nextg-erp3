@@ -85,7 +85,6 @@ const FinancePage: React.FC = () => {
     page: 1,
     limit: 50,
     search: filters.search || undefined,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     type: filters.type !== 'all' ? filters.type as any : undefined,
     isActive: true,
   });

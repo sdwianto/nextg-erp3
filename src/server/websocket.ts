@@ -6,7 +6,7 @@ import { getWebSocketConfig } from '../env';
 
 export const initializeWebSocket = (httpServer: HTTPServer) => {
   const config = getWebSocketConfig();
-  const io = new SocketIOServer(httpServer, config as Partial<ServerOptions>) 
+  const io = new SocketIOServer(httpServer, config as Partial<ServerOptions>); 
 
   // Handle connections
   io.on('connection', (socket) => {

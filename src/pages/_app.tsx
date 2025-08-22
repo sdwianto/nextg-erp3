@@ -17,7 +17,6 @@ const outfit = Outfit({
 });
 
 export type NextPageWithLayout<P = object, IP = P> = NextPage<P, IP> & {
-  // eslint-disable-next-line no-unused-vars
   getLayout?: (page: ReactElement) => ReactNode;
 };
 
@@ -29,18 +28,30 @@ const MyApp = ({ Component, pageProps }: AppPropsWithLayout) => {
   const getLayout = Component.getLayout ?? ((page) => page);
   const [mounted, setMounted] = useState(false);
 
-  // tRPC setup dengan optimasi caching
+  // tRPC setup dengan optimasi caching - ENHANCED
   const [queryClient] = useState(() => new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 5 * 60 * 1000, // 5 menit
-        gcTime: 10 * 60 * 1000, // 10 menit
-        retry: 1,
+        staleTime: 2 * 60 * 1000, // 2 menit - reduced for more responsive data
+        gcTime: 5 * 60 * 1000, // 5 menit - reduced for better memory management
+        retry: 2, // Increased retry for better reliability
         refetchOnWindowFocus: false,
         refetchOnMount: false,
+        refetchOnReconnect: true, // Refetch on reconnect
+        // Performance optimizations
+        refetchInterval: false, // Disable automatic refetching
+        refetchIntervalInBackground: false,
+        // Network optimizations
+        networkMode: 'online',
+        // Cache optimizations
+        structuralSharing: true,
+        // Error handling
+        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
       },
       mutations: {
         retry: 1,
+        retryDelay: 1000,
+        networkMode: 'online',
       },
     },
   }));

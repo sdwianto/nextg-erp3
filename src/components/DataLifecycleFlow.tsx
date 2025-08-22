@@ -140,7 +140,6 @@ const DataLifecycleFlow: React.FC = () => {
     return 0;
   };
 
-  // eslint-disable-next-line no-unused-vars
   const safeArrayMap = (data: unknown, key: string, callback: (_item: unknown, _index: number) => React.ReactNode): React.ReactNode => {
     if (data && typeof data === 'object' && key in data) {
       const value = (data as Record<string, unknown>)[key];

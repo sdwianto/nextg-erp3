@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import app from "./app";
 import { createServer } from "http";
 import { initializeWebSocket } from "./websocket";
@@ -13,9 +14,12 @@ initializeWebSocket(httpServer);
 
 // Start server
 httpServer.listen(PORT, () => {
-  // console.log(`🚀 NextGen ERP API Server running on port ${PORT}`);
-  // console.log(`📊 Health check: http://localhost:${PORT}/health`);
-  // console.log(`📦 Inventory API: http://localhost:${PORT}/api/inventory`);
-  // console.log(`🔌 WebSocket Server: ws://localhost:${PORT}`);
-  // console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
+  if (process.env.NODE_ENV === 'development') {
+    // console.log(`🚀 NextGen ERP API Server running on port ${PORT}`);
+    // console.log(`📊 Health check: http://localhost:${PORT}/health`);
+    // console.log(`📦 Inventory API: http://localhost:${PORT}/api/inventory`);
+    // console.log(`🔌 WebSocket Server: ws://localhost:${PORT}`);
+    // console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
+  }
 });
+ 

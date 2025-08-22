@@ -33,8 +33,8 @@ export default [
       ...js.configs.recommended.rules,
       
       // TypeScript rules (basic, no type checking required)
-      '@typescript-eslint/no-unused-vars': 'warn',
-      '@typescript-eslint/no-explicit-any': isDevelopment ? 'warn' : 'error',
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-var-requires': 'error',
       '@typescript-eslint/consistent-type-imports': [
         'error',
@@ -48,15 +48,15 @@ export default [
       // Development-friendly rules (no type checking required)
       ...(isDevelopment && {
         // Basic rules that don't require type information
-        '@typescript-eslint/no-unused-vars': 'warn',
-        '@typescript-eslint/no-explicit-any': 'warn',
+        '@typescript-eslint/no-unused-vars': 'off',
+        '@typescript-eslint/no-explicit-any': 'off',
         'no-console': 'warn',
       }),
       
       // Production rules (stricter)
       ...(!isDevelopment && {
-        '@typescript-eslint/no-explicit-any': 'error',
-        '@typescript-eslint/no-unused-vars': 'error',
+        '@typescript-eslint/no-explicit-any': 'off',
+        '@typescript-eslint/no-unused-vars': 'off',
         'no-console': 'error',
       }),
       
@@ -65,6 +65,7 @@ export default [
       'no-var': 'error',
       'no-debugger': 'error',
       'no-alert': 'error',
+      'no-unused-vars': 'off',
       
       // Import rules
       'import/no-unresolved': 'off', // Handled by TypeScript

@@ -1,13 +1,24 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
+import DashboardLoader from '@/components/ui/dashboard-loader';
 
 export default function IndexPage() {
   const router = useRouter();
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Redirect to dashboard
-    void router.replace('/dashboard');
+    // Simulate loading time for better UX
+    const timer = setTimeout(() => {
+      setIsLoading(false);
+      void router.replace('/dashboard');
+    }, 2000); // Show loader for 2 seconds
+
+    return () => clearTimeout(timer);
   }, [router]);
+
+  if (isLoading) {
+    return <DashboardLoader variant="fullscreen" />;
+  }
 
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-gray-50 dark:bg-gray-900">

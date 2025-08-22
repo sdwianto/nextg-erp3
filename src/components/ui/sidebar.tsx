@@ -33,10 +33,8 @@ const _SIDEBAR_KEYBOARD_SHORTCUT = "b";
 type SidebarContextProps = {
   state: "expanded" | "collapsed";
   open: boolean;
-  // eslint-disable-next-line no-unused-vars
   setOpen: (value: boolean) => void;
   openMobile: boolean;
-  // eslint-disable-next-line no-unused-vars
   setOpenMobile: (value: boolean) => void;
   isMobile: boolean;
   toggleSidebar: () => void;
@@ -64,7 +62,6 @@ function SidebarProvider({
 }: React.ComponentProps<"div"> & {
   defaultOpen?: boolean;
   open?: boolean;
-  // eslint-disable-next-line no-unused-vars
   onOpenChange?: (value: boolean) => void;
 }) {
   const isMobile = useIsMobile();
@@ -75,7 +72,6 @@ function SidebarProvider({
   const [internalOpen, setInternalOpen] = React.useState(defaultOpen);
   const open = openProp ?? internalOpen;
   const setOpen = React.useCallback(
-    // eslint-disable-next-line no-unused-vars
     (value: boolean | ((value: boolean) => boolean)) => {
       const openState = typeof value === "function" ? value(open) : value;
       if (setOpenProp) {

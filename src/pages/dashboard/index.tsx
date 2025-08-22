@@ -13,9 +13,11 @@ import { EquipmentGPSMap } from '@/components/EquipmentGPSMap';
 import { SafetyCompliance } from '@/components/SafetyCompliance';
 import { MaintenanceCard } from '@/components/MaintenanceCard';
 import { MaintenanceAlerts } from '@/components/MaintenanceAlerts';
+import DashboardLoader from '@/components/ui/dashboard-loader';
 
 import { Badge } from '@/components/ui/badge';
 import { AlertTriangle, CheckCircle, Clock, Building2, Package, Truck, DollarSign, Users, BarChart3, TrendingUp, Wrench, ShoppingCart } from 'lucide-react';
+import { WebSocketStatus } from '@/components/ui/websocket-status';
 
 
 const DashboardPage: React.FC = () => {
@@ -64,67 +66,74 @@ const DashboardPage: React.FC = () => {
   const hrData = api.hrms.getDashboardData.useQuery();
 
   // Real-time data hook
-  const { data: realtimeData, isConnected } = useRealtime();
+  const { data: realtimeData, isConnected, connectionStatus, retryCount, lastError } = useRealtime();
 
-  // Update stats when data is available
+  // Update stats when data is available - OPTIMIZED with useMemo
+  const finalStats = React.useMemo(() => {
+    if (!rentalData.data || !operationsData.data || !inventoryData.data || !financeData.data || !hrData.data) {
+      return null;
+    }
+
+    // Calculate real metrics from actual data
+    const _inventoryTotal = inventoryData.data.pagination?.total || 0;
+    const _lowStockCount = 0;
+    const _outOfStockCount = 0;
+    const _inventoryValue = 0;
+
+    const _rentalRevenue = 0;
+    const _financeRevenue = 0;
+    const _totalRevenue = _rentalRevenue + _financeRevenue;
+
+    // Use real-time data if available, otherwise use calculated data
+    return realtimeData ? {
+      inventory: realtimeData.inventory,
+      rental: realtimeData.rental,
+      finance: realtimeData.finance,
+      hr: realtimeData.hr,
+      maintenance: realtimeData.maintenance
+    } : {
+      inventory: {
+        totalItems: _inventoryTotal,
+        lowStock: _lowStockCount,
+        outOfStock: _outOfStockCount,
+        value: _inventoryValue
+      },
+      rental: {
+        activeRentals: rentalData.data?.summary?.inUseEquipment || 0,
+        pendingReturns: rentalData.data?.summary?.pendingMaintenanceRecords || 0,
+        maintenanceDue: rentalData.data?.summary?.pendingMaintenanceRecords || 0,
+        revenue: _rentalRevenue
+      },
+      finance: {
+        monthlyRevenue: _totalRevenue,
+        pendingPayments: 0,
+        expenses: 0,
+        profit: _totalRevenue
+      },
+      hr: {
+        totalEmployees: hrData.data?.data?.totalEmployees || 0,
+        onLeave: hrData.data?.data?.onLeaveEmployees || 0,
+        newHires: hrData.data?.data?.recentHires?.length || 0,
+        attendance: 0
+      },
+      maintenance: {
+        totalEquipment: rentalData.data?.summary?.totalEquipment || 0,
+        scheduledMaintenance: rentalData.data?.summary?.pendingMaintenanceRecords || 0,
+        overdueMaintenance: 0, // TODO: Implement overdue maintenance
+        inProgress: rentalData.data?.summary?.maintenanceEquipment || 0,
+        completedThisMonth: rentalData.data?.summary?.completedMaintenanceRecords || 0,
+        totalCost: 0 // TODO: Implement total cost
+      }
+    };
+  }, [rentalData.data, operationsData.data, inventoryData.data, financeData.data, hrData.data, realtimeData]);
+
+  // Update stats when finalStats changes
   React.useEffect(() => {
-    if (rentalData.data && operationsData.data && inventoryData.data && financeData.data && hrData.data) {
-      // Calculate real metrics from actual data
-      const _inventoryTotal = inventoryData.data.pagination?.total || 0;
-      const _lowStockCount = 0;
-      const _outOfStockCount = 0;
-      const _inventoryValue = 0;
-
-      const _rentalRevenue = 0;
-      const _financeRevenue = 0;
-      const _totalRevenue = _rentalRevenue + _financeRevenue;
-
-      // Use real-time data if available, otherwise use calculated data
-      const finalStats = realtimeData ? {
-        inventory: realtimeData.inventory,
-        rental: realtimeData.rental,
-        finance: realtimeData.finance,
-        hr: realtimeData.hr,
-        maintenance: realtimeData.maintenance
-      } : {
-        inventory: {
-          totalItems: _inventoryTotal,
-          lowStock: _lowStockCount,
-          outOfStock: _outOfStockCount,
-          value: _inventoryValue
-        },
-        rental: {
-          activeRentals: rentalData.data?.summary?.inUseEquipment || 0,
-          pendingReturns: rentalData.data?.summary?.pendingMaintenanceRecords || 0,
-          maintenanceDue: rentalData.data?.summary?.pendingMaintenanceRecords || 0,
-          revenue: _rentalRevenue
-        },
-        finance: {
-          monthlyRevenue: _totalRevenue,
-          pendingPayments: 0,
-          expenses: 0,
-          profit: _totalRevenue
-        },
-        hr: {
-          totalEmployees: hrData.data?.data?.totalEmployees || 0,
-          onLeave: hrData.data?.data?.onLeaveEmployees || 0,
-          newHires: hrData.data?.data?.recentHires?.length || 0,
-          attendance: 0
-        },
-        maintenance: {
-          totalEquipment: rentalData.data?.summary?.totalEquipment || 0,
-          scheduledMaintenance: rentalData.data?.summary?.pendingMaintenanceRecords || 0,
-          overdueMaintenance: 0, // TODO: Implement overdue maintenance
-          inProgress: rentalData.data?.summary?.maintenanceEquipment || 0,
-          completedThisMonth: rentalData.data?.summary?.completedMaintenanceRecords || 0,
-          totalCost: 0 // TODO: Implement total cost
-        }
-      };
-
+    if (finalStats) {
       setStats(finalStats);
       setLoading(false);
     }
-  }, [rentalData.data, operationsData.data, inventoryData.data, financeData.data, hrData.data, realtimeData]);
+  }, [finalStats]);
 
   const maintenanceAlerts: Array<{id: number; equipmentName: string; equipmentCode: string; alertType: 'OVERDUE' | 'EMERGENCY' | 'SCHEDULED' | 'INSPECTION'; message: string; priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'; daysOverdue?: number; scheduledDate?: string}> = [];
   const recentActivities: Array<{id: string; status: string; message: string; time: string; type: string}> = [];
@@ -148,23 +157,7 @@ const DashboardPage: React.FC = () => {
   };
 
   if (loading) {
-    return (
-      <DashboardLayout>
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">NextGen ERP Dashboard v1.1</h1>
-              <p className="text-gray-600 dark:text-gray-400">Loading real-time data...</p>
-            </div>
-          </div>
-          <div className="grid gap-6">
-            <div className="animate-pulse">
-              <div className="h-32 bg-gray-200 rounded-lg"></div>
-            </div>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
+    return <DashboardLoader variant="minimal" />;
   }
 
   return (
@@ -176,10 +169,18 @@ const DashboardPage: React.FC = () => {
             <h1 className="text-3xl font-bold text-gray-900 dark:text-white">NextGen ERP Dashboard v1.1</h1>
             <p className="text-gray-600 dark:text-gray-400">Real-time overview of your business operations</p>
           </div>
-          <Badge variant="outline" className="flex items-center gap-2">
-            <div className="h-2 w-2 rounded-full bg-green-500"></div>
-            System Online
-          </Badge>
+          <div className="flex items-center gap-3">
+            <WebSocketStatus 
+              connectionStatus={connectionStatus}
+              retryCount={retryCount}
+              lastError={lastError}
+              isConnected={isConnected}
+            />
+            <Badge variant="outline" className="flex items-center gap-2">
+              <div className="h-2 w-2 rounded-full bg-green-500"></div>
+              System Online
+            </Badge>
+          </div>
         </div>
 
         {/* Real-time Dashboard Component */}

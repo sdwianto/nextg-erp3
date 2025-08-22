@@ -214,18 +214,19 @@ export const salesRouter = createTRPCRouter({
       ]);
 
       // Get product details for top products,
-  const topProductsWithDetails = await Promise.all(
-        topProducts.map(async (item) => {
-          const product = await prisma.product.findUnique({
-            where: { id: item.productId },
-          });
-          return {
-            product,
-            totalQuantity: item._sum.quantity ?? 0,
-            totalRevenue: item._sum.totalPrice ?? 0,
-          };
-        })
-      );
+      // Get product details for top products - OPTIMIZED with single query
+      const productIds = topProducts.map(item => item.productId);
+      const products = await prisma.product.findMany({
+        where: { id: { in: productIds } },
+        select: { id: true, name: true, sku: true, price: true }
+      });
+      
+      const productsMap = new Map(products.map(p => [p.id, p]));
+      const topProductsWithDetails = topProducts.map(item => ({
+        product: productsMap.get(item.productId) || null,
+        totalQuantity: item._sum.quantity ?? 0,
+        totalRevenue: item._sum.totalPrice ?? 0,
+      }));
 
       return {
         summary: {

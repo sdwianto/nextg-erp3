@@ -155,28 +155,28 @@ const EnhancedProcurementWorkflow: React.FC = () => {
 
   // API calls
   const { data: dashboardData, isLoading: dashboardLoading } = api.procurement.getDashboardData.useQuery(undefined, {
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false, // OPTIMIZED: Disable window focus refetch
     refetchOnMount: true,
-    refetchInterval: 5000, // Auto-refresh every 5 seconds for real-time updates
-    staleTime: 0, // Always fetch fresh data
+    refetchInterval: 10000, // OPTIMIZED: Reduced to 10 seconds
+    staleTime: 30000, // OPTIMIZED: 30 seconds stale time
   });
   const { data: purchaseRequests, isLoading: prLoading } = api.procurement.getPurchaseRequests.useQuery(undefined, {
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false, // OPTIMIZED: Disable window focus refetch
     refetchOnMount: true,
-    refetchInterval: 5000, // Auto-refresh every 5 seconds
-    staleTime: 0,
+    refetchInterval: 10000, // OPTIMIZED: Reduced to 10 seconds
+    staleTime: 30000, // OPTIMIZED: 30 seconds stale time
   });
   const { data: purchaseOrders, isLoading: poLoading } = api.procurement.getPurchaseOrders.useQuery(undefined, {
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false, // OPTIMIZED: Disable window focus refetch
     refetchOnMount: true,
-    refetchInterval: 5000, // Auto-refresh every 5 seconds
-    staleTime: 0,
+    refetchInterval: 10000, // OPTIMIZED: Reduced to 10 seconds
+    staleTime: 30000, // OPTIMIZED: 30 seconds stale time
   });
   const { data: suppliers, isLoading: suppliersLoading, refetch: refetchSuppliers } = api.procurement.getSuppliers.useQuery(undefined, {
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false, // OPTIMIZED: Disable window focus refetch
     refetchOnMount: true,
-    refetchInterval: 2000, // Auto-refresh every 2 seconds for real-time updates
-    staleTime: 0, // Always fetch fresh data
+    refetchInterval: 5000, // OPTIMIZED: Reduced to 5 seconds
+    staleTime: 15000, // OPTIMIZED: 15 seconds stale time
     refetchOnReconnect: true,
   });
 

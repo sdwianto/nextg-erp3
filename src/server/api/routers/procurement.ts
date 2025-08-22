@@ -1,9 +1,10 @@
 // src/server/api/routers/procurement.ts
 import { z } from "zod";
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
-import { InventoryTransactionType, AssetType, DepreciationMethod, ProcurementSourceType } from "@prisma/client";
+import { InventoryTransactionType, AssetType, DepreciationMethod, ProcurementSourceType, Prisma } from "@prisma/client";
 import type { PurchaseOrderStatus } from "@prisma/client";
 import { prisma } from "@/server/db";
+import { withCache, CACHE_KEYS } from "@/utils/cache";
 
 // Enhanced input validation schemas with JDE compliance
 const createPurchaseRequestSchema = z.object({
@@ -69,213 +70,183 @@ export const procurementRouter = createTRPCRouter({
 
   getDashboardData: publicProcedure
     .query(async () => {
-      try {
-        // Get counts with JDE-style metrics - more specific and accurate
-        const [
-          activePurchaseRequestsCount, // Only count active PRs (not processed)
-          activePurchaseOrdersCount,   // Only count active POs
-          goodsReceiptsCount,
-          suppliersCount,
-          totalSpend,
-          pendingPRApprovals,
-          pendingPOApprovals,
-          rejectedPRsCount,            // Count rejected PRs
-          rejectedPOsCount,            // Count rejected POs
-          totalPurchaseRequestsCount   // Total count for reference
-        ] = await Promise.all([
-          // Count PRs that don't have Purchase Orders yet
-          prisma.purchaseRequest.count({
-            where: {
-              // Exclude PRs that have associated Purchase Orders
-              NOT: {
-                purchaseOrders: {
-                  some: {}
+      return withCache(CACHE_KEYS.PROCUREMENT_DASHBOARD, async () => {
+        try {
+          // Use single optimized query for all stats
+          const statsQuery = `
+            SELECT 
+              COUNT(CASE 
+                WHEN pr.id IS NOT NULL 
+                AND NOT EXISTS (SELECT 1 FROM "purchase_orders" po2 WHERE po2."purchaseRequestId" = pr.id)
+                THEN 1 
+              END) as "activePurchaseRequestsCount",
+              COUNT(CASE 
+                WHEN po.status IN ('DRAFT', 'SUBMITTED', 'APPROVED', 'ORDERED', 'PARTIALLY_RECEIVED') 
+                THEN 1 
+              END) as "activePurchaseOrdersCount",
+              COUNT(DISTINCT gr.id) as "goodsReceiptsCount",
+              (SELECT COUNT(*) FROM "Supplier" WHERE "isActive" = true) as "suppliersCount",
+              COALESCE(SUM(CASE 
+                WHEN po.status IN ('APPROVED', 'ORDERED', 'PARTIALLY_RECEIVED', 'RECEIVED') 
+                THEN po."grandTotal" 
+              END), 0) as "totalSpend",
+              COUNT(CASE 
+                WHEN pr.status IN ('SUBMITTED', 'UNDER_REVIEW') 
+                THEN 1 
+              END) as "pendingPRApprovals",
+              COUNT(CASE 
+                WHEN po.status = 'SUBMITTED' 
+                THEN 1 
+              END) as "pendingPOApprovals",
+              COUNT(CASE 
+                WHEN pr.status = 'REJECTED' 
+                THEN 1 
+              END) as "rejectedPRsCount",
+              COUNT(CASE 
+                WHEN po.status = 'REJECTED' 
+                THEN 1 
+              END) as "rejectedPOsCount",
+              COUNT(DISTINCT pr.id) as "totalPurchaseRequestsCount"
+            FROM "purchase_requests" pr
+            FULL OUTER JOIN "purchase_orders" po ON po."purchaseRequestId" = pr.id
+            LEFT JOIN "GoodsReceipt" gr ON gr."purchaseOrderId" = po.id
+          `;
+          
+          const [statsResult] = await prisma.$queryRaw<any[]>(Prisma.raw(statsQuery));
+          const stats = statsResult || {};
+          
+          // Convert to numbers
+          const [
+            activePurchaseRequestsCount,
+            activePurchaseOrdersCount, 
+            goodsReceiptsCount,
+            suppliersCount,
+            totalSpend,
+            pendingPRApprovals,
+            pendingPOApprovals,
+            rejectedPRsCount,
+            rejectedPOsCount,
+            totalPurchaseRequestsCount
+          ] = [
+            parseInt(stats.activePurchaseRequestsCount) || 0,
+            parseInt(stats.activePurchaseOrdersCount) || 0,
+            parseInt(stats.goodsReceiptsCount) || 0,
+            parseInt(stats.suppliersCount) || 0,
+            parseFloat(stats.totalSpend) || 0,
+            parseInt(stats.pendingPRApprovals) || 0,
+            parseInt(stats.pendingPOApprovals) || 0,
+            parseInt(stats.rejectedPRsCount) || 0,
+            parseInt(stats.rejectedPOsCount) || 0,
+            parseInt(stats.totalPurchaseRequestsCount) || 0
+          ];
+
+          // Get recent data with minimal fields - OPTIMIZED with Promise.all
+          const [recentPurchaseOrders, recentPurchaseRequests] = await Promise.all([
+            prisma.purchaseOrder.findMany({
+              where: {
+                status: { 
+                  in: ["DRAFT", "SUBMITTED", "APPROVED", "ORDERED", "PARTIALLY_RECEIVED"] 
                 }
-              }
-            }
-          }),
-          // Count active POs (excluding completed/cancelled)
-          prisma.purchaseOrder.count({
-            where: { 
-              status: { 
-                in: ["DRAFT", "SUBMITTED", "APPROVED", "ORDERED", "PARTIALLY_RECEIVED"] 
-              } 
-            }
-          }),
-          prisma.goodsReceipt.count(),
-          prisma.supplier.count({ where: { isActive: true } }),
-          prisma.purchaseOrder.aggregate({
-            _sum: { grandTotal: true },
-            where: { status: { in: ["APPROVED", "ORDERED", "PARTIALLY_RECEIVED", "RECEIVED"] } }
-          }),
-          // Pending approvals - PRs waiting for approval
-          prisma.purchaseRequest.count({ 
-            where: { status: { in: ["SUBMITTED", "UNDER_REVIEW"] } } 
-          }),
-          // Pending approvals - POs waiting for approval
-          prisma.purchaseOrder.count({ 
-            where: { status: "SUBMITTED" } 
-          }),
-          // Rejected PRs count
-          prisma.purchaseRequest.count({ 
-            where: { status: "REJECTED" } 
-          }),
-          // Rejected POs count
-          prisma.purchaseOrder.count({ 
-            where: { status: "REJECTED" as PurchaseOrderStatus } 
-          }),
-          // Total PR count for comparison
-          prisma.purchaseRequest.count()
-        ]);
-
-        // Get recent Purchase Orders first
-        const recentPurchaseOrders = await prisma.purchaseOrder.findMany({
-          take: 5,
-          where: {
-            status: { 
-              in: ["DRAFT", "SUBMITTED", "APPROVED", "ORDERED", "PARTIALLY_RECEIVED"] 
-            }
-          },
-          orderBy: { orderDate: 'desc' },
-          include: {
-            supplier: true,
-            items: {
-              include: {
-                product: true,
               },
-            },
-          },
-        });
-
-        // Get recent activities - PRs that don't have Purchase Orders yet
-        const recentPurchaseRequests = await prisma.purchaseRequest.findMany({
-          take: 10, // Get more to filter out ones with POs
-          orderBy: { requestDate: 'desc' },
-          include: {
-            items: {
-              include: {
-                product: true,
-              },
-            },
-          },
-        });
-
-        // Filter out PRs that already have Purchase Orders
-        const prsWithoutPOs = recentPurchaseRequests.filter(pr => {
-          // Check if this PR has any associated Purchase Orders
-          return !recentPurchaseOrders.some(po => po.purchaseRequestId === pr.id);
-        }).slice(0, 5); // Take only first 5 after filtering
-
-        // Get supplier performance metrics (JDE-style)
-        const supplierPerformance = await prisma.supplier.findMany({
-          take: 5,
-          orderBy: { name: 'asc' },
-          select: {
-            id: true,
-            name: true,
-            code: true,
-            contactPerson: true,
-            email: true,
-            phone: true,
-            isActive: true,
-            _count: {
               select: {
-                purchaseOrders: true
-              }
-            }
-          },
-        });
+                id: true,
+                poNumber: true,
+                status: true,
+                grandTotal: true,
+                orderDate: true,
+                supplier: {
+                  select: {
+                    id: true,
+                    name: true
+                  }
+                }
+              },
+              orderBy: { orderDate: 'desc' },
+              take: 5
+            }),
+            prisma.purchaseRequest.findMany({
+              where: {
+                purchaseOrders: {
+                  none: {}
+                }
+              },
+              select: {
+                id: true,
+                prNumber: true,
+                title: true,
+                status: true,
+                priority: true,
+                requiredDate: true,
+                estimatedBudget: true
+              },
+              orderBy: { requestDate: 'desc' },
+              take: 5
+            })
+          ]);
 
-        // Calculate month-over-month changes for better insights
-        const currentMonth = new Date();
-        const lastMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1);
-        const thisMonthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+          // Get monthly stats
+          const monthlyStatsQuery = `
+            SELECT 
+              COUNT(CASE WHEN pr."requestDate" >= date_trunc('month', CURRENT_DATE) THEN 1 END) as "thisMonthPRCount",
+              COUNT(CASE WHEN pr."requestDate" >= date_trunc('month', CURRENT_DATE - interval '1 month') 
+                         AND pr."requestDate" < date_trunc('month', CURRENT_DATE) THEN 1 END) as "lastMonthPRCount",
+              COUNT(CASE WHEN po."orderDate" >= date_trunc('month', CURRENT_DATE) THEN 1 END) as "thisMonthPOCount",
+              COUNT(CASE WHEN po."orderDate" >= date_trunc('month', CURRENT_DATE - interval '1 month') 
+                         AND po."orderDate" < date_trunc('month', CURRENT_DATE) THEN 1 END) as "lastMonthPOCount",
+              COALESCE(SUM(CASE WHEN po."orderDate" >= date_trunc('month', CURRENT_DATE) 
+                               AND po.status IN ('APPROVED', 'ORDERED', 'PARTIALLY_RECEIVED', 'RECEIVED')
+                               THEN po."grandTotal" END), 0) as "thisMonthSpend",
+              COALESCE(SUM(CASE WHEN po."orderDate" >= date_trunc('month', CURRENT_DATE - interval '1 month') 
+                               AND po."orderDate" < date_trunc('month', CURRENT_DATE)
+                               AND po.status IN ('APPROVED', 'ORDERED', 'PARTIALLY_RECEIVED', 'RECEIVED')
+                               THEN po."grandTotal" END), 0) as "lastMonthSpend"
+            FROM "purchase_requests" pr
+            FULL OUTER JOIN "purchase_orders" po ON po."purchaseRequestId" = pr.id
+          `;
+          const monthlyStats = await prisma.$queryRaw<any[]>(Prisma.raw(monthlyStatsQuery));
 
-        const [
-          thisMonthPRCount,
-          lastMonthPRCount,
-          thisMonthPOCount,
-          lastMonthPOCount,
-          thisMonthSpend,
-          lastMonthSpend
-        ] = await Promise.all([
-          prisma.purchaseRequest.count({
-            where: { 
-              requestDate: { gte: thisMonthStart }
-            }
-          }),
-          prisma.purchaseRequest.count({
-            where: { 
-              requestDate: { gte: lastMonth, lt: thisMonthStart }
-            }
-          }),
-          prisma.purchaseOrder.count({
-            where: { 
-              orderDate: { gte: thisMonthStart },
-              status: { in: ["DRAFT", "SUBMITTED", "APPROVED", "ORDERED", "PARTIALLY_RECEIVED"] }
-            }
-          }),
-          prisma.purchaseOrder.count({
-            where: { 
-              orderDate: { gte: lastMonth, lt: thisMonthStart },
-              status: { in: ["DRAFT", "SUBMITTED", "APPROVED", "ORDERED", "PARTIALLY_RECEIVED"] }
-            }
-          }),
-          prisma.purchaseOrder.aggregate({
-            _sum: { grandTotal: true },
-            where: { 
-              orderDate: { gte: thisMonthStart },
-              status: { in: ["APPROVED", "ORDERED", "PARTIALLY_RECEIVED", "RECEIVED"] }
-            }
-          }),
-          prisma.purchaseOrder.aggregate({
-            _sum: { grandTotal: true },
-            where: { 
-              orderDate: { gte: lastMonth, lt: thisMonthStart },
-              status: { in: ["APPROVED", "ORDERED", "PARTIALLY_RECEIVED", "RECEIVED"] }
-            }
-          })
-        ]);
+          // Process monthly stats
+          const monthlyStatsData = monthlyStats[0] || {};
+          const thisMonthPRCount = parseInt(monthlyStatsData.thisMonthPRCount) || 0;
+          const lastMonthPRCount = parseInt(monthlyStatsData.lastMonthPRCount) || 0;
+          const thisMonthPOCount = parseInt(monthlyStatsData.thisMonthPOCount) || 0;
+          const lastMonthPOCount = parseInt(monthlyStatsData.lastMonthPOCount) || 0;
+          const thisMonthSpend = parseFloat(monthlyStatsData.thisMonthSpend) || 0;
+          const lastMonthSpend = parseFloat(monthlyStatsData.lastMonthSpend) || 0;
 
-        // Calculate percentage changes
-        const prChange = lastMonthPRCount > 0 ? Math.round(((thisMonthPRCount - lastMonthPRCount) / lastMonthPRCount) * 100) : 0;
-        const poChange = lastMonthPOCount > 0 ? Math.round(((thisMonthPOCount - lastMonthPOCount) / lastMonthPOCount) * 100) : 0;
-        const lastMonthSpendValue = Number(lastMonthSpend._sum?.grandTotal ?? 0);
-        const thisMonthSpendValue = Number(thisMonthSpend._sum?.grandTotal ?? 0);
-        const spendChange = lastMonthSpendValue > 0 ? 
-          Math.round(((thisMonthSpendValue - lastMonthSpendValue) / lastMonthSpendValue) * 100) : 0;
+          // Calculate percentage changes
+          const prChange = lastMonthPRCount > 0 ? Math.round(((thisMonthPRCount - lastMonthPRCount) / lastMonthPRCount) * 100) : 0;
+          const poChange = lastMonthPOCount > 0 ? Math.round(((thisMonthPOCount - lastMonthPOCount) / lastMonthPOCount) * 100) : 0;
+          const spendChange = lastMonthSpend > 0 ? 
+            Math.round(((thisMonthSpend - lastMonthSpend) / lastMonthSpend) * 100) : 0;
 
-        // Ensure all values are properly converted to numbers and handle null/undefined
-        const totalSpendValue = totalSpend._sum?.grandTotal ? Number(totalSpend._sum.grandTotal) : 0;
-
-        return {
-          stats: {
-            purchaseRequests: activePurchaseRequestsCount ?? 0,     // Active PRs only
-            purchaseOrders: activePurchaseOrdersCount ?? 0,         // Active POs only
-            goodsReceipts: goodsReceiptsCount ?? 0,
-            suppliers: suppliersCount ?? 0,                         // Active suppliers only
-            totalSpend: totalSpendValue,                            // Ensure it's 0 after reset
-            pendingPRApprovals: pendingPRApprovals ?? 0,            // PRs waiting for approval
-            pendingPOApprovals: pendingPOApprovals ?? 0,            // POs waiting for approval
-            pendingApprovals: (pendingPRApprovals ?? 0) + (pendingPOApprovals ?? 0), // Total pending approvals
-            rejectedPRs: rejectedPRsCount ?? 0,                     // Rejected PRs count
-            rejectedPOs: rejectedPOsCount ?? 0,                     // Rejected POs count
-            totalPurchaseRequests: totalPurchaseRequestsCount ?? 0, // Total for reference
-            // Month-over-month changes
-            prChangePercent: prChange ?? 0,
-            poChangePercent: poChange ?? 0,
-            spendChangePercent: spendChange ?? 0,
-            thisMonthPRs: thisMonthPRCount ?? 0,
-            thisMonthPOs: thisMonthPOCount ?? 0,
-            thisMonthSpend: thisMonthSpendValue                     // Ensure it's 0 after reset
-          },
-          recentPurchaseRequests: prsWithoutPOs || [],
-          recentPurchaseOrders: recentPurchaseOrders || [],
-          supplierPerformance: supplierPerformance || [],
-        };
-      } catch {
-        throw new Error('Failed to fetch procurement dashboard data');
-      }
+          return {
+            stats: {
+              purchaseRequests: activePurchaseRequestsCount,
+              purchaseOrders: activePurchaseOrdersCount,
+              goodsReceipts: goodsReceiptsCount,
+              suppliers: suppliersCount,
+              totalSpend: totalSpend,
+              pendingPRApprovals: pendingPRApprovals,
+              pendingPOApprovals: pendingPOApprovals,
+              pendingApprovals: pendingPRApprovals + pendingPOApprovals,
+              rejectedPRs: rejectedPRsCount,
+              rejectedPOs: rejectedPOsCount,
+              totalPurchaseRequests: totalPurchaseRequestsCount,
+              prChangePercent: prChange,
+              poChangePercent: poChange,
+              spendChangePercent: spendChange,
+              thisMonthPRs: thisMonthPRCount,
+              thisMonthPOs: thisMonthPOCount,
+              thisMonthSpend: thisMonthSpend
+            },
+            recentPurchaseRequests: recentPurchaseRequests,
+            recentPurchaseOrders: recentPurchaseOrders
+          };
+        } catch (error) {
+          throw new Error('Failed to fetch procurement dashboard data');
+        }
+      }, 60); // Cache for 60 seconds
     }),
 
   // ========================================
@@ -291,44 +262,70 @@ export const procurementRouter = createTRPCRouter({
       department: z.string().optional(),
     }).optional().default({}))
     .query(async ({ input }) => {
-      try {
-        const skip = (input.page - 1) * input.limit;
+      const cacheKey = `${CACHE_KEYS.PROCUREMENT_REQUESTS}:${JSON.stringify(input)}`;
+      
+      return withCache(cacheKey, async () => {
+        try {
+          const skip = (input.page - 1) * input.limit;
 
-        const where = {
-          ...(input.status && { status: input.status }),
-          ...(input.priority && { priority: input.priority }),
-          ...(input.department && { department: { contains: input.department } }),
-        };
+          const where = {
+            ...(input.status && { status: input.status }),
+            ...(input.priority && { priority: input.priority }),
+            ...(input.department && { department: { contains: input.department } }),
+          };
 
-        const [purchaseRequests, total] = await Promise.all([
-          prisma.purchaseRequest.findMany({
-            where,
-            skip,
-            take: input.limit,
-            orderBy: { requestDate: 'desc' },
-            include: {
-              items: {
-                include: {
-                  product: true,
-                },
-              },
+          const [purchaseRequests, total] = await Promise.all([
+            prisma.purchaseRequest.findMany({
+              where,
+              skip,
+              take: input.limit,
+              orderBy: { requestDate: 'desc' },
+              select: {
+                id: true,
+                prNumber: true,
+                title: true,
+                description: true,
+                status: true,
+                priority: true,
+                requiredDate: true,
+                estimatedBudget: true,
+                department: true,
+                costCenter: true,
+                requestDate: true,
+                items: {
+                  select: {
+                    id: true,
+                    quantity: true,
+                    unitPrice: true,
+                    specifications: true,
+                    urgency: true,
+                    product: {
+                      select: {
+                        id: true,
+                        name: true,
+                        code: true
+                      }
+                    }
+                  }
+                }
+              }
+            }),
+            prisma.purchaseRequest.count({ where }),
+          ]);
+
+          return {
+            data: purchaseRequests,
+            pagination: {
+              page: input.page,
+              limit: input.limit,
+              total,
+              totalPages: Math.ceil(total / input.limit),
             },
-          }),
-          prisma.purchaseRequest.count({ where }),
-        ]);
-
-        return {
-          data: purchaseRequests,
-          pagination: {
-            page: input.page,
-            limit: input.limit,
-            total,
-            totalPages: Math.ceil(total / input.limit),
-          },
-        };
-      } catch {
-        throw new Error('Failed to fetch purchase requests');
-      }
+          };
+        } catch (error) {
+          throw new Error('Failed to fetch purchase requests');
+        }
+      }, 30); // Cache for 30 seconds
     }),
 
   createPurchaseRequest: protectedProcedure

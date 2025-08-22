@@ -83,7 +83,7 @@ export const getCorsConfig = () => {
       : [urls.frontend],
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With", "X-Client-Type"],
   };
 };
 
