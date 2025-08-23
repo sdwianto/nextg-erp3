@@ -1,138 +1,37 @@
-import { Server as SocketIOServer, type ServerOptions } from 'socket.io';
+import type { Server as SocketIOServer } from 'socket.io';
 import type { Server as HTTPServer } from 'http';
-import { prisma } from './db';
+// import { prisma } from './db'; // DISABLED DATABASE CONNECTION
 
-import { getWebSocketConfig } from '../env';
+export function initializeWebSocket(httpServer: HTTPServer) {
+  // DISABLED WEBSOCKET SERVER FOR DEVELOPMENT
+  // WebSocket server disabled for development
+  return null;
 
-export const initializeWebSocket = (httpServer: HTTPServer) => {
-  const config = getWebSocketConfig();
-  const io = new SocketIOServer(httpServer, config as Partial<ServerOptions>); 
+  // ORIGINAL WEBSOCKET CODE (DISABLED)
+  /*
+  const io = new SocketIOServer(httpServer, {
+    cors: {
+      origin: process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3002",
+      methods: ["GET", "POST"],
+      credentials: true
+    },
+    path: process.env.NEXT_PUBLIC_WS_PATH || "/api/websocket"
+  });
 
-  // Handle connections
   io.on('connection', (socket) => {
-    // console.log('Client connected:', socket.id);
+    console.log('🔌 Client connected:', socket.id);
 
-    // Join dashboard room
-    socket.on('join-dashboard', async () => {
+    socket.on('join-dashboard', () => {
       socket.join('dashboard');
-      // console.log('Client joined dashboard room');
+      console.log('📊 Client joined dashboard room:', socket.id);
     });
 
-    // Join equipment tracking room
-    socket.on('join-equipment-tracking', async (equipmentId: string) => {
-      socket.join(`equipment-${equipmentId}`);
-      // console.log(`Client joined equipment tracking room: ${equipmentId}`);
-    });
-
-    // Join inventory room
-    socket.on('join-inventory', async () => {
-      socket.join('inventory');
-      // console.log('Client joined inventory room');
-    });
-
-    // Handle equipment status updates
-    socket.on('equipment-status-update', async (data) => {
-      try {
-        // Update equipment status in database
-        await prisma.equipment.update({
-          where: { id: data.equipmentId },
-          data: {
-            status: data.status,
-            location: data.location,
-            totalOperatingHours: data.operatingHours,
-            lastMaintenanceDate: data.lastMaintenanceDate,
-            nextMaintenanceDate: data.nextMaintenanceDate,
-          }
-        });
-
-        // Broadcast to all clients tracking this equipment
-        io.to(`equipment-${data.equipmentId}`).emit('equipment-status', data);
-        
-        // Send alert if maintenance is due
-        if (data.maintenanceDue) {
-          io.to('dashboard').emit('alert', {
-            id: `maintenance-${data.equipmentId}`,
-            type: 'warning',
-            title: 'Maintenance Due',
-            message: `Equipment ${data.equipmentName} requires maintenance`,
-            timestamp: new Date(),
-            equipmentId: data.equipmentId
-          });
-        }
-      } catch {
-        // console.error('Error updating equipment status:', error);
-      }
-    });
-
-    // Handle inventory updates
-    socket.on('inventory-update', async (data) => {
-      try {
-        // Update inventory in database
-        await prisma.inventoryItem.update({
-          where: { id: data.inventoryId },
-          data: {
-            quantity: data.quantity,
-            availableQuantity: data.availableQuantity,
-          }
-        });
-
-        // Broadcast to inventory room
-        io.to('inventory').emit('inventory-update', data);
-
-        // Send low stock alert
-        if (data.lowStock) {
-          io.to('dashboard').emit('alert', {
-            id: `low-stock-${data.productId}`,
-            type: 'warning',
-            title: 'Low Stock Alert',
-            message: `Product ${data.productName} is running low on stock`,
-            timestamp: new Date(),
-            productId: data.productId
-          });
-        }
-      } catch {
-        // console.error('Error updating inventory:', error);
-      }
-    });
-
-    // Handle safety alerts
-    socket.on('safety-alert', (data) => {
-      io.to('dashboard').emit('alert', {
-        id: `safety-${Date.now()}`,
-        type: 'error',
-        title: 'Safety Alert',
-        message: data.message,
-        timestamp: new Date(),
-        location: data.location,
-        severity: data.severity
-      });
-    });
-
-    // Handle GPS location updates
-    socket.on('gps-update', async (data) => {
-      try {
-        // Update equipment location
-        await prisma.equipment.update({
-          where: { id: data.equipmentId },
-          data: {
-            location: `${data.latitude},${data.longitude}`,
-          }
-        });
-
-        // Broadcast location update
-        io.to(`equipment-${data.equipmentId}`).emit('gps-update', data);
-      } catch {
-        // console.error('Error updating GPS location:', error);
-      }
-    });
-
-    // Handle disconnect
     socket.on('disconnect', () => {
-      // console.log('Client disconnected:', socket.id);
+      console.log('🔌 Client disconnected:', socket.id);
     });
   });
 
-  // Periodic dashboard updates
+  // Send dashboard updates every 30 seconds
   setInterval(async () => {
     try {
       // Get real-time dashboard data
@@ -146,10 +45,17 @@ export const initializeWebSocket = (httpServer: HTTPServer) => {
   }, 30000); // Update every 30 seconds
 
   return io;
-};
+  */
+}
 
-// Function to get real-time dashboard data
+// Function to get real-time dashboard data (DISABLED)
 async function getDashboardData() {
+  // DISABLED DATABASE QUERIES FOR DEVELOPMENT
+  // Dashboard data queries disabled for development
+  return null;
+
+  // ORIGINAL DATABASE QUERIES (DISABLED)
+  /*
   try {
     // Get inventory data
     const inventoryCount = await prisma.product.count();
@@ -232,4 +138,5 @@ async function getDashboardData() {
     // console.error('Error getting dashboard data:', error);
     return null;
   }
+  */
 }

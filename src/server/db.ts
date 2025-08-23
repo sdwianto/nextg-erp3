@@ -5,7 +5,7 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 export const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  log: ['query', 'error', 'warn'],
+  log: ['error', 'warn'], // Reduced logging to avoid spam
   datasources: {
     db: {
       url: process.env.DATABASE_URL,
@@ -13,18 +13,62 @@ export const prisma = globalForPrisma.prisma ?? new PrismaClient({
   },
 });
 
-// Add connection error handling
-prisma.$connect()
-  .then(() => {
-    // console.log('✅ Database connected successfully');
-  })
-  .catch(() => {
-    // console.error('❌ Database connection failed:', error);
-  });
+// Add connection error handling with retry logic
+let connectionAttempts = 0;
+const maxConnectionAttempts = 3;
+
+const connectWithRetry = async () => {
+  try {
+    await prisma.$connect();
+    // Database connected successfully
+    connectionAttempts = 0; // Reset on success
+  } catch (error) {
+    connectionAttempts++;
+    // Database connection failed (attempt ${connectionAttempts}/${maxConnectionAttempts}): ${error}
+    
+    if (connectionAttempts < maxConnectionAttempts) {
+      // Retrying connection in 5 seconds...
+      setTimeout(connectWithRetry, 5000);
+    } else {
+      // Max connection attempts reached. Database connection failed.
+    }
+  }
+};
+
+// Initial connection
+connectWithRetry();
 
 // Graceful shutdown
 process.on('beforeExit', async () => {
-  await prisma.$disconnect();
+  try {
+    await prisma.$disconnect();
+    // Database disconnected gracefully
+  } catch (error) {
+    // Error disconnecting database: ${error}
+  }
+});
+
+// Handle process termination
+process.on('SIGINT', async () => {
+  try {
+    await prisma.$disconnect();
+    // Database disconnected on SIGINT
+    process.exit(0);
+  } catch (error) {
+    // Error disconnecting database on SIGINT: ${error}
+    process.exit(1);
+  }
+});
+
+process.on('SIGTERM', async () => {
+  try {
+    await prisma.$disconnect();
+    // Database disconnected on SIGTERM
+    process.exit(0);
+  } catch (error) {
+    // Error disconnecting database on SIGTERM: ${error}
+    process.exit(1);
+  }
 });
 
 if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
