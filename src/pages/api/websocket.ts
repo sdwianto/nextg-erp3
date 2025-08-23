@@ -21,7 +21,7 @@ const initWebSocket = (req: NextApiRequest, res: NextApiResponse) => {
             ? ['https://nextg-erp3.vercel.app', 'https://*.vercel.app']
             : ['http://localhost:3002', 'http://localhost:3000'],
           methods: ['GET', 'POST', 'OPTIONS'],
-          allowedHeaders: ['Content-Type', 'X-Client-Type', 'X-ERP-Version'],
+          allowedHeaders: ['Content-Type'], // SOLUSI: Simplify headers
           credentials: true
         },
         transports: ['polling' as any],
@@ -30,15 +30,16 @@ const initWebSocket = (req: NextApiRequest, res: NextApiResponse) => {
         pingInterval: 25000,
         connectTimeout: 45000,
         maxHttpBufferSize: 1e6, // 1MB for ERP data
-        allowRequest: (req: any, callback: any) => {
-          // ERP-specific request validation
-          const erpVersion = req.headers['x-erp-version'];
-          if (erpVersion === '1.1') {
-            callback(null, true);
-          } else {
-            callback(null, true); // Allow legacy clients
-          }
-        }
+        // SOLUSI: Remove allowRequest yang bisa menyebabkan masalah
+        // allowRequest: (req: any, callback: any) => {
+        //   // ERP-specific request validation
+        //   const erpVersion = req.headers['x-erp-version'];
+        //   if (erpVersion === '1.1') {
+        //     callback(null, true);
+        //   } else {
+        //     callback(null, true); // Allow legacy clients
+        //   }
+        // }
       };
 
       io = new SocketIOServer(httpServer, serverConfig);
@@ -179,7 +180,7 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
       
     res.setHeader('Access-Control-Allow-Origin', allowedOrigin);
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-Client-Type');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type'); // SOLUSI: Simplify headers
     res.setHeader('Access-Control-Allow-Credentials', 'true');
     res.status(200).end();
     return;

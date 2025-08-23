@@ -86,6 +86,16 @@ export const useRealtime = () => {
     console.log('🔌 WebSocket Path:', process.env.NODE_ENV === 'production' ? '/api/websocket' : '/socket.io/');
     // eslint-disable-next-line no-console
     console.log('🔌 Full WebSocket URL:', `${websocketUrl}${process.env.NODE_ENV === 'production' ? '/api/websocket' : '/socket.io/'}`);
+    // SOLUSI: Add more detailed logging for production
+    if (process.env.NODE_ENV === 'production') {
+      // eslint-disable-next-line no-console
+      console.log('🔌 Production Debug:', {
+        windowLocation: typeof window !== 'undefined' ? window.location.href : 'undefined',
+        windowOrigin: typeof window !== 'undefined' ? window.location.origin : 'undefined',
+        websocketUrl,
+        expectedPath: '/api/websocket'
+      });
+    }
 
     setConnectionStatus('connecting');
 
@@ -107,10 +117,11 @@ export const useRealtime = () => {
       maxReconnectionAttempts: 10,
       withCredentials: false,
       forceNew: true,
-      extraHeaders: {
-        'X-Client-Type': 'web',
-        'X-ERP-Version': '1.1'
-      }
+      // SOLUSI: Remove extraHeaders yang bisa menyebabkan truncation
+      // extraHeaders: {
+      //   'X-Client-Type': 'web',
+      //   'X-ERP-Version': '1.1'
+      // }
     };
 
     const newSocket = io(websocketUrl, socketConfig);
@@ -171,8 +182,20 @@ export const useRealtime = () => {
       setRetryCount(prev => prev + 1);
       setLastError(`Connection failed: ${error.message}`);
       
+      // SOLUSI: Improved error handling for production
+      if (process.env.NODE_ENV === 'production') {
+        // eslint-disable-next-line no-console
+        console.log('🔧 Production Error Analysis:', {
+          errorType: error.name,
+          errorMessage: error.message,
+          currentUrl: typeof window !== 'undefined' ? window.location.href : 'undefined',
+          websocketUrl,
+          retryCount: retryCountRef.current
+        });
+      }
+      
       // ERP-specific error handling
-      if (error.message.includes('xhr poll error') || error.message.includes('400')) {
+      if (error.message.includes('xhr poll error') || error.message.includes('400') || error.message.includes('websock')) {
         // eslint-disable-next-line no-console
         console.log('🔧 ERP: Detected path/configuration issue, attempting recovery...');
         

@@ -15,7 +15,12 @@ export const getWebSocketUrl = () => {
   // Production: Use same domain as frontend for WebSocket
   if (process.env.NODE_ENV === 'production') {
     // For Vercel, use the same domain as the frontend
-    return typeof window !== 'undefined' ? window.location.origin : '';
+    if (typeof window !== 'undefined') {
+      // Ensure we have a proper URL without trailing slash
+      const origin = window.location.origin;
+      return origin.endsWith('/') ? origin.slice(0, -1) : origin;
+    }
+    return '';
   }
   
   // Development: Use separate backend server
