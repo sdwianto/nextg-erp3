@@ -77,6 +77,14 @@ export const useRealtime = () => {
       return;
     }
 
+    // Debug logging for production
+    if (process.env.NODE_ENV === 'production') {
+      // eslint-disable-next-line no-console
+      console.log('🔌 Production WebSocket URL:', websocketUrl);
+      // eslint-disable-next-line no-console
+      console.log('🔌 Production Path:', process.env.NODE_ENV === 'production' ? '/api/websocket' : '/socket.io/');
+    }
+
     setConnectionStatus('connecting');
 
     // SOLUSI: Debug connection dengan logging
@@ -85,14 +93,18 @@ export const useRealtime = () => {
     // console.log('🔌 Attempting WebSocket connection to:', websocketUrl);
     
     const newSocket = io(websocketUrl, {
+      path: process.env.NODE_ENV === 'production' ? '/api/websocket' : '/socket.io/',
       transports: ['polling'],
-      autoConnect: true, // Let Socket.IO handle connection
-      timeout: 5000,
-      reconnection: true, // Enable reconnection
-      reconnectionAttempts: 3,
+      autoConnect: true,
+      timeout: 10000,
+      reconnection: true,
+      reconnectionAttempts: 5,
       reconnectionDelay: 1000,
       withCredentials: false,
-      forceNew: true
+      forceNew: true,
+      extraHeaders: {
+        'X-Client-Type': 'web'
+      }
     });
 
     // Listen to ALL events for debugging

@@ -6,9 +6,11 @@ import {
   Package, 
   Truck, 
   DollarSign, 
-  WifiOff
+  WifiOff,
+  Wifi
 } from 'lucide-react';
 import { api } from '@/utils/api';
+import { useRealtime } from '@/hooks/use-realtime';
 
 interface DashboardMetrics {
   totalProducts: number;
@@ -20,6 +22,9 @@ interface DashboardMetrics {
 }
 
 export const DashboardRealTime: React.FC = () => {
+  // Real-time connection status
+  const { isConnected } = useRealtime();
+
   // Fetch procurement data
   const { data: procurementData, isLoading: procurementLoading } = api.procurement.getDashboardData.useQuery(undefined, {
     refetchOnWindowFocus: true,
@@ -46,8 +51,12 @@ export const DashboardRealTime: React.FC = () => {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2">
-            <WifiOff className="h-5 w-5 text-orange-500" />
-            Development Mode
+            {isConnected ? (
+              <Wifi className="h-5 w-5 text-green-500" />
+            ) : (
+              <WifiOff className="h-5 w-5 text-orange-500" />
+            )}
+            {process.env.NODE_ENV === 'production' ? 'Production Mode' : 'Development Mode'}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -69,11 +78,16 @@ export const DashboardRealTime: React.FC = () => {
               <div className="text-sm text-muted-foreground">Conflicts</div>
             </div>
           </div>
-          <div className="mt-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
-            <p className="text-sm text-orange-800 dark:text-orange-200">
-              Real-time features are disabled in development mode. Set NEXT_PUBLIC_SOCKET_URL to enable WebSocket connections.
-            </p>
-          </div>
+          {!isConnected && (
+            <div className="mt-4 p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
+              <p className="text-sm text-orange-800 dark:text-orange-200">
+                {process.env.NODE_ENV === 'production' 
+                  ? 'Real-time features are connecting...' 
+                  : 'Real-time features are disabled in development mode. Set NEXT_PUBLIC_SOCKET_URL to enable WebSocket connections.'
+                }
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 

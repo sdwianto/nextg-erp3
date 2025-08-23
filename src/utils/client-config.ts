@@ -14,7 +14,8 @@ export const getClientPorts = () => {
 export const getWebSocketUrl = () => {
   // Production: Use same domain as frontend for WebSocket
   if (process.env.NODE_ENV === 'production') {
-    return process.env.NEXT_PUBLIC_WS_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+    // For Vercel, use the same domain as the frontend
+    return typeof window !== 'undefined' ? window.location.origin : '';
   }
   
   // Development: Use separate backend server
