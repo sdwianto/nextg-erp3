@@ -117,14 +117,41 @@ export const useRealtime = () => {
       maxReconnectionAttempts: 10,
       withCredentials: false,
       forceNew: true,
-      // SOLUSI: Remove extraHeaders yang bisa menyebabkan truncation
-      // extraHeaders: {
-      //   'X-Client-Type': 'web',
-      //   'X-ERP-Version': '1.1'
-      // }
+      // SOLUSI: Add cache-busting untuk mencegah truncation
+      query: {
+        _t: Date.now(), // Cache busting
+        _v: '1.1' // Version identifier
+      }
     };
 
-    const newSocket = io(websocketUrl, socketConfig);
+    // SOLUSI: Validate URL sebelum koneksi
+    const finalWebSocketUrl = websocketUrl;
+    if (process.env.NODE_ENV === 'production') {
+      // eslint-disable-next-line no-console
+      console.log('🔌 Final WebSocket URL:', finalWebSocketUrl);
+      // eslint-disable-next-line no-console
+      console.log('🔌 Expected Path:', '/api/websocket');
+      // eslint-disable-next-line no-console
+      console.log('🔌 Full URL should be:', `${finalWebSocketUrl}/api/websocket`);
+      
+      // SOLUSI: Detect truncated URL dan fix
+      if (finalWebSocketUrl && finalWebSocketUrl.includes('websock_')) {
+        // eslint-disable-next-line no-console
+        console.error('❌ DETECTED TRUNCATED URL:', finalWebSocketUrl);
+        // eslint-disable-next-line no-console
+        console.log('🔧 Attempting to fix truncated URL...');
+        
+        // Force reload untuk clear cache
+        setTimeout(() => {
+          if (typeof window !== 'undefined') {
+            window.location.reload();
+          }
+        }, 2000);
+        return;
+      }
+    }
+
+    const newSocket = io(finalWebSocketUrl, socketConfig);
 
     // Listen to ALL events for debugging
     newSocket.onAny((eventName, ...args) => {

@@ -92,6 +92,29 @@ const nextConfig = {
   //     return config;
   //   },
   // }),
+  
+  // SOLUSI: Add cache-busting untuk WebSocket
+  async headers() {
+    return [
+      {
+        source: '/api/websocket',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'no-cache, no-store, must-revalidate'
+          },
+          {
+            key: 'Pragma',
+            value: 'no-cache'
+          },
+          {
+            key: 'Expires',
+            value: '0'
+          }
+        ]
+      }
+    ];
+  },
 };
 
 export default nextConfig;

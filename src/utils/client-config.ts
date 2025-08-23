@@ -18,7 +18,18 @@ export const getWebSocketUrl = () => {
     if (typeof window !== 'undefined') {
       // Ensure we have a proper URL without trailing slash
       const origin = window.location.origin;
-      return origin.endsWith('/') ? origin.slice(0, -1) : origin;
+      const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
+      
+      // SOLUSI: Validate URL untuk mencegah truncation
+      if (!cleanOrigin || cleanOrigin === 'undefined' || cleanOrigin === 'null') {
+        // eslint-disable-next-line no-console
+        console.error('❌ Invalid WebSocket URL:', cleanOrigin);
+        return '';
+      }
+      
+      // eslint-disable-next-line no-console
+      console.log('🔌 Generated WebSocket URL:', cleanOrigin);
+      return cleanOrigin;
     }
     return '';
   }
