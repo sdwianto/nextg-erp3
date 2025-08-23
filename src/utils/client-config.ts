@@ -12,9 +12,9 @@ export const getClientPorts = () => {
 };
 
 export const getWebSocketUrl = () => {
-  // Production: Disable WebSocket for now (use polling/SSE instead)
+  // Production: Use same domain as frontend for WebSocket
   if (process.env.NODE_ENV === 'production') {
-    return process.env.NEXT_PUBLIC_WS_URL || '';
+    return process.env.NEXT_PUBLIC_WS_URL || (typeof window !== 'undefined' ? window.location.origin : '');
   }
   
   // Development: Use separate backend server

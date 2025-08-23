@@ -72,12 +72,6 @@ export const useRealtime = () => {
 
     // Only attempt connection if websocketUrl is valid
     if (!websocketUrl || websocketUrl === 'undefined' || websocketUrl === 'null' || websocketUrl === '') {
-      // In production, this is expected - WebSocket disabled
-      if (process.env.NODE_ENV === 'production') {
-        setConnectionStatus('disconnected');
-        setLastError('WebSocket disabled in production');
-        return;
-      }
       setConnectionStatus('error');
       setLastError('WebSocket URL not configured');
       return;
