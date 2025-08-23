@@ -77,13 +77,15 @@ export const useRealtime = () => {
       return;
     }
 
-    // Debug logging for production
-    if (process.env.NODE_ENV === 'production') {
-      // eslint-disable-next-line no-console
-      console.log('🔌 Production WebSocket URL:', websocketUrl);
-      // eslint-disable-next-line no-console
-      console.log('🔌 Production Path:', process.env.NODE_ENV === 'production' ? '/api/websocket' : '/socket.io/');
-    }
+    // Debug logging for all environments
+    // eslint-disable-next-line no-console
+    console.log('🔌 Environment:', process.env.NODE_ENV);
+    // eslint-disable-next-line no-console
+    console.log('🔌 WebSocket URL:', websocketUrl);
+    // eslint-disable-next-line no-console
+    console.log('🔌 WebSocket Path:', process.env.NODE_ENV === 'production' ? '/api/websocket' : '/socket.io/');
+    // eslint-disable-next-line no-console
+    console.log('🔌 Full WebSocket URL:', `${websocketUrl}${process.env.NODE_ENV === 'production' ? '/api/websocket' : '/socket.io/'}`);
 
     setConnectionStatus('connecting');
 
@@ -92,20 +94,26 @@ export const useRealtime = () => {
     
     // console.log('🔌 Attempting WebSocket connection to:', websocketUrl);
     
-    const newSocket = io(websocketUrl, {
+    // ERP-optimized Socket.IO configuration
+    const socketConfig = {
       path: process.env.NODE_ENV === 'production' ? '/api/websocket' : '/socket.io/',
       transports: ['polling'],
       autoConnect: true,
-      timeout: 10000,
+      timeout: 15000, // Increased for ERP operations
       reconnection: true,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: 10, // More attempts for ERP reliability
       reconnectionDelay: 1000,
+      reconnectionDelayMax: 5000,
+      maxReconnectionAttempts: 10,
       withCredentials: false,
       forceNew: true,
       extraHeaders: {
-        'X-Client-Type': 'web'
+        'X-Client-Type': 'web',
+        'X-ERP-Version': '1.1'
       }
-    });
+    };
+
+    const newSocket = io(websocketUrl, socketConfig);
 
     // Listen to ALL events for debugging
     newSocket.onAny((eventName, ...args) => {
@@ -149,11 +157,42 @@ export const useRealtime = () => {
     });
 
     newSocket.on('connect_error', (error) => {
-      // console.log('❌ WebSocket connection error:', error.message);
+      // eslint-disable-next-line no-console
+      console.log('❌ WebSocket connection error:', error.message);
+      // eslint-disable-next-line no-console
+      console.log('❌ Error details:', {
+        name: error.name,
+        message: error.message,
+        stack: error.stack?.split('\n')[0]
+      });
+      
       setIsConnected(false);
       setConnectionStatus('error');
       setRetryCount(prev => prev + 1);
       setLastError(`Connection failed: ${error.message}`);
+      
+      // ERP-specific error handling
+      if (error.message.includes('xhr poll error') || error.message.includes('400')) {
+        // eslint-disable-next-line no-console
+        console.log('🔧 ERP: Detected path/configuration issue, attempting recovery...');
+        
+        // Force reconnection with different configuration
+        setTimeout(() => {
+          if (socketRef.current && !socketRef.current.connected) {
+            socketRef.current.disconnect();
+            setTimeout(() => {
+              socketRef.current?.connect();
+            }, 1000);
+          }
+        }, 3000);
+      } else {
+        // Standard reconnection
+        setTimeout(() => {
+          if (socketRef.current && !socketRef.current.connected) {
+            socketRef.current.connect();
+          }
+        }, 2000);
+      }
     });
 
     newSocket.on('reconnect', (attemptNumber) => {
