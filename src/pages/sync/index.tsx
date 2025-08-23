@@ -46,7 +46,7 @@ const OfflineSyncPage: React.FC = () => {
     description?: string;
   }> = [];
 
-  const _getStatusColor = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'Online':
       case 'Synced':
@@ -78,7 +78,7 @@ const OfflineSyncPage: React.FC = () => {
     }
   };
 
-  const _getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'High':
         return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200';
@@ -221,7 +221,7 @@ const OfflineSyncPage: React.FC = () => {
                       </td>
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
-                          <div className={`w-2 h-2 rounded-full ${_getStatusColor(device.status)}`}></div>
+                          <div className={`w-2 h-2 rounded-full ${getStatusColor(device.status)}`}></div>
                           <Badge className={_getStatusBadgeColor(device.status)}>
                             {device.status}
                           </Badge>
@@ -304,7 +304,7 @@ const OfflineSyncPage: React.FC = () => {
                 {syncQueue.map((item) => (
                   <div key={item.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 border rounded-lg">
                     <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${_getStatusColor(item.status)}`}></div>
+                      <div className={`w-3 h-3 rounded-full ${getStatusColor(item.status)}`}></div>
                       <div>
                         <div className="font-medium">{item.type}</div>
                         <div className="text-sm text-muted-foreground">
@@ -318,7 +318,7 @@ const OfflineSyncPage: React.FC = () => {
                         <Badge className={_getStatusBadgeColor(item.status)}>
                           {item.status}
                         </Badge>
-                        <Badge className={_getPriorityColor(item.priority)}>
+                                                    <Badge className={getPriorityColor(item.priority)}>
                           {item.priority}
                         </Badge>
                       </div>
@@ -342,7 +342,7 @@ const OfflineSyncPage: React.FC = () => {
                 {conflicts.map((conflict) => (
                   <div key={conflict.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 border rounded-lg">
                     <div className="flex items-center gap-3">
-                      <div className={`w-3 h-3 rounded-full ${_getStatusColor(conflict.status)}`}></div>
+                      <div className={`w-3 h-3 rounded-full ${getStatusColor(conflict.status)}`}></div>
                       <div>
                         <div className="font-medium">{conflict.type}</div>
                         <div className="text-sm text-muted-foreground">

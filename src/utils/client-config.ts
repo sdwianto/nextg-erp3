@@ -28,7 +28,7 @@ export const getWebSocketUrl = () => {
       }
       
       // eslint-disable-next-line no-console
-      console.log('🔌 Generated WebSocket URL:', cleanOrigin);
+      // console.log('🔌 Generated WebSocket URL:', cleanOrigin);
       return cleanOrigin;
     }
     return '';

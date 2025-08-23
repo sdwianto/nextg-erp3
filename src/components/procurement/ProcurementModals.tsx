@@ -15,7 +15,7 @@ const ProcurementModals: React.FC<ProcurementModalsProps> = ({
   selectedItem,
   onCloseDetails
 }) => {
-  const _getStatusColor = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'DRAFT': return 'bg-gray-100 text-gray-800';
       case 'SUBMITTED': return 'bg-blue-100 text-blue-800';
@@ -30,7 +30,7 @@ const ProcurementModals: React.FC<ProcurementModalsProps> = ({
     }
   };
 
-  const _getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'LOW': return 'bg-gray-100 text-gray-800';
       case 'MEDIUM': return 'bg-blue-100 text-blue-800';
@@ -62,7 +62,7 @@ const ProcurementModals: React.FC<ProcurementModalsProps> = ({
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-500">Status</Label>
-                  <Badge className={_getStatusColor(selectedItem.status)}>
+                  <Badge className={getStatusColor(selectedItem.status)}>
                     {selectedItem.status}
                   </Badge>
                 </div>
@@ -72,7 +72,7 @@ const ProcurementModals: React.FC<ProcurementModalsProps> = ({
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-500">Priority</Label>
-                  <Badge className={_getPriorityColor(selectedItem.priority)}>
+                  <Badge className={getPriorityColor(selectedItem.priority)}>
                     {selectedItem.priority}
                   </Badge>
                 </div>
@@ -88,9 +88,9 @@ const ProcurementModals: React.FC<ProcurementModalsProps> = ({
                   <Label className="text-sm font-medium text-gray-500">Total Price</Label>
                   <p className="text-sm font-medium text-green-600">
                     ${selectedItem.items?.reduce((total: number, item: any) => {
-                      const _quantity = Number(item.quantity) || 0;
-                      const _unitPrice = Number(item.unitPrice) || 0;
-                      return total + (_quantity * _unitPrice);
+                      const quantity = Number(item.quantity) || 0;
+                      const unitPrice = Number(item.unitPrice) || 0;
+                      return total + (quantity * unitPrice);
                     }, 0).toLocaleString() || '0'}
                   </p>
                 </div>
@@ -146,7 +146,7 @@ const ProcurementModals: React.FC<ProcurementModalsProps> = ({
                 </div>
                 <div>
                   <Label className="text-sm font-medium text-gray-500">Status</Label>
-                  <Badge className={_getStatusColor(selectedItem.status)}>
+                  <Badge className={getStatusColor(selectedItem.status)}>
                     {selectedItem.status}
                   </Badge>
                 </div>
@@ -252,7 +252,7 @@ const ProcurementModals: React.FC<ProcurementModalsProps> = ({
                           </div>
                           <div className="text-right">
                             <p className="font-medium text-green-600">${po.grandTotal?.toLocaleString()}</p>
-                            <Badge className={_getStatusColor(po.status)}>
+                            <Badge className={getStatusColor(po.status)}>
                               {po.status}
                             </Badge>
                           </div>

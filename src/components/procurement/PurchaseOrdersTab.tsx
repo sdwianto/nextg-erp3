@@ -29,7 +29,7 @@ const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({
   onApprovePO,
   isLoading
 }) => {
-  const _getStatusColor = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'DRAFT': return 'bg-gray-100 text-gray-800';
       case 'SUBMITTED': return 'bg-blue-100 text-blue-800';
@@ -73,7 +73,7 @@ const PurchaseOrdersTab: React.FC<PurchaseOrdersTabProps> = ({
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-2">
                   <span className="font-medium">{po.poNumber}</span>
-                  <Badge className={_getStatusColor(po.status)}>
+                  <Badge className={getStatusColor(po.status)}>
                     {po.status}
                   </Badge>
                 </div>

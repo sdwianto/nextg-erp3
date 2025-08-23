@@ -130,7 +130,7 @@ const EnhancedProcurementWorkflowSplit: React.FC = () => {
 
 
   // Get utils for cache invalidation
-  const _utils = api.useUtils();
+  const utils = api.useUtils();
 
   // Memoized computed values for performance
   const memoizedTabsData = useMemo(() => ({
@@ -161,8 +161,8 @@ const EnhancedProcurementWorkflowSplit: React.FC = () => {
   const __approveRequestMutation = api.procurement.approvePurchaseRequest.useMutation({
     onSuccess: async () => {
       await Promise.all([
-        _utils.procurement.getDashboardData.invalidate(),
-        _utils.procurement.getPurchaseRequests.invalidate(),
+        utils.procurement.getDashboardData.invalidate(),
+        utils.procurement.getPurchaseRequests.invalidate(),
       ]);
     },
   });
@@ -170,8 +170,8 @@ const EnhancedProcurementWorkflowSplit: React.FC = () => {
   const __submitRequestMutation = api.procurement.submitPurchaseRequest.useMutation({
     onSuccess: async () => {
       await Promise.all([
-        _utils.procurement.getDashboardData.invalidate(),
-        _utils.procurement.getPurchaseRequests.invalidate(),
+        utils.procurement.getDashboardData.invalidate(),
+        utils.procurement.getPurchaseRequests.invalidate(),
       ]);
     },
   });

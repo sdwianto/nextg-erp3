@@ -35,7 +35,7 @@ const PurchaseRequestsTab: React.FC<PurchaseRequestsTabProps> = ({
   onCreatePOFromRequest,
   isLoading
 }) => {
-  const _getStatusColor = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'DRAFT': return 'bg-gray-100 text-gray-800';
       case 'SUBMITTED': return 'bg-blue-100 text-blue-800';
@@ -47,7 +47,7 @@ const PurchaseRequestsTab: React.FC<PurchaseRequestsTabProps> = ({
     }
   };
 
-  const _getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'LOW': return 'bg-gray-100 text-gray-800';
       case 'MEDIUM': return 'bg-blue-100 text-blue-800';
@@ -112,12 +112,12 @@ const PurchaseRequestsTab: React.FC<PurchaseRequestsTabProps> = ({
               <div className="flex-1">
                 <div className="flex items-center space-x-2 mb-2">
                   <span className="font-medium">{pr.prNumber}</span>
-                  <Badge className={_getStatusColor(pr.status)}>
+                  <Badge className={getStatusColor(pr.status)}>
                     {pr.status}
                   </Badge>
-                  <Badge className={_getPriorityColor(pr.priority)}>
-                    {pr.priority}
-                  </Badge>
+                                     <Badge className={getPriorityColor(pr.priority)}>
+                     {pr.priority}
+                   </Badge>
                 </div>
                 <h3 className="font-medium">{pr.title}</h3>
                 <p className="text-sm text-gray-600 mt-1">{pr.description}</p>

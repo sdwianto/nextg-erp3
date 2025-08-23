@@ -1,5 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // SOLUSI A: Disable SWC minification untuk mencegah truncation
+  // Permanen: gunakan Terser sebagai minifier (matikan SWC minify)
+  swcMinify: false,         // ← Permanen: gunakan Terser
+  
   experimental: {
     optimizeCss: true,
     optimizePackageImports: [
@@ -81,17 +85,6 @@ const nextConfig = {
   generateEtags: false,
   // Performance optimizations
   reactStrictMode: true,
-  // Bundle analyzer (optional) - requires @next/bundle-analyzer package
-  // ...(process.env.ANALYZE === 'true' && {
-  //   webpack: (config) => {
-  //     config.plugins.push(
-  //       new (require('@next/bundle-analyzer')({
-  //         enabled: true,
-  //       }))()
-  //     );
-  //     return config;
-  //   },
-  // }),
   
   // SOLUSI: Add cache-busting untuk WebSocket
   async headers() {

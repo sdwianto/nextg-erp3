@@ -75,7 +75,7 @@ const MaintenancePage: React.FC = () => {
   const _handleStartWork = (recordId: number) => {
     // TODO: Implement API call to update maintenance status
     // eslint-disable-next-line no-console
-    console.log('Starting work for record:', recordId);
+    // console.log('Starting work for record:', recordId);
   };
 
   const _handleUpdateProgress = (record: MaintenanceRecord) => {
@@ -88,11 +88,11 @@ const MaintenancePage: React.FC = () => {
   const _handleCompleteMaintenance = (recordId: number) => {
     // TODO: Implement API call to complete maintenance
     // eslint-disable-next-line no-console
-    console.log('Completing maintenance for record:', recordId, 'with cost:', actualCost);
+    // console.log('Completing maintenance for record:', recordId, 'with cost:', actualCost);
     setIsProgressDialogOpen(false);
   };
 
-  const _getStatusColor = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'SCHEDULED': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
       case 'IN_PROGRESS': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200';
@@ -287,7 +287,7 @@ const MaintenancePage: React.FC = () => {
                   <Button variant="default" onClick={() => {
                     // TODO: Implement API call to create maintenance record
                     // eslint-disable-next-line no-console
-                    console.log('Creating maintenance record:', newMaintenance);
+                    // console.log('Creating maintenance record:', newMaintenance);
                     setNewMaintenance({
                       equipment: '',
                       maintenanceType: '',
@@ -560,7 +560,7 @@ const MaintenancePage: React.FC = () => {
                 </div>
                 <div>
                   <Label>Status</Label>
-                  <Badge className={_getStatusColor(selectedRecord.status)}>
+                  <Badge className={getStatusColor(selectedRecord.status)}>
                     {selectedRecord.status}
                   </Badge>
                 </div>

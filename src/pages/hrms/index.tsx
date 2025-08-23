@@ -325,7 +325,7 @@ const HRMSPage: React.FC = () => {
     //   )
     // ); // API call
     // eslint-disable-next-line no-console
-    console.log('Updating leave request:', leaveId, 'to status:', newStatus);
+    // console.log('Updating leave request:', leaveId, 'to status:', newStatus);
     setIsLeaveApprovalDialogOpen(false);
     setSelectedLeave(null);
   };

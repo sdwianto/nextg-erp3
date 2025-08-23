@@ -254,9 +254,9 @@ const EnhancedProcurementWorkflow: React.FC = () => {
     onSuccess: async () => {
       // Invalidate all related queries to refresh the UI
       await Promise.all([
-        _utils.procurement.getDashboardData.invalidate(),
-        _utils.procurement.getPurchaseRequests.invalidate(),
-        _utils.procurement.getPurchaseOrders.invalidate(),
+        utils.procurement.getDashboardData.invalidate(),
+        utils.procurement.getPurchaseRequests.invalidate(),
+        utils.procurement.getPurchaseOrders.invalidate(),
       ]);
       
       setShowNewOrderModal(false);
@@ -286,10 +286,10 @@ const EnhancedProcurementWorkflow: React.FC = () => {
     onSuccess: async () => {
       // Invalidate all related queries to refresh the UI
       await Promise.all([
-        _utils.procurement.getDashboardData.invalidate(),
-        _utils.procurement.getPurchaseRequests.invalidate(),
-        _utils.procurement.getPurchaseOrders.invalidate(),
-        _utils.procurement.getSuppliers.invalidate(), // Add suppliers invalidation
+        utils.procurement.getDashboardData.invalidate(),
+        utils.procurement.getPurchaseRequests.invalidate(),
+        utils.procurement.getPurchaseOrders.invalidate(),
+        utils.procurement.getSuppliers.invalidate(), // Add suppliers invalidation
       ]);
       
       setShowNewOrderModal(false);
@@ -321,13 +321,13 @@ const EnhancedProcurementWorkflow: React.FC = () => {
       try {
         // Force refetch all data
         await Promise.all([
-          _utils.procurement.getDashboardData.invalidate(),
-          _utils.procurement.getPurchaseRequests.invalidate(),
-          _utils.procurement.getPurchaseOrders.invalidate(),
+          utils.procurement.getDashboardData.invalidate(),
+          utils.procurement.getPurchaseRequests.invalidate(),
+          utils.procurement.getPurchaseOrders.invalidate(),
         ]);
         
         // Force refetch dashboard data
-        await _utils.procurement.getDashboardData.refetch();
+        await utils.procurement.getDashboardData.refetch();
         
         setShowRejectDialog(false);
         setShowPOApprovalDialog(false); // Also close the approval dialog
@@ -355,7 +355,7 @@ const EnhancedProcurementWorkflow: React.FC = () => {
 
 
 
-  const _utils = api.useUtils();
+  const utils = api.useUtils();
 
   const getNextSupplierCodeMutation = api.procurement.getNextSupplierCode.useMutation();
 
@@ -366,7 +366,7 @@ const EnhancedProcurementWorkflow: React.FC = () => {
 
   const __createSupplierMutation = api.procurement.createSupplier.useMutation({
     onSuccess: async (newSupplier) => {
-      await _utils.procurement.getSuppliers.invalidate();
+      await utils.procurement.getSuppliers.invalidate();
       setSupplierForm({
         name: '',
         code: '',
@@ -391,7 +391,7 @@ const EnhancedProcurementWorkflow: React.FC = () => {
   const __createProductMutation = api.procurement.createProduct.useMutation({
     onSuccess: async (newProduct) => {
       // Invalidate products query to refresh the list
-      await _utils.procurement.getProducts.invalidate();
+      await utils.procurement.getProducts.invalidate();
       
       setShowNewProductModal(false);
       setProductForm({
@@ -664,12 +664,12 @@ const EnhancedProcurementWorkflow: React.FC = () => {
     }
 
     // Validate items
-    const _validItems = purchaseRequestForm.items.filter(item => 
+    const validItems = purchaseRequestForm.items.filter(item => 
       item.productId && item.productId.trim() !== '' && 
       item.quantity && item.quantity > 0
     );
 
-    if (_validItems.length === 0) {
+    if (validItems.length === 0) {
       // console.log('At least one valid item is required');
       return;
     }
@@ -682,7 +682,7 @@ const EnhancedProcurementWorkflow: React.FC = () => {
       estimatedBudget: parseFloat(purchaseRequestForm.estimatedBudget),
       department: purchaseRequestForm.department || '',
       costCenter: purchaseRequestForm.costCenter || '',
-      items: _validItems.map(item => ({
+      items: validItems.map(item => ({
         productId: item.productId.trim(),
         quantity: parseInt(item.quantity.toString()),
         unitPrice: item.unitPrice && item.unitPrice.trim() !== '' ? parseFloat(item.unitPrice) : undefined,
@@ -712,13 +712,13 @@ const EnhancedProcurementWorkflow: React.FC = () => {
     }
 
     // Validate items
-    const _validItems = purchaseOrderForm.items.filter(item => 
+    const validItems = purchaseOrderForm.items.filter(item => 
       item.productId && item.productId.trim() !== '' && 
       item.quantity && item.quantity > 0 &&
       item.unitPrice && parseFloat(item.unitPrice) > 0
     );
 
-    if (_validItems.length === 0) {
+    if (validItems.length === 0) {
       // console.log('At least one valid item with price is required');
       return;
     }
@@ -733,7 +733,7 @@ const EnhancedProcurementWorkflow: React.FC = () => {
       currency: purchaseOrderForm.currency,
       exchangeRate: parseFloat(purchaseOrderForm.exchangeRate.toString()),
       notes: purchaseOrderForm.notes || '',
-      items: _validItems.map(item => ({
+      items: validItems.map(item => ({
         productId: item.productId.trim(),
         quantity: parseInt(item.quantity.toString()),
         unitPrice: parseFloat(item.unitPrice.toString()),
@@ -909,7 +909,7 @@ const EnhancedProcurementWorkflow: React.FC = () => {
   };
 
   // Helper functions for styling
-  const _getStatusColor = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'DRAFT': return 'bg-gray-100 text-gray-800';
       case 'SUBMITTED': return 'bg-blue-100 text-blue-800';
@@ -924,7 +924,7 @@ const EnhancedProcurementWorkflow: React.FC = () => {
     }
   };
 
-  const _getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'LOW': return 'bg-gray-100 text-gray-800';
       case 'MEDIUM': return 'bg-blue-100 text-blue-800';
@@ -1008,7 +1008,7 @@ const EnhancedProcurementWorkflow: React.FC = () => {
   };
 
   // Use real data if available, otherwise fallback to mock data
-  const _data = dashboardData || { 
+  const data = dashboardData || { 
     stats: _mockProcurementData.overview,
     recentPurchaseRequests: [],
     recentPurchaseOrders: [],
@@ -1017,7 +1017,7 @@ const EnhancedProcurementWorkflow: React.FC = () => {
 
   // Helper function to safely access stats data
   const _getStats = () => {
-    return _data.stats || {};
+    return data.stats || {};
   };
   const _isLoading = dashboardLoading || prLoading || poLoading || suppliersLoading;
 
@@ -1199,7 +1199,7 @@ const EnhancedProcurementWorkflow: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {_data.recentPurchaseRequests
+                  {data.recentPurchaseRequests
                     ?.filter((pr) => {
                       // Hide PRs that already have Purchase Orders (any status)
                       const _hasPurchaseOrder = purchaseOrders?.data?.some((po) => 
@@ -1212,10 +1212,10 @@ const EnhancedProcurementWorkflow: React.FC = () => {
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
                           <span className="font-medium">{pr.prNumber}</span>
-                          <Badge className={_getStatusColor(pr.status)}>
+                          <Badge className={getStatusColor(pr.status)}>
                             {pr.status}
                           </Badge>
-                          <Badge className={_getPriorityColor(pr.priority)}>
+                          <Badge className={getPriorityColor(pr.priority)}>
                             {pr.priority}
                           </Badge>
                         </div>
@@ -1247,12 +1247,12 @@ const EnhancedProcurementWorkflow: React.FC = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {_data.recentPurchaseOrders?.slice(0, 5).map((po) => (
+                  {data.recentPurchaseOrders?.slice(0, 5).map((po) => (
                     <div key={po.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2">
                           <span className="font-medium">{po.poNumber}</span>
-                          <Badge className={_getStatusColor(po.status)}>
+                          <Badge className={getStatusColor(po.status)}>
                             {po.status}
                           </Badge>
                         </div>
@@ -1321,10 +1321,10 @@ const EnhancedProcurementWorkflow: React.FC = () => {
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
                         <span className="font-medium">{pr.prNumber}</span>
-                        <Badge className={_getStatusColor(pr.status)}>
+                        <Badge className={getStatusColor(pr.status)}>
                           {pr.status}
                         </Badge>
-                        <Badge className={_getPriorityColor(pr.priority)}>
+                        <Badge className={getPriorityColor(pr.priority)}>
                           {pr.priority}
                         </Badge>
                       </div>
@@ -1411,7 +1411,7 @@ const EnhancedProcurementWorkflow: React.FC = () => {
                       <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-2">
                         <span className="font-medium">{po.poNumber}</span>
-                        <Badge className={_getStatusColor(po.status)}>
+                        <Badge className={getStatusColor(po.status)}>
                           {po.status}
                         </Badge>
                         </div>
@@ -1735,7 +1735,7 @@ const EnhancedProcurementWorkflow: React.FC = () => {
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-gray-500">Status</Label>
-                    <Badge className={_getStatusColor(selectedItem.status)}>
+                    <Badge className={getStatusColor(selectedItem.status)}>
                       {selectedItem.status}
                     </Badge>
                   </div>
@@ -1745,7 +1745,7 @@ const EnhancedProcurementWorkflow: React.FC = () => {
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-gray-500">Priority</Label>
-                    <Badge className={_getPriorityColor(selectedItem.priority)}>
+                    <Badge className={getPriorityColor(selectedItem.priority)}>
                       {selectedItem.priority}
                     </Badge>
                   </div>
@@ -1760,10 +1760,10 @@ const EnhancedProcurementWorkflow: React.FC = () => {
                   <div>
                     <Label className="text-sm font-medium text-gray-500">Total Price</Label>
                     <p className="text-sm font-medium text-green-600">
-                      $                      {selectedItem.items?.reduce((total: number, item) => {
-                        const _quantity = Number(item.quantity) || 0;
-                        const _unitPrice = Number(item.unitPrice) || 0;
-                        return total + (_quantity * _unitPrice);
+                      ${selectedItem.items?.reduce((total: number, item) => {
+                        const quantity = Number(item.quantity) || 0;
+                        const unitPrice = Number(item.unitPrice) || 0;
+                        return total + (quantity * unitPrice);
                       }, 0).toLocaleString() || '0'}
                     </p>
                   </div>
@@ -1806,7 +1806,7 @@ const EnhancedProcurementWorkflow: React.FC = () => {
                             </div>
                             <div>
                               <Label className="text-xs font-medium text-gray-500">Urgency</Label>
-                              <Badge className={_getPriorityColor(item.urgency)}>
+                              <Badge className={getPriorityColor(item.urgency)}>
                                 {item.urgency}
                               </Badge>
                             </div>
@@ -1837,7 +1837,7 @@ const EnhancedProcurementWorkflow: React.FC = () => {
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-gray-500">Status</Label>
-                    <Badge className={_getStatusColor(selectedItem.status)}>
+                    <Badge className={getStatusColor(selectedItem.status)}>
                       {selectedItem.status}
                     </Badge>
                   </div>
@@ -2027,9 +2027,9 @@ const EnhancedProcurementWorkflow: React.FC = () => {
                   id="totalPrice"
                   type="text"
                   value={`$${purchaseRequestForm.items.reduce((total, item) => {
-                    const _quantity = item.quantity || 0;
-                    const _unitPrice = parseFloat(item.unitPrice) || 0;
-                    return total + (_quantity * _unitPrice);
+                            const quantity = item.quantity || 0;
+        const unitPrice = parseFloat(item.unitPrice) || 0;
+        return total + (quantity * unitPrice);
                   }, 0).toLocaleString()}`}
                   readOnly
                   className="bg-gray-100 cursor-not-allowed"

@@ -66,7 +66,7 @@ const DashboardPage: React.FC = () => {
   const hrData = api.hrms.getDashboardData.useQuery();
 
   // Real-time data hook
-  const { data: realtimeData, isConnected, connectionStatus, retryCount, lastError } = useRealtime();
+  const { data: realtimeData, isConnected, connectionStatus, lastError } = useRealtime();
 
   // Update stats when data is available - OPTIMIZED with useMemo
   const finalStats = React.useMemo(() => {
@@ -172,7 +172,7 @@ const DashboardPage: React.FC = () => {
           <div className="flex items-center gap-3">
             <WebSocketStatus 
               connectionStatus={connectionStatus}
-              retryCount={retryCount}
+              retryCount={0} // Removed retryCount as it's no longer available
               lastError={lastError}
               isConnected={isConnected}
             />

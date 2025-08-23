@@ -32,9 +32,9 @@ const ProcurementOverview: React.FC<ProcurementOverviewProps> = ({
   isLoading
 }) => {
   const _getStats = () => dashboardData?.stats;
-  const _data = dashboardData;
+  const data = dashboardData;
 
-  const _getStatusColor = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'DRAFT': return 'bg-gray-100 text-gray-800';
       case 'SUBMITTED': return 'bg-blue-100 text-blue-800';
@@ -49,7 +49,7 @@ const ProcurementOverview: React.FC<ProcurementOverviewProps> = ({
     }
   };
 
-  const _getPriorityColor = (priority: string) => {
+  const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'LOW': return 'bg-gray-100 text-gray-800';
       case 'MEDIUM': return 'bg-blue-100 text-blue-800';
@@ -193,7 +193,7 @@ const ProcurementOverview: React.FC<ProcurementOverviewProps> = ({
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {(_data.recentPurchaseRequests as any[])
+                             {(data.recentPurchaseRequests as any[])
                 ?.filter((pr: any) => {
                   // Hide PRs that already have Purchase Orders (any status)
                   const _hasPurchaseOrder = (purchaseOrders?.data as any[])?.some((po: any) => 
@@ -206,12 +206,12 @@ const ProcurementOverview: React.FC<ProcurementOverviewProps> = ({
                   <div className="flex-1">
                     <div className="flex items-center space-x-2">
                       <span className="font-medium">{pr.prNumber}</span>
-                      <Badge className={_getStatusColor(pr.status)}>
+                      <Badge className={getStatusColor(pr.status)}>
                         {pr.status}
                       </Badge>
-                      <Badge className={_getPriorityColor(pr.priority)}>
-                        {pr.priority}
-                      </Badge>
+                                             <Badge className={getPriorityColor(pr.priority)}>
+                         {pr.priority}
+                       </Badge>
                     </div>
                     <p className="text-sm text-gray-600 mt-1">{pr.title}</p>
                     <p className="text-xs text-gray-500">
@@ -241,12 +241,12 @@ const ProcurementOverview: React.FC<ProcurementOverviewProps> = ({
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              {(_data.recentPurchaseOrders as any[])?.slice(0, 5).map((po: any) => (
+                             {(data.recentPurchaseOrders as any[])?.slice(0, 5).map((po: any) => (
                 <div key={po.id} className="flex items-center justify-between p-3 border rounded-lg">
                   <div className="flex-1">
                     <div className="flex items-center space-x-2">
                       <span className="font-medium">{po.poNumber}</span>
-                      <Badge className={_getStatusColor(po.status)}>
+                      <Badge className={getStatusColor(po.status)}>
                         {po.status}
                       </Badge>
                     </div>

@@ -361,42 +361,42 @@ const RentalPage: React.FC = () => {
   const _handleCreateRental = () => {
     // TODO: Implement API call to create rental contract
     // eslint-disable-next-line no-console
-    console.log('Creating rental contract:', newRentalForm);
+    // console.log('Creating rental contract:', newRentalForm);
     setIsNewRentalDialogOpen(false);
   };
 
   const _handleUpdateRental = () => {
     // TODO: Implement API call to update rental contract
     // eslint-disable-next-line no-console
-    console.log('Updating rental contract:', editRentalForm);
+    // console.log('Updating rental contract:', editRentalForm);
     setIsEditRentalContractDialogOpen(false);
   };
 
   const _handleProcessReturn = () => {
     // TODO: Implement API call to process equipment return
     // eslint-disable-next-line no-console
-    console.log('Processing return:', returnForm);
+    // console.log('Processing return:', returnForm);
     setIsReturnEquipmentDialogOpen(false);
   };
 
   const _handleProcessExtension = () => {
     // TODO: Implement API call to extend rental
     // eslint-disable-next-line no-console
-    console.log('Processing extension:', extendForm);
+    // console.log('Processing extension:', extendForm);
     setIsExtendRentalDialogOpen(false);
   };
 
   const _handleProcessCancellation = () => {
     // TODO: Implement API call to cancel rental
     // eslint-disable-next-line no-console
-    console.log('Processing cancellation for contract:', selectedRental?.id);
+    // console.log('Processing cancellation for contract:', selectedRental?.id);
     setIsCancelRentalDialogOpen(false);
   };
 
   const _handleExportRentalReport = () => {
     // TODO: Implement API call to export report
     // eslint-disable-next-line no-console
-    console.log('Exporting rental report...');
+    // console.log('Exporting rental report...');
     setIsExportReportDialogOpen(false);
   };
 
@@ -408,7 +408,7 @@ const RentalPage: React.FC = () => {
     }).format(amount);
   };
 
-  const _getStatusColor = (status: string) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'available': return 'bg-green-100 text-green-800';
       case 'rented': return 'bg-blue-100 text-blue-800';
@@ -709,7 +709,7 @@ const RentalPage: React.FC = () => {
                           </div>
                         </div>
                         <div className="flex items-center space-x-4">
-                          <Badge className={_getStatusColor(item.status)}>
+                          <Badge className={getStatusColor(item.status)}>
                             {item.status}
                           </Badge>
                           <div className="text-right">
@@ -1025,7 +1025,7 @@ const RentalPage: React.FC = () => {
                 </div>
                 <div>
                   <Label>Status</Label>
-                  <Badge className={_getStatusColor(selectedEquipment.status)}>
+                  <Badge className={getStatusColor(selectedEquipment.status)}>
                     {selectedEquipment.status}
                   </Badge>
                 </div>
